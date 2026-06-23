@@ -6,5 +6,9 @@ cache/
 .env.*
 !.env.example
 /home/adam/workspace/av_treasury/artifacts
+/home/adam/workspace/av_treasury/simulator
 
 /home/adam/workspace/av_treasury/contracts/template
+simulator/batch_sweep.py
+simulator/simulation_report.md
+simulator/simulation_report.md

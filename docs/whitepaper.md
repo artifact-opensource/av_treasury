@@ -412,6 +412,6 @@ Au/ETH or Au/USDC pools on Aerodrome. LP tokens staked in AVLPStaking_v2 earn Au
 
 ---
 
-**Author:** OWL (on behalf of Ali)
+**Author:** ARTIFACT RESEARCH DIVISION
 **Date:** June 23, 2026
-**Status:** v1.0 — Publication Ready
+**Status:** v1.0

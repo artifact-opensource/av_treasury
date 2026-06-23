@@ -2,9 +2,9 @@
 
 *A Self-Sustaining, Self-Governing Economic Organism*
 
-**Version:** 1.0 — June 2026
-**Deployer:** `0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E`
-**Treasury:** `0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e`
+**Version:** 1.0 — June 2026 <br>
+**Deployer:** `0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E` <br>
+**Treasury:** `0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e` <br>
 **Chain:** Base Mainnet (chainId 8453)
 
 ---

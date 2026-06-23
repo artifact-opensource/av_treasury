@@ -95,7 +95,7 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
     uint256 public constant MAX_SINGLE_EMISSION = 10_000 * 1e18;
 
     /// @notice Maximum Ag tokens emitted per day (24-hour rolling window).
-    uint256 public constant DAILY_EMISSION_CAP = 25_000 * 1e18;
+    uint256 public constant DAILY_EMISSION_CAP = 11_000 * 1e18;
 
     /// @notice Default target TVL (10,000,000 NFTs, represented as raw count).
     uint256 public constant DEFAULT_TARGET_TVL = 10_000_000;
@@ -107,7 +107,7 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
     uint256 public constant MAX_TARGET_TVL = 5_000_000;
 
     /// @notice Bootstrap duration in months (12 months).
-    uint256 public constant BOOTSTRAP_DURATION_MONTHS = 12;
+    uint256 public constant BOOTSTRAP_DURATION_MONTHS = 10;
 
     /// @notice Seconds per month (30 days average).
     uint256 internal constant SECONDS_PER_MONTH = 30 days;

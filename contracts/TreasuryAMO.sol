@@ -68,7 +68,7 @@ contract TreasuryAMO is AccessControl, ReentrancyGuard, Pausable {
     uint256 public constant AMO_RESERVE_RUNWAY_MONTHS = 12;
 
     /// @notice AMO buyback percentage of excess reserves (out of 100)
-    uint256 public constant AMO_BUYBACK_PCT = 10;
+    uint256 public constant AMO_BUYBACK_PCT = 12;
 
     /// @notice Minimum buyback amount in USD equivalent (scaled to reserve token decimals)
     uint256 public constant MIN_BUYBACK_USD = 500;

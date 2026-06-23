@@ -1,0 +1,19 @@
+{
+  "name": "av-treasury",
+  "version": "1.0.0",
+  "description": "AV Treasury — Self-sustaining dual-token economic system on Base mainnet",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:base": "npx hardhat run scripts/deploy_mainnet.js --network base",
+    "verify": "npx hardhat run scripts/verify.js --network base"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.9.0",
+    "@openzeppelin/contracts-upgradeable": "4.9.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
+    "dotenv": "^16.3.1",
+    "hardhat": "^2.22.6"
+  }
+}

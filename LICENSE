@@ -1,0 +1,32 @@
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2026 Artifact Virtual (AV Treasury Program)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ A special exception to the AGPL 3.0 terms is applied to this program:
+
+    - All derivative works, deployments, and commercial uses MUST preserve
+      the same license and open-source availability of all smart contract
+      code interacting with the AV Treasury system on-chain.
+
+    - Anyone interacting with these contracts via a network interface MUST
+      make available the complete corresponding source code under AGPL-3.0.
+
+    - Commercial licensing is available separately by contacting the
+      Artifact Virtual DAO through official governance channels.
+
+ For the full legal text of the AGPL-3.0, see:
+ <https://www.gnu.org/licenses/agpl-3.0.en.html>

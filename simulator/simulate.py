@@ -33,7 +33,7 @@ AU_MAX_FLASH_MINT = 1_000_000
 
 # Ag Token
 AG_MAX_SUPPLY = 100_000_000
-AG_INITIAL_DAILY_CAP = 100_000
+AG_INITIAL_DAILY_CAP = 25_000
 AG_SINGLE_CAP = 10_000
 
 # Staking Multiplier
@@ -43,17 +43,20 @@ STAKING_MULT_DEN = 5000
 STAKING_MAX_MULT = 25000
 
 # PID Controller
-PID_KP = 0.6
-PID_KI = 0.1
+PID_KP = 0.1
+PID_KI = 0.02
 PID_KD = 0.3
 PID_TVL_TARGET = 5_000_000
+PID_BOOTSTRAP_TARGET_TVL = 500_000
+PID_BOOTSTRAP_DURATION_MONTHS = 12
 PID_TWATVL_SMOOTHING_NUM = 99
 PID_TWATVL_SMOOTHING_DEN = 100
 
 # Treasury AMO
 AMO_BUYBACK_COOLDOWN = 1
-AMO_BUYBACK_PCT = 20
-AMO_RESERVE_RUNWAY_MONTHS = 6
+AMO_BUYBACK_PCT = 10
+AMO_RESERVE_RUNWAY_MONTHS = 12
+AMO_MIN_BUYBACK_USD = 500
 
 # Market
 INITIAL_AU_PRICE = 0.01
@@ -151,12 +154,16 @@ def run_simulation():
             state['daily_ag_emitted'][today_key] = 0
         
         total_today = state['daily_ag_emitted'][today_key]
+        
+        # Bootstrap: scale TVL target from $500K to $5M over 12 months
+        current_target = get_bootstrap_target_tvl(day)
+        
         pid_output, state['pid_integral'] = pid_compute(
-            state['twatvl'], PID_TVL_TARGET,
+            state['twatvl'], current_target,
             PID_KP, PID_KI, PID_KD,
             state['pid_integral'], state['pid_prev_error']
         )
-        state['pid_prev_error'] = PID_TVL_TARGET - state['twatvl']
+        state['pid_prev_error'] = current_target - state['twatvl']
         
         if state['ag_price'] > 0:
             ag_to_emit_usd = min(pid_output, AG_INITIAL_DAILY_CAP * state['ag_price'])
@@ -173,6 +180,10 @@ def run_simulation():
         if state['ag_price'] <= 0 or state['twatvl'] <= 0:
             ag_to_emit = 0
         
+        # Emission decay: if TVL dropped below TWATVL, halve the emission
+        if state['tvl'] < state['twatvl'] * 95 / 100:
+            ag_to_emit = ag_to_emit / 2
+        
         state['ag_circulating'] += ag_to_emit
         state['ag_minted_total'] += ag_to_emit
         state['daily_ag_emitted'][today_key] = total_today + ag_to_emit
@@ -184,7 +195,7 @@ def run_simulation():
             if state['treasury_reserves'] > reserve_requirement:
                 excess = state['treasury_reserves'] - reserve_requirement
                 buyback_amount = excess * (AMO_BUYBACK_PCT / 100)
-                if buyback_amount > 0:
+                if buyback_amount >= AMO_MIN_BUYBACK_USD:
                     state['treasury_reserves'] -= buyback_amount
                     state['total_buybacks'] += buyback_amount
                     state['last_buyback_day'] = day
@@ -543,6 +554,15 @@ The AV Treasury v3 system demonstrates sustainable economic dynamics over 36 mon
     with open(filepath, 'w') as f:
         f.write(report)
     print(f"  Report saved: {filepath}")
+
+def get_bootstrap_target_tvl(day):
+    """TVL target scales from $500K at deployment to $5M over 12 months"""
+    month = day // DAYS_PER_MONTH
+    if month >= PID_BOOTSTRAP_DURATION_MONTHS:
+        return PID_TVL_TARGET
+    # Linear interpolation
+    fraction = month / PID_BOOTSTRAP_DURATION_MONTHS
+    return PID_BOOTSTRAP_TARGET_TVL + (PID_TVL_TARGET - PID_BOOTSTRAP_TARGET_TVL) * fraction
 
 # ============ MAIN ============
 

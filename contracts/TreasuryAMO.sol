@@ -64,6 +64,15 @@ contract TreasuryAMO is AccessControl, ReentrancyGuard, Pausable {
     /// @notice Maximum deadline extension from current block timestamp
     uint256 internal constant MAX_DEADLINE_EXTENSION = 1 hours;
 
+    /// @notice AMO reserve runway in months (minimum months of reserves to maintain)
+    uint256 public constant AMO_RESERVE_RUNWAY_MONTHS = 12;
+
+    /// @notice AMO buyback percentage of excess reserves (out of 100)
+    uint256 public constant AMO_BUYBACK_PCT = 10;
+
+    /// @notice Minimum buyback amount in USD equivalent (scaled to reserve token decimals)
+    uint256 public constant MIN_BUYBACK_USD = 500;
+
     // ============================================================
     //                          ROLES
     // ============================================================
@@ -98,6 +107,9 @@ contract TreasuryAMO is AccessControl, ReentrancyGuard, Pausable {
 
     /// @notice Buyback exceeds per-epoch cap
     error ExceedsEpochCap(uint256 amount, uint256 maxAllowed);
+
+    /// @notice Buyback amount is below the minimum floor
+    error BelowBuybackFloor(uint256 amount, uint256 minRequired);
 
     /// @notice TWAP price deviation exceeds maximum
     error TWAPDeviationExceeded(uint256 expectedPrice, uint256 actualPrice, uint256 maxDeviationBps);
@@ -328,6 +340,11 @@ contract TreasuryAMO is AccessControl, ReentrancyGuard, Pausable {
         uint256 maxEpochAmount = (currentReserve * maxBuybackPerEpochBps) / BPS_DENOMINATOR;
         if (reserveAmount > maxEpochAmount) {
             revert ExceedsEpochCap(reserveAmount, maxEpochAmount);
+        }
+
+        // Enforce minimum buyback floor
+        if (reserveAmount < MIN_BUYBACK_USD) {
+            revert BelowBuybackFloor(reserveAmount, MIN_BUYBACK_USD);
         }
 
         // TWAP price validation

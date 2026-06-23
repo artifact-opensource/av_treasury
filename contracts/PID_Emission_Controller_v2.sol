@@ -95,10 +95,28 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
     uint256 public constant MAX_SINGLE_EMISSION = 10_000 * 1e18;
 
     /// @notice Maximum Ag tokens emitted per day (24-hour rolling window).
-    uint256 public constant DAILY_EMISSION_CAP = 100_000 * 1e18;
+    uint256 public constant DAILY_EMISSION_CAP = 25_000 * 1e18;
 
     /// @notice Default target TVL (10,000,000 NFTs, represented as raw count).
     uint256 public constant DEFAULT_TARGET_TVL = 10_000_000;
+
+    /// @notice Bootstrap starting target TVL ($500K equivalent in NFT count units).
+    uint256 public constant BOOTSTRAP_TARGET_TVL = 500_000;
+
+    /// @notice Bootstrap maximum target TVL ($5M equivalent in NFT count units).
+    uint256 public constant MAX_TARGET_TVL = 5_000_000;
+
+    /// @notice Bootstrap duration in months (12 months).
+    uint256 public constant BOOTSTRAP_DURATION_MONTHS = 12;
+
+    /// @notice Seconds per month (30 days average).
+    uint256 internal constant SECONDS_PER_MONTH = 30 days;
+
+    /// @notice TWATVL drop threshold: emission halved when currentTVL < twatvl * 95 / 100.
+    uint256 internal constant TVL_DROP_THRESHOLD_NUM = 95;
+
+    /// @notice TWATVL drop threshold denominator (100 = 100%).
+    uint256 internal constant TVL_DROP_THRESHOLD_DEN = 100;
 
     /// @notice Timelock duration for scheduled gains changes (24 hours).
     uint256 public constant GAINS_CHANGE_TIMELOCK = 24 hours;
@@ -234,6 +252,9 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
     /// @notice Time-Weighted Average TVL (TWATVL) — smoothed TVL to prevent oracle manipulation.
     uint256 public twatvl;
 
+    /// @notice Timestamp of contract deployment, used for bootstrap TVL target interpolation.
+    uint256 public deploymentTimestamp;
+
     // =========================================================================
     //                         Emission Tracking State
     // =========================================================================
@@ -311,9 +332,9 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
         if (ki_ < MIN_PID_GAIN || ki_ > MAX_PID_GAIN) revert InvalidKi();
         if (kd_ < MIN_PID_GAIN || kd_ > MAX_PID_GAIN) revert InvalidKd();
 
-        // Set target TVL: use default if zero, otherwise validate non-zero.
+        // Set target TVL: use bootstrap target if zero, otherwise validate non-zero.
         if (targetTVL_ == 0) {
-            targetTVL = DEFAULT_TARGET_TVL;
+            targetTVL = BOOTSTRAP_TARGET_TVL;
         } else {
             targetTVL = targetTVL_;
         }
@@ -339,6 +360,7 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
         // Initialize state.
         lastUpdate = block.timestamp;
         dailyWindowStart = block.timestamp;
+        deploymentTimestamp = block.timestamp;
 
         // Initialize TWATVL with the initial target TVL.
         twatvl = targetTVL;
@@ -477,6 +499,11 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
                 return 0;
             }
             emission = remaining;
+        }
+
+        // Emission decay: if current TVL drops below 95% of TWATVL, halve the emission.
+        if (currentTVL < (twatvl * TVL_DROP_THRESHOLD_NUM) / TVL_DROP_THRESHOLD_DEN) {
+            emission = emission / 2;
         }
 
         // Update state before external call (checks-effects-interactions).
@@ -698,6 +725,26 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
             return 0;
         }
         return gainsChangeExecuteAfter - block.timestamp;
+    }
+
+    /**
+     * @notice Returns the current bootstrap-scaled target TVL.
+     * @dev Linearly interpolates from BOOTSTRAP_TARGET_TVL ($500K) at deployment
+     *      to MAX_TARGET_TVL ($5M) over BOOTSTRAP_DURATION_MONTHS (12 months).
+     *      After the bootstrap period, returns MAX_TARGET_TVL.
+     * @return currentTarget The interpolated target TVL for the current time.
+     */
+    function getCurrentTargetTVL() public view returns (uint256 currentTarget) {
+        uint256 elapsed = block.timestamp - deploymentTimestamp;
+        uint256 bootstrapDuration = BOOTSTRAP_DURATION_MONTHS * SECONDS_PER_MONTH;
+
+        if (elapsed >= bootstrapDuration) {
+            return MAX_TARGET_TVL;
+        }
+
+        // Linear interpolation: start + (end - start) * elapsed / duration
+        currentTarget = BOOTSTRAP_TARGET_TVL
+            + ((MAX_TARGET_TVL - BOOTSTRAP_TARGET_TVL) * elapsed) / bootstrapDuration;
     }
 
     /**

@@ -7,26 +7,26 @@
 | Au Price | $0.0100 | $0.0049 | -51.1% |
 | Ag Price | $0.0992 | $0.0162 | -83.6% |
 | TVL | $496,780 | $150,272 | -69.8% |
-| Ag Supply | 100,000 | 100,000,000 | +99,900,000 |
-| Treasury | $6,049 | $2,579 | -57.4% |
+| Ag Supply | 136 | 16,794,771 | +16,794,634 |
+| Treasury | $7,034 | $12,257 | +74.3% |
 
 ## Key Metrics
 
 ### Token Performance
 - **Au Price (Month 36):** $0.0049
 - **Ag Price (Month 36):** $0.0162
-- **Ag Total Minted:** 100,000,000 / 100,000,000 cap
-- **Ag Utilization:** 100.0%
+- **Ag Total Minted:** 16,794,771 / 100,000,000 cap
+- **Ag Utilization:** 16.8%
 
 ### Treasury Health
-- **Total Fees Accumulated:** $18,547.85
-- **Total Burned:** $18,547.85
-- **Total Buybacks:** $22,968.71
-- **Treasury Reserves:** $2,579.14
+- **Total Fees Accumulated:** $18,546.51
+- **Total Burned:** $18,546.51
+- **Total Buybacks:** $13,289.05
+- **Treasury Reserves:** $12,257.45
 
 ### Staking
 - **Final Multiplier:** 2.50x
-- **Staked LP Value:** $59,474.43
+- **Staked LP Value:** $57,633.69
 
 ### PID Controller
 - **TVL Target:** $5,000,000

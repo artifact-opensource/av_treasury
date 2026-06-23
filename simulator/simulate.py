@@ -33,14 +33,37 @@ AU_MAX_FLASH_MINT = 1_000_000
 
 # Ag Token
 AG_MAX_SUPPLY = 100_000_000
-AG_INITIAL_DAILY_CAP = 11_000
+# Dynamic Emission Cap (v3.1)
+AG_BASE_DAILY_CAP = 11_000    # Floor — minimum daily emission
+AG_MAX_DAILY_CAP = 50_000     # Ceiling — maximum daily emission
+
+def get_dynamic_daily_cap(state, day, tvl_history):
+    """Calculate daily emission cap based on 30-day TVL growth rate."""
+    if day < 30 or len(tvl_history) < 30:
+        return AG_BASE_DAILY_CAP
+    
+    tvl_30d_ago = tvl_history[max(0, len(tvl_history) - 30)]
+    current_tvl = state['tvl']
+    
+    if tvl_30d_ago <= 0:
+        return AG_BASE_DAILY_CAP
+    
+    growth_rate = (current_tvl - tvl_30d_ago) / tvl_30d_ago
+    growth_rate = min(growth_rate, 4.0)  # Cap at 400%
+    
+    if growth_rate <= 0:
+        return AG_BASE_DAILY_CAP
+    
+    # Linear interpolation: 0% growth → base, 400% growth → max
+    dynamic_cap = AG_BASE_DAILY_CAP + (AG_MAX_DAILY_CAP - AG_BASE_DAILY_CAP) * growth_rate / 4.0
+    return min(dynamic_cap, AG_MAX_DAILY_CAP)
 AG_SINGLE_CAP = 10_000
 
-# Staking Multiplier
+# Staking Multiplier (v3.1: 1.5x → 2.5x max)
 STAKING_BASE_MULT = 10000
-STAKING_MULT_NUM = 15000
+STAKING_MULT_NUM = 25000
 STAKING_MULT_DEN = 5000
-STAKING_MAX_MULT = 20000
+STAKING_MAX_MULT = 25000
 
 # PID Controller
 PID_KP = 0.12
@@ -90,6 +113,7 @@ state = {
 }
 
 history = []
+tvl_history = []
 
 # ============ HELPERS ============
 
@@ -154,6 +178,7 @@ def run_simulation():
         # Net TVL change = market trend + buyback support + staking yield - volatility drag
         tvl_change = ag_return * 0.3 + buyback_effect + staking_yield_effect
         state['tvl'] = max(100_000, state['tvl'] * (1 + tvl_change) * tvl_noise)
+        tvl_history.append(state['tvl'])
         
         # TWATVL EMA
         state['twatvl'] = (
@@ -189,12 +214,14 @@ def run_simulation():
         state['pid_prev_error'] = current_target - state['twatvl']
         
         if state['ag_price'] > 0:
-            ag_to_emit_usd = min(pid_output, AG_INITIAL_DAILY_CAP * state['ag_price'])
+            dynamic_cap = get_dynamic_daily_cap(state, day, tvl_history)
+            ag_to_emit_usd = min(pid_output, dynamic_cap * state['ag_price'])
             ag_to_emit = ag_to_emit_usd / state['ag_price']
         else:
             ag_to_emit = 0
         
-        ag_to_emit = min(ag_to_emit, AG_INITIAL_DAILY_CAP - total_today)
+        dynamic_cap = get_dynamic_daily_cap(state, day, tvl_history)
+        ag_to_emit = min(ag_to_emit, dynamic_cap - total_today)
         ag_to_emit = max(0, ag_to_emit)
         
         if state['ag_circulating'] + ag_to_emit > AG_MAX_SUPPLY:

@@ -1,0 +1,4 @@
+{
+    "chat.utilityModel": "openrouter/google/gemma-4-31b-it:free",
+    "chat.utilitySmallModel": "openrouter/google/gemma-4-26b-a4b-it:free"
+}

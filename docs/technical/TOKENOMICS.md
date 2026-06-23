@@ -1,4 +1,4 @@
-# AV Treasury Tokenomics
+# Treasury Tokenomics
 
 This document details the economic design of the AV Treasury system, focusing on the dual-token model (Au and Ag) and the systemic incentives that drive value accumulation.
 
@@ -85,3 +85,8 @@ The staking yield is multiplied by a factor between **1x and 2.5x** based on the
 3. **Treasury Buybacks:** TreasuryAMO uses reserves to buy Au from DEXs $\rightarrow$ Price support.
 4. **Staking Incentives:** LP NFTs earn Au and Ag $\rightarrow$ Locks liquidity.
 5. **Governance Power:** Ag holders control parameters $\rightarrow$ Optimize the cycle.
+
+
+**Author:** ARTIFACT RESEARCH DIVISION - BLOCKCHAIN
+**Date:** 23 June, 2026
+**Status:** Ready

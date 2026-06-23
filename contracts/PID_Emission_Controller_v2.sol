@@ -95,7 +95,12 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
     uint256 public constant MAX_SINGLE_EMISSION = 10_000 * 1e18;
 
     /// @notice Maximum Ag tokens emitted per day (24-hour rolling window).
-    uint256 public constant DAILY_EMISSION_CAP = 11_000 * 1e18;
+    uint256 public constant BASE_DAILY_EMISSION_CAP = 11_000 * 1e18; // Base cap, scales with TVL growth
+    uint256 public constant MAX_DAILY_EMISSION_CAP = 50_000 * 1e18; // Hard ceiling at 5x base
+    // TVL growth tracking for dynamic cap
+    uint256 public tvlSnapshot30d; // TVL recorded 30 days ago
+    uint256 public tvlSnapshotTime; // When the snapshot was taken
+    uint256 public lastDynamicCap; // Last computed dynamic cap
 
     /// @notice Default target TVL (10,000,000 NFTs, represented as raw count).
     uint256 public constant DEFAULT_TARGET_TVL = 10_000_000;
@@ -476,9 +481,9 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
         }
 
         // Enforce daily emission cap.
-        if (dailyEmitted + emission > DAILY_EMISSION_CAP) {
+        if (dailyEmitted + emission > getDynamicDailyCap()) {
             // Reduce emission to fit within the daily cap.
-            uint256 remaining = DAILY_EMISSION_CAP - dailyEmitted;
+            uint256 remaining = getDynamicDailyCap() - dailyEmitted;
             if (remaining == 0) {
                 // Daily cap fully consumed — update state but emit zero.
                 lastError = error;
@@ -543,6 +548,60 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
             return;
         }
         twatvl = (twatvl * TWATVL_SMOOTHING_NUM + currentTVL * (TWATVL_SMOOTHING_DEN - TWATVL_SMOOTHING_NUM)) / TWATVL_SMOOTHING_DEN;
+    }
+
+    // ============ DYNAMIC EMISSION CAP (v3.1) ============
+
+    /**
+     * @notice Returns the current dynamic emission cap based on TVL growth.
+     * @dev Formula: baseCap * (1 + tvlGrowthRate30d), clamped to [baseCap, maxCap]
+     *      If no 30-day data exists yet, returns baseCap.
+     */
+    function getDynamicDailyCap() public view returns (uint256) {
+        // If no snapshot taken yet, return base cap
+        if (tvlSnapshotTime == 0 || tvlSnapshot30d == 0) {
+            return BASE_DAILY_EMISSION_CAP;
+        }
+        // Need at least 30 days of data
+        if (block.timestamp < tvlSnapshotTime + 30 days) {
+            return BASE_DAILY_EMISSION_CAP;
+        }
+        uint256 currentTVL = staking.totalStakedNFTs();
+        // Prevent division by zero
+        if (tvlSnapshot30d == 0) {
+            return BASE_DAILY_EMISSION_CAP;
+        }
+        // Calculate growth rate in basis points
+        uint256 growthBps;
+        if (currentTVL >= tvlSnapshot30d) {
+            growthBps = ((currentTVL - tvlSnapshot30d) * 10000) / tvlSnapshot30d;
+        } else {
+            // TVL decreased — return base cap (don't increase emissions)
+            return BASE_DAILY_EMISSION_CAP;
+        }
+        // Cap growth rate at 400% to prevent extreme inflation
+        if (growthBps > 40000) {
+            growthBps = 40000;
+        }
+        // dynamicCap = baseCap + (baseCap * growthBps / 10000)
+        uint256 dynamicCap = BASE_DAILY_EMISSION_CAP + ((BASE_DAILY_EMISSION_CAP * growthBps) / 10000);
+        // Clamp to max
+        if (dynamicCap > MAX_DAILY_EMISSION_CAP) {
+            dynamicCap = MAX_DAILY_EMISSION_CAP;
+        }
+        return dynamicCap;
+    }
+
+    /**
+     * @notice Updates the 30-day TVL snapshot for dynamic cap calculation.
+     * @dev Can be called by anyone, but only once per 30-day period.
+     */
+    function updateTvlSnapshot() external {
+        if (tvlSnapshotTime > 0 && block.timestamp < tvlSnapshotTime + 30 days) {
+            revert("AV: Snapshot only once per 30 days");
+        }
+        tvlSnapshot30d = staking.totalStakedNFTs();
+        tvlSnapshotTime = block.timestamp;
     }
 
     /**
@@ -694,10 +753,10 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
      * @return remaining The amount of Ag that can still be emitted today.
      */
     function remainingDailyEmission() external view returns (uint256 remaining) {
-        if (dailyEmitted >= DAILY_EMISSION_CAP) {
+        if (dailyEmitted >= getDynamicDailyCap()) {
             return 0;
         }
-        return DAILY_EMISSION_CAP - dailyEmitted;
+        return getDynamicDailyCap() - dailyEmitted;
     }
 
     /**
@@ -807,8 +866,8 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
             emission = MAX_SINGLE_EMISSION;
         }
 
-        if (dailyEmitted + emission > DAILY_EMISSION_CAP) {
-            uint256 remaining = DAILY_EMISSION_CAP - dailyEmitted;
+        if (dailyEmitted + emission > getDynamicDailyCap()) {
+            uint256 remaining = getDynamicDailyCap() - dailyEmitted;
             emission = remaining;
         }
 

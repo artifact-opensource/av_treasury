@@ -13,15 +13,15 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 /**
  * @title AVLPStaking_v2 — v3
  * @notice Stake LP NFTs, earn Au + Ag rewards. UUPS upgradeable.
- * @dev Ag-based multiplier: 1x to 1.5x based on staker's Ag holdings.
+ * @dev Ag-based multiplier: 1x to 2.5x based on staker's Ag holdings.
  * @dev Deployed v2 on Base: 0x3e26b061eC20392b32dE712132c41bbE43f52556
  *
  * @author Artifact Virtual DAO
  *
  * @dev CRITICAL v3 FIX:
  * - Ag multiplier now reads staker's Ag balance dynamically (was missing in v2)
- * - Formula: multiplier = 10000 + (5000 * agBalance) / agThreshold
- * - At threshold (5000 Ag): multiplier = 15000 (1.5x)
+ * - Formula: multiplier = 10000 + (15000 * agBalance) / agThreshold
+ * - At threshold (5000 Ag): multiplier = 25000 (2.5x)
  *
  * @custom:compiler-version 0.8.26
  * @custom:optimizer-runs 200
@@ -82,7 +82,7 @@ contract AVLPStaking_v2 is
     // Ag multiplier config
     uint256 public agThreshold; // Ag balance for max multiplier (5000 Ag)
     uint256 public constant MULTIPLIER_DENOMINATOR = 10_000;
-    uint256 public constant MAX_MULTIPLIER = 15_000; // 1.5x
+    uint256 public constant MAX_MULTIPLIER = 25_000; // 2.5x (v3.1: Au price stability)
 
     // Minimum stake duration (1 day)
     uint256 public minStakeDuration = 1 days;
@@ -200,14 +200,14 @@ contract AVLPStaking_v2 is
     /**
      * @notice Calculate Ag-based multiplier for a staker
      * @param staker Address to calculate multiplier for
-     * @return multiplier in basis points (10000 = 1x, 15000 = 1.5x)
+     * @return multiplier in basis points (10000 = 1x, 25000 = 2.5x)
      */
     function getAgMultiplier(address staker) public view returns (uint256) {
         uint256 agBalance = agToken.balanceOf(staker);
         if (agBalance >= agThreshold) {
             return MAX_MULTIPLIER;
         }
-        // multiplier = 10000 + (5000 * agBalance) / agThreshold
+        // multiplier = 10000 + (15000 * agBalance) / agThreshold
         return MULTIPLIER_DENOMINATOR + (5_000 * agBalance) / agThreshold;
     }
 

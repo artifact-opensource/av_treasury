@@ -1,2 +1,10 @@
 .env
 node_modules
+artifacts/
+cache/
+*.json
+.env.*
+!.env.example
+/home/adam/workspace/av_treasury/artifacts
+
+/home/adam/workspace/av_treasury/contracts/template

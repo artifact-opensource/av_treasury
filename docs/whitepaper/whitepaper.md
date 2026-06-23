@@ -1,10 +1,10 @@
-# AV Treasury — Whitepaper
+# Whitepaper
 
 *A Self-Sustaining, Self-Governing Economic Organism*
 
-**Version:** 1.0 — June 2026
-**Deployer:** `0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E`
-**Treasury:** `0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e`
+**Version:** 1.0 — June 2026 <br>
+**Deployer:** `0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E` <br>
+**Treasury:** `0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e` <br>
 **Chain:** Base Mainnet (chainId 8453)
 
 ---
@@ -13,7 +13,7 @@
 
 The AV Treasury is a decentralized economic system built on a dual-token architecture that separates utility from governance. The system captures value from every interaction through a 9 basis-point transfer fee on its utility token (Au), recycles captured value through automated buybacks, and governs itself through a PID-controlled emission schedule for its governance token (Ag). The two tokens are bound by a cross-token staking multiplier: Ag holdings amplify Au staking yields, creating a mathematical link between governance participation and utility demand. The result is a self-reinforcing flywheel where usage drives scarcity, scarcity drives value, and value drives further usage.
 
-This whitepaper presents the complete system design — economic, technical, and governance — as a unified whole. Every mechanism traces back to six core principles: self-preservation, programmatic balance, usage-derived value, liquidation by design, zero trust, and future-proofing.
+This whitepaper presents the complete economic, governance and technical system design as a unified whole. Every mechanism traces back to six core principles: self-preservation, programmatic balance, usage-derived value, liquidation by design, zero trust, and future-proofing.
 
 ---
 
@@ -412,6 +412,6 @@ Au/ETH or Au/USDC pools on Aerodrome. LP tokens staked in AVLPStaking_v2 earn Au
 
 ---
 
-**Author:** OWL (on behalf of Ali)
+**Author:** ARTIFACT RESEARCH DIVISION
 **Date:** June 23, 2026
-**Status:** v1.0 — Publication Ready
+**Status:** v1.0

@@ -288,7 +288,7 @@ contract AuToken is
         address from,
         address to,
         uint256 value
-    ) internal override whenNotPaused {
+    ) internal override whenNotPaused nonReentrant {
         // Blocklist check
         if (isBlocked[from]) revert Au_SenderBlocked();
 

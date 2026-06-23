@@ -1,4 +1,4 @@
-# AV Treasury — Whitepaper
+# Whitepaper
 
 *A Self-Sustaining, Self-Governing Economic Organism*
 

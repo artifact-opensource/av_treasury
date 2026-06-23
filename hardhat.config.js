@@ -8,6 +8,10 @@ module.exports = {
     settings: {
       evmVersion: 'cancun',
       optimizer: { enabled: true, runs: 200 },
+      modelChecker: {
+        engine: 'chc',
+        targets: ['assert', 'overflow', 'underflow', 'divByZero', 'constantCondition'],
+      },
     },
   },
   networks: {

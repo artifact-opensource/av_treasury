@@ -12,3 +12,5 @@ cache/
 simulator/batch_sweep.py
 simulator/simulation_report.md
 simulator/simulation_report.md
+simulator/batch_sweep_fast.py
+simulator/batch_sweep2.py

@@ -129,8 +129,24 @@ def run_simulation():
         state['au_price'] = max(state['au_price'], 0.0001)
         state['ag_price'] = max(state['ag_price'], 0.0001)
         
+        # Value-anchored Ag price: backed by treasury value per Ag token
+        if state['ag_circulating'] > 0:
+            treasury_per_ag = state['treasury_reserves'] / state['ag_circulating']
+            # Ag price floor = 50% of treasury-backed value + 50% market price
+            value_floor = treasury_per_ag * 0.5
+            state['ag_price'] = max(state['ag_price'], value_floor)
+        
         tvl_noise = random.gauss(1.0, 0.02)
-        state['tvl'] = max(100_000, state['tvl'] * (1 + ag_return * 0.5) * tvl_noise)
+        # TVL model: base random walk + buyback pressure + staking yield
+        buyback_effect = 0
+        if state['total_buybacks'] > 0:
+            # Buybacks create upward pressure proportional to buyback/tvl ratio
+            buyback_effect = (state['total_buybacks'] / max(state['tvl'], 1)) * 0.01
+        # Staking yield attracts TVL: higher multiplier → more staking → more TVL
+        staking_yield_effect = (state['staking_mult'] - 1.0) * 0.002
+        # Net TVL change = market trend + buyback support + staking yield - volatility drag
+        tvl_change = ag_return * 0.3 + buyback_effect + staking_yield_effect
+        state['tvl'] = max(100_000, state['tvl'] * (1 + tvl_change) * tvl_noise)
         
         # TWATVL EMA
         state['twatvl'] = (
@@ -202,11 +218,12 @@ def run_simulation():
                     buyback_pressure = buyback_amount / max(state['au_circulating'] * state['au_price'], 1)
                     state['au_price'] *= (1 + buyback_pressure * 0.1)
         
-        # Staking
+        # Staking (calculate before TVL update for flywheel)
         avg_ag_held = state['ag_circulating'] * 0.01
         mult = get_staking_multiplier(avg_ag_held)
         daily_stake_rewards = state['tvl'] * 0.0001 * mult
         state['staked_lp_value'] += daily_stake_rewards
+        state['staking_mult'] = mult
         
         # Monthly snapshot
         if day % DAYS_PER_MONTH == 0:

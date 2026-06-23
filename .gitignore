@@ -15,3 +15,6 @@ simulator/simulation_report.md
 simulator/batch_sweep_fast.py
 simulator/batch_sweep2.py
 simulator/optimal_params.txt
+
+simulator/simulation_dashboard.png
+simulator/simulation_data.csv

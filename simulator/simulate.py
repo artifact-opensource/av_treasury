@@ -33,28 +33,28 @@ AU_MAX_FLASH_MINT = 1_000_000
 
 # Ag Token
 AG_MAX_SUPPLY = 100_000_000
-AG_INITIAL_DAILY_CAP = 25_000
+AG_INITIAL_DAILY_CAP = 11_000
 AG_SINGLE_CAP = 10_000
 
 # Staking Multiplier
 STAKING_BASE_MULT = 10000
 STAKING_MULT_NUM = 15000
 STAKING_MULT_DEN = 5000
-STAKING_MAX_MULT = 25000
+STAKING_MAX_MULT = 20000
 
 # PID Controller
-PID_KP = 0.1
-PID_KI = 0.02
+PID_KP = 0.12
+PID_KI = 0.03
 PID_KD = 0.3
 PID_TVL_TARGET = 5_000_000
 PID_BOOTSTRAP_TARGET_TVL = 500_000
-PID_BOOTSTRAP_DURATION_MONTHS = 12
+PID_BOOTSTRAP_DURATION_MONTHS = 10
 PID_TWATVL_SMOOTHING_NUM = 99
 PID_TWATVL_SMOOTHING_DEN = 100
 
 # Treasury AMO
 AMO_BUYBACK_COOLDOWN = 1
-AMO_BUYBACK_PCT = 10
+AMO_BUYBACK_PCT = 12
 AMO_RESERVE_RUNWAY_MONTHS = 12
 AMO_MIN_BUYBACK_USD = 500
 
@@ -135,6 +135,13 @@ def run_simulation():
             # Ag price floor = 50% of treasury-backed value + 50% market price
             value_floor = treasury_per_ag * 0.5
             state['ag_price'] = max(state['ag_price'], value_floor)
+        
+        # Staking (before TVL update for flywheel effect)
+        avg_ag_held = state['ag_circulating'] * 0.01
+        mult = get_staking_multiplier(avg_ag_held)
+        daily_stake_rewards = state['tvl'] * 0.0001 * mult
+        state['staked_lp_value'] += daily_stake_rewards
+        state['staking_mult'] = mult
         
         tvl_noise = random.gauss(1.0, 0.02)
         # TVL model: base random walk + buyback pressure + staking yield
@@ -217,13 +224,6 @@ def run_simulation():
                     state['last_buyback_day'] = day
                     buyback_pressure = buyback_amount / max(state['au_circulating'] * state['au_price'], 1)
                     state['au_price'] *= (1 + buyback_pressure * 0.1)
-        
-        # Staking (calculate before TVL update for flywheel)
-        avg_ag_held = state['ag_circulating'] * 0.01
-        mult = get_staking_multiplier(avg_ag_held)
-        daily_stake_rewards = state['tvl'] * 0.0001 * mult
-        state['staked_lp_value'] += daily_stake_rewards
-        state['staking_mult'] = mult
         
         # Monthly snapshot
         if day % DAYS_PER_MONTH == 0:

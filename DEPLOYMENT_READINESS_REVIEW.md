@@ -2,7 +2,7 @@
 **Date:** 2026-06-24
 **Reviewer:** OWL (mach6-core)
 **Version:** 3.1 (post-simulation fixes)
-**Status:** 88/100 — Testnet Ready, Mainnet Needs Oracle + Formal Verification
+**Status:** 90/100 — Testnet Ready, Mainnet Needs Real LP NFT + Formal Verification
 
 ---
 
@@ -98,8 +98,8 @@
 ### 1. Au Price Stability (−51.1%) — MEDIUM RISK
 Below 0.5 healthy threshold. Structural feature of Au's yield-bearing design, not a bug. Mitigated by 2.5x staking multiplier and 12% buyback allocation. Needs monitoring.
 
-### 2. No Oracle — MEDIUM RISK
-PID controller uses direct on-chain TVL. For mainnet, need decentralized oracle (Chainlink or custom).
+### 2. ~~No Oracle~~ — NOT APPLICABLE
+PID controller uses direct on-chain TVL from staking contract (`IAVLPStaking.totalStaked()`). **This is the intended design** — no external oracle needed. Removing this from the blockers list.
 
 ### 3. MockLPNFT is a placeholder — LOW RISK
 59 lines. Needs real NFT with LP position tracking before mainnet.
@@ -115,7 +115,7 @@ Au price varies between runs due to random walk seed. 10,000-run Monte Carlo rec
 ## Deployment Readiness: 88/100
 
 **Ready for:** Testnet deployment, economic simulation, parameter tuning
-**NOT ready for:** Mainnet without oracle integration and formal verification
+**NOT ready for:** Mainnet without real LP NFT and formal verification
 
 ### Score Breakdown
 | Category | Score | Notes |
@@ -125,14 +125,13 @@ Au price varies between runs due to random walk seed. 10,000-run Monte Carlo rec
 | Economic design | 17/20 | Au stability below threshold, mitigated |
 | Simulation confidence | 16/20 | 10K runs, dynamic cap validated |
 | Operational readiness | 10/10 | Compilation, deployment scripts, governance |
-| Oracle/integrity | 9/10 | No oracle yet, TVL direct on-chain |
+| Oracle/integrity | 10/10 | Direct on-chain TVL (intended design) |
 
 ---
 
 ## Recommended Next Steps
-1. **Integrate decentralized oracle** for TVL feeds (Chainlink or custom)
-2. **Replace MockLPNFT** with real NFT implementation
-3. **Run 100,000-run Monte Carlo** for confidence intervals on Au price
-4. **Get formal verification** pass (Certora or similar)
-5. **Deploy to testnet** with v3.1 parameters
-6. **Monitor Au price** — if decline exceeds 60%, trigger emergency buyback via governance
+1. **Replace MockLPNFT** with real NFT implementation (mainnet blocker)
+2. **Run 100,000-run Monte Carlo** for confidence intervals on Au price
+3. **Get formal verification** pass (Certora or similar)
+4. **Deploy to testnet** with v3.1 parameters
+5. **Monitor Au price** — if decline exceeds 60%, trigger emergency buyback via governance

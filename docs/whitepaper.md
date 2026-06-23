@@ -13,7 +13,7 @@
 
 The AV Treasury is a decentralized economic system built on a dual-token architecture that separates utility from governance. The system captures value from every interaction through a 9 basis-point transfer fee on its utility token (Au), recycles captured value through automated buybacks, and governs itself through a PID-controlled emission schedule for its governance token (Ag). The two tokens are bound by a cross-token staking multiplier: Ag holdings amplify Au staking yields, creating a mathematical link between governance participation and utility demand. The result is a self-reinforcing flywheel where usage drives scarcity, scarcity drives value, and value drives further usage.
 
-This whitepaper presents the complete system design — economic, technical, and governance — as a unified whole. Every mechanism traces back to six core principles: self-preservation, programmatic balance, usage-derived value, liquidation by design, zero trust, and future-proofing.
+This whitepaper presents the complete economic, governance and technical system design as a unified whole. Every mechanism traces back to six core principles: self-preservation, programmatic balance, usage-derived value, liquidation by design, zero trust, and future-proofing.
 
 ---
 

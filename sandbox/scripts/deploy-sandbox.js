@@ -1,206 +1,245 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════════
- * Deploy Sandbox — Full Dual-Token Architecture (Au + Ag)
+ * Deploy Sandbox — Full Dual-Token DAO Deployment
  * ═══════════════════════════════════════════════════════════════════
  *
- * Deploys:
- * 1. MockTokens (deploys MockAuToken + MockAgToken internally)
- * 2. DexSimulator (AMM with one-sided LP support)
- * 3. Fund 100 bots with both Au + Ag
- * 4. Seed the DEX with liquidity
+ * Deploys the complete system:
+ *   MockAuToken + MockAgToken → DexSimulator → SandboxLPToken
+ *   → MockStaking → MockPIDController → MockTreasuryAMO → MockGovernor
  *
- * Usage: node sandbox/scripts/deploy-sandbox.js
+ * Then funds 100 bot accounts and starts the simulation.
  */
 
 const { ethers } = require('ethers');
 const fs = require('fs');
 const path = require('path');
 
-const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:8545';
 const MNEMONIC = 'test test test test test test test test test test test junk';
-const BOT_COUNT = 100;
+const NUM_BOTS = 100;
+const BOT_FUNDING = ethers.utils.parseEther('1000');
+const DEPLOYER_FUNDING = ethers.utils.parseEther('10000');
 
-// Load compiled artifacts from forge out/ directory
-const OUT_DIR = path.join(__dirname, '..', '..', 'out');
+// Contract artifacts (compiled with forge build)
+const ARTIFACTS_DIR = path.join(__dirname, '..', 'artifacts', 'sandbox');
 
-function loadArtifact(name) {
-  // Try direct: out/Name.sol/Name.json
-  let p = path.join(OUT_DIR, `${name}.sol`, `${name}.json`);
-  if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
-
-  // Try nested: out/MockTokens.sol/Name.json (multi-contract file)
-  p = path.join(OUT_DIR, `MockTokens.sol`, `${name}.json`);
-  if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
-
-  // Search all subdirs
-  const dirs = fs.readdirSync(OUT_DIR);
-  for (const d of dirs) {
-    p = path.join(OUT_DIR, d, `${name}.json`);
-    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
-  }
-  throw new Error(`Artifact not found: ${name}`);
+async function getSigner(provider, index) {
+  return ethers.Wallet.fromMnemonic(MNEMONIC, `m/44'/60'/0'/0/${index}`).connect(provider);
 }
 
-function getBotKey(index) {
-  const wallet = ethers.Wallet.fromMnemonic(
-    ethers.Mnemonic.fromPhrase(MNEMONIC),
-    `m/44'/60'/0'/0/${index}`
+async function deployContract(name, deployer, ...args) {
+  const artifact = JSON.parse(
+    fs.readFileSync(path.join(ARTIFACTS_DIR, `${name}.sol`, `${name}.json`), 'utf8')
   );
-  return wallet.privateKey;
+  const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, deployer);
+  const contract = await factory.deploy(...args);
+  await contract.deployed();
+  console.log(`  ✅ ${name} deployed at ${contract.address}`);
+  return contract;
 }
 
 async function main() {
-  const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  const deployer = new ethers.Wallet(getBotKey(0), provider);
+  const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:8545');
+  const deployer = await getSigner(provider, 0);
+
+  // Wait for network
+  try {
+    await provider.getBlockNumber();
+  } catch (e) {
+    console.error('❌ Cannot connect to Anvil at http://127.0.0.1:8545');
+    console.error('   Run: bash sandbox/scripts/start-ganache.sh');
+    process.exit(1);
+  }
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('  DUAL-TOKEN SANDBOX DEPLOY — Au + Ag');
+  console.log('  Deploying Full Dual-Token DAO System');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`  Deployer: ${deployer.address}`);
-  console.log(`  RPC:      ${RPC_URL}`);
-  console.log(`  Bots:     ${BOT_COUNT}`);
-  console.log('───────────────────────────────────────────────────────────────');
+  console.log();
 
-  // ── 1. Deploy MockTokens (deploys Au + Ag internally) ──────────
-  console.log('\n📦 Deploying AuToken + AgToken...');
+  // ─── Step 1: Tokens ───
+  console.log('📝 Step 1: Deploying Tokens...');
+  const auToken = await deployContract('MockAuToken', deployer);
+  const agToken = await deployContract('MockAgToken', deployer);
 
-  const MockTokens = loadArtifact('MockTokens');
-  const MockTokensFactory = new ethers.ContractFactory(
-    MockTokens.abi, MockTokens.bytecode, deployer
+  // ─── Step 2: DEX ───
+  console.log('\n📝 Step 2: Deploying DEX...');
+  const dex = await deployContract('DexSimulator', deployer, agToken.address, auToken.address);
+
+  // ─── Step 3: LP Token Wrapper ───
+  console.log('\n📝 Step 3: Deploying LP Token...');
+  const lpToken = await deployContract('SandboxLPToken', deployer, dex.address, agToken.address, auToken.address);
+
+  // ─── Step 4: Staking ───
+  console.log('\n📝 Step 4: Deploying Staking...');
+  const rewardRateAu = ethers.utils.parseEther('0.001');  // 0.1% per block
+  const rewardRateAg = ethers.utils.parseEther('0.002');  // 0.2% per block
+  const staking = await deployContract('MockStaking', deployer, lpToken.address, auToken.address, agToken.address, rewardRateAu, rewardRateAg);
+
+  // ─── Step 5: PID Controller ───
+  console.log('\n📝 Step 5: Deploying PID Controller...');
+  const kp = ethers.utils.parseEther('0.5');
+  const ki = ethers.utils.parseEther('0.01');
+  const kd = ethers.utils.parseEther('0.1');
+  const targetTvl = ethers.utils.parseEther('1000000'); // 1M TVL target
+  const maxDailyEmission = ethers.utils.parseEther('100000');
+  const maxSingleEmission = ethers.utils.parseEther('10000');
+  const pid = await deployContract(
+    'MockPIDController',
+    deployer,
+    agToken.address,
+    staking.address,      // TVL source = staking
+    kp, ki, kd,
+    targetTvl,
+    maxDailyEmission,
+    maxSingleEmission,
+    10,                   // 10 block cooldown
+    500                   // 5% deadband
   );
-  const mockTokens = await MockTokensFactory.deploy(deployer.address);
-  await mockTokens.waitForDeployment();
 
-  const auAddr = await mockTokens.auToken();
-  const agAddr = await mockTokens.agToken();
-  console.log(`  AuToken:  ${auAddr}`);
-  console.log(`  AgToken:  ${agAddr}`);
+  // Grant PID minter role on AgToken
+  const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('MINTER_ROLE'));
+  await agToken.connect(deployer).grantRole(MINTER_ROLE, pid.address);
+  console.log('  🔑 Granted MINTER_ROLE to PID Controller');
 
-  const auToken = new ethers.Contract(auAddr, loadArtifact('MockAuToken').abi, provider);
-  const agToken = new ethers.Contract(agAddr, loadArtifact('MockAgToken').abi, provider);
-
-  // ── 2. Deploy DexSimulator ──────────────────────────────────────
-  console.log('\n📦 Deploying DexSimulator...');
-
-  const DexArtifact = loadArtifact('DexSimulator');
-  const DexFactory = new ethers.ContractFactory(
-    DexArtifact.abi, DexArtifact.bytecode, deployer
+  // ─── Step 6: TreasuryAMO ───
+  console.log('\n📝 Step 6: Deploying TreasuryAMO...');
+  const cooldown = 50;           // 50 block cooldown
+  const maxSlippageBps = 50;     // 0.5%
+  const maxBuybackPerEpochBps = 500; // 5%
+  const runway = ethers.utils.parseEther('10000');
+  const treasuryAMO = await deployContract(
+    'MockTreasuryAMO',
+    deployer,
+    agToken.address,
+    auToken.address,
+    dex.address,
+    cooldown,
+    maxSlippageBps,
+    maxBuybackPerEpochBps,
+    runway
   );
-  const dex = await DexFactory.deploy();
-  await dex.waitForDeployment();
-  const dexAddr = await dex.getAddress();
-  console.log(`  DEX:      ${dexAddr}`);
 
-  // ── 3. Mint initial Ag supply to deployer ───────────────────────
-  console.log('\n🏦 Minting initial Ag supply...');
-  const INITIAL_AG_SUPPLY = ethers.utils.parseEther('10000000'); // 10M Ag
-  await agToken.mint(deployer.address, INITIAL_AG_SUPPLY);
-  console.log(`  Minted ${ethers.utils.formatEther(INITIAL_AG_SUPPLY)} Ag to deployer`);
+  // ─── Step 7: Governor ───
+  console.log('\n📝 Step 7: Deploying Governor...');
+  const governor = await deployContract(
+    'MockGovernor',
+    deployer,
+    100,    // 100 block voting period
+    50,     // 50 block timelock
+    ethers.utils.parseEther('1000'), // proposal threshold
+    400     // 4% quorum
+  );
 
-  // ── 4. Fund bots with Au + Ag ───────────────────────────────────
-  console.log(`\n🤖 Funding ${BOT_COUNT} bots with Au + Ag...`);
+  // ─── Step 8: Fund system ───
+  console.log('\n📝 Step 8: Funding System...');
 
-  const AU_PER_BOT = ethers.utils.parseEther('10000');   // 10,000 Au
-  const AG_PER_BOT = ethers.utils.parseEther('50000');   // 50,000 Ag
+  // Fund TreasuryAMO with Ag for buybacks
+  const buybackFunding = ethers.utils.parseEther('500000');
+  await agToken.connect(deployer).mint(treasuryAMO.address, buybackFunding);
+  console.log(`  💰 TreasuryAMO funded with ${ethers.utils.formatEther(buybackFunding)} Ag`);
 
-  for (let i = 1; i <= BOT_COUNT; i++) {
-    const bot = new ethers.Wallet(getBotKey(i), provider);
+  // Fund staking with Au for rewards
+  const stakingFunding = ethers.utils.parseEther('100000');
+  await auToken.connect(deployer).mint(staking.address, stakingFunding);
+  console.log(`  💰 Staking funded with ${ethers.utils.formatEther(stakingFunding)} Au`);
 
-    // Transfer Au from deployer to bot
-    await auToken.transfer(bot.address, AU_PER_BOT);
+  // ─── Step 9: Add initial liquidity ───
+  console.log('\n📝 Step 9: Adding Initial Liquidity...');
+  const initAgLiq = ethers.utils.parseEther('50000');
+  const initAuLiq = ethers.utils.parseEther('50000');
 
-    // Mint Ag to bot (simulating PID emission)
-    await agToken.mint(bot.address, AG_PER_BOT);
+  await agToken.connect(deployer).approve(lpToken.address, initAgLiq);
+  await auToken.connect(deployer).approve(lpToken.address, initAuLiq);
+  await lpToken.connect(deployer).mint(initAgLiq, initAuLiq);
+  console.log(`  💧 Added ${ethers.utils.formatEther(initAgLiq)} Ag + ${ethers.utils.formatEther(initAuLiq)} Au liquidity`);
 
-    if (i % 20 === 0) {
-      console.log(`  Funded bots 1-${i}`);
+  // ─── Step 10: Fund bots ───
+  console.log('\n📝 Step 10: Funding 100 Bot Accounts...');
+  const accounts = [];
+  for (let i = 1; i <= NUM_BOTS; i++) {
+    const bot = await getSigner(provider, i);
+
+    // Fund with Ag for trading
+    await agToken.connect(deployer).mint(bot.address, BOT_FUNDING);
+
+    // Give some Au to some bots (every 3rd bot)
+    if (i % 3 === 0) {
+      await auToken.connect(deployer).mint(bot.address, ethers.utils.parseEther('500'));
+    }
+
+    accounts.push({
+      index: i,
+      address: bot.address,
+      privateKey: bot.privateKey,
+    });
+
+    if (i % 25 === 0) {
+      console.log(`  👤 Funded bots ${i - 24}..${i}`);
     }
   }
-  console.log(`  ✅ All ${BOT_COUNT} bots funded`);
 
-  // ── 5. Seed DEX with liquidity ─────────────────────────────────
-  console.log('\n💧 Seeding DEX with liquidity...');
-
-  const LIQUIDITY_AU = ethers.utils.parseEther('500000');   // 500K Au
-  const LIQUIDITY_AG = ethers.utils.parseEther('2500000');  // 2.5M Ag (initial price: 5 Ag per Au)
-
-  // Approve tokens for DEX
-  await auToken.connect(deployer).approve(dexAddr, LIQUIDITY_AU);
-  await agToken.connect(deployer).approve(dexAddr, LIQUIDITY_AG);
-
-  // Add two-sided liquidity
-  await dex.connect(deployer).addLiquidity(auAddr, agAddr, LIQUIDITY_AU, LIQUIDITY_AG);
-  console.log(`  Added ${ethers.utils.formatEther(LIQUIDITY_AU)} Au + ${ethers.utils.formatEther(LIQUIDITY_AG)} liquidity`);
-
-  // ── 6. Verify state ─────────────────────────────────────────────
-  console.log('\n📊 Verifying deployment...');
-
-  const auBal = await auToken.balanceOf(deployer.address);
-  const agBal = await agToken.balanceOf(deployer.address);
-  const auSupply = await auToken.totalSupply();
-  const agSupply = await agToken.totalSupply();
-
-  const price = await dex.getPrice(auAddr, agAddr);
-
-  console.log(`  Deployer Au:  ${ethers.utils.formatEther(auBal)}`);
-  console.log(`  Deployer Ag:  ${ethers.utils.formatEther(agBal)}`);
-  console.log(`  Total Au:     ${ethers.utils.formatEther(auSupply)}`);
-  console.log(`  Total Ag:     ${ethers.utils.formatEther(agSupply)}`);
-  console.log(`  Price (Au/Ag): ${ethers.utils.formatEther(price)} Ag per Au`);
-
-  // ── 7. Save config ──────────────────────────────────────────────
-  const configDir = path.join(__dirname, '..', 'config');
+  // ─── Step 11: Save deployment ───
+  console.log('\n📝 Step 11: Saving Deployment...');
   const deployed = {
-    auToken: auAddr,
-    agToken: agAddr,
-    dex: dexAddr,
-    deployer: deployer.address,
     network: 'anvil',
     chainId: 1337,
-    initialPrice: ethers.utils.formatEther(price),
-    botCount: BOT_COUNT,
-    auPerBot: ethers.utils.formatEther(AU_PER_BOT),
-    agPerBot: ethers.utils.formatEther(AG_PER_BOT),
-    liquidityAu: ethers.utils.formatEther(LIQUIDITY_AU),
-    liquidityAg: ethers.utils.formatEther(LIQUIDITY_AG),
     timestamp: new Date().toISOString(),
+    deployer: deployer.address,
+    contracts: {
+      AuToken: auToken.address,
+      AgToken: agToken.address,
+      DexSimulator: dex.address,
+      LpToken: lpToken.address,
+      Staking: staking.address,
+      PIDController: pid.address,
+      TreasuryAMO: treasuryAMO.address,
+      Governor: governor.address,
+    },
+    initialLiquidity: {
+      ag: initAgLiq.toString(),
+      au: initAuLiq.toString(),
+    },
+    botFunding: BOT_FUNDING.toString(),
+    numBots: NUM_BOTS,
   };
 
+  const configDir = path.join(__dirname, '..', 'config');
+  fs.mkdirSync(configDir, { recursive: true });
   fs.writeFileSync(
     path.join(configDir, 'deployed.json'),
     JSON.stringify(deployed, null, 2)
   );
 
   // Save bot accounts
-  const accounts = [];
-  for (let i = 0; i <= BOT_COUNT; i++) {
-    const wallet = ethers.Wallet.fromMnemonic(
-      ethers.Mnemonic.fromPhrase(MNEMONIC),
-      `m/44'/60'/0'/0/${i}`
-    );
-    accounts.push({
-      index: i,
-      address: wallet.address,
-      privateKey: wallet.privateKey,
-    });
-  }
   fs.writeFileSync(
     path.join(configDir, 'accounts.json'),
     JSON.stringify(accounts, null, 2)
   );
 
-  console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('  ✅ DUAL-TOKEN SANDBOX DEPLOYED');
+  // ─── Summary ───
+  console.log();
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`  Au:  ${auAddr}`);
-  console.log(`  Ag:  ${agAddr}`);
-  console.log(`  DEX: ${dexAddr}`);
-  console.log(`  Config: sandbox/config/deployed.json`);
-  console.log('───────────────────────────────────────────────────────────────');
+  console.log('  ✅ Full DAO Deployed Successfully');
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log();
+  console.log('  Contracts:');
+  for (const [name, addr] of Object.entries(deployed.contracts)) {
+    console.log(`    ${name.padEnd(16)} ${addr}`);
+  }
+  console.log();
+  console.log('  Bots: 100 accounts × 1000 Ag each');
+  console.log('  Initial LP: 50,000 Ag + 50,000 Au');
+  console.log('  TreasuryAMO: 500,000 Ag for buybacks');
+  console.log('  Staking: 100,000 Au for rewards');
+  console.log();
+  console.log('  Config saved to: sandbox/config/deployed.json');
+  console.log('  Accounts saved:  sandbox/config/accounts.json');
+  console.log();
+  console.log('  Next: node sandbox/bots/BotEngine.js');
+  console.log('═══════════════════════════════════════════════════════════════');
 }
 
-main().catch((err) => {
-  console.error('❌ Deploy failed:', err.message);
+main().catch((e) => {
+  console.error('❌ Deployment failed:', e.message);
   process.exit(1);
 });

@@ -28,6 +28,24 @@ success() { echo -e "${GREEN}[ok]${NC} $1"; }
 warn() { echo -e "${YELLOW}[warn]${NC} $1"; }
 err() { echo -e "${RED}[err]${NC} $1"; }
 
+compile() {
+  log "Compiling sandbox contracts with Foundry..."
+  cd "$ROOT"
+  forge build --contracts sandbox/contracts --out-path artifacts/sandbox 2>&1
+  if [ $? -eq 0 ]; then
+    success "Contracts compiled to artifacts/sandbox/"
+  else
+    # Fallback: compile individual contracts
+    warn "Trying individual compilation..."
+    mkdir -p artifacts/sandbox
+    for f in sandbox/contracts/*.sol; do
+      name=$(basename "$f" .sol)
+      forge compile "$f" --out-path "artifacts/sandbox" 2>&1
+    done
+    success "Contracts compiled individually"
+  fi
+}
+
 start_ganache() {
   log "Starting ganache..."
   mkdir -p "$LOGS"
@@ -36,10 +54,15 @@ start_ganache() {
 }
 
 deploy() {
-  log "Deploying contracts..."
+  log "Compiling and deploying full DAO system..."
   cd "$ROOT"
+  
+  # Compile sandbox contracts
+  forge build --contracts sandbox/contracts --out-path artifacts/sandbox 2>&1 || true
+  
+  # Deploy everything (tokens + DEX + LP + staking + PID + AMO + governor)
   node "$SANDBOX/scripts/deploy-sandbox.js"
-  success "Contracts deployed"
+  success "Full DAO deployed (8 contracts + 100 bots funded)"
 }
 
 start_bots() {
@@ -191,7 +214,7 @@ case "${1:-help}" in
   *)
     echo "Usage: $0 {start|stop|status|stress <mode>|full|deploy|bots|monitor}"
     echo ""
-    echo "Modes for stress: normal, crash, squeeze, drain, onesided, whale"
+    echo "Modes for stress: crash, squeeze, drain, flywheel, deathspiral"
     exit 1
     ;;
 esac

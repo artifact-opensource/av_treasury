@@ -31,11 +31,12 @@ const ERC20_ABI = [
   'function approve(address, uint256) returns (bool)',
   'function transfer(address, uint256) returns (bool)',
   'function mint(address, uint256)',
+  'function allowance(address, address) view returns (uint256)',
 ];
 
 const DEX_ABI = [
-  'function swapAforB(uint256) returns (uint256)',
-  'function swapBforA(uint256) returns (uint256)',
+  'function swapAforB(uint256,uint256,address) returns (uint256)',
+  'function swapBforA(uint256,uint256,address) returns (uint256)',
   'function addLiquidity(uint256, uint256) returns (uint256)',
   'function removeLiquidity(uint256) returns (uint256, uint256)',
   'function addOneSidedA(uint256) returns (uint256)',
@@ -177,7 +178,7 @@ function getPersonality(index) {
 
 class BotEngine {
   constructor() {
-    this.provider = new ethers.JsonRpcProvider(RPC_URL);
+    this.provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     this.bots = [];
     this.round = 0;
     this.running = false;
@@ -223,8 +224,8 @@ class BotEngine {
 
     // Initialize bots
     for (let i = 1; i <= BOT_COUNT; i++) {
-      const wallet = ethers.HDNodeWallet.fromMnemonic(
-        ethers.Mnemonic.fromPhrase(MNEMONIC),
+      const wallet = ethers.Wallet.fromMnemonic(
+        MNEMONIC,
         `m/44'/60'/0'/0/${i}`
       ).connect(this.provider);
 
@@ -240,18 +241,43 @@ class BotEngine {
     }
 
     console.log(`  ✅ ${BOT_COUNT} bots initialized with 7 personality types`);
+
+    // Ensure all bots have ETH for gas (needed after Anvil restart)
+    console.log('  ⛽ Funding bots with ETH for gas...');
+    const deployer = new ethers.Wallet(
+      '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+      this.provider
+    );
+    // Get starting nonce
+    let nonce = await deployer.getTransactionCount();
+    const fundTasks = [];
+    for (let i = 1; i <= BOT_COUNT; i++) {
+      const bot = this.bots[i - 1];
+      const bal = await this.provider.getBalance(bot.wallet.address);
+      if (bal.lt(ethers.utils.parseEther('0.1'))) {
+        fundTasks.push(
+          deployer.sendTransaction({
+            to: bot.wallet.address,
+            value: ethers.utils.parseEther('1.0'),
+            nonce: nonce++,
+          })
+        );
+      }
+    }
+    const txs = await Promise.all(fundTasks);
+    console.log(`  ⏳ Waiting for ${txs.length} funding txs to confirm...`);
+    await Promise.all(txs.map(tx => tx.wait()));
+    console.log(`  ✅ Funded ${txs.length} bots with ETH for gas`);
   }
 
   async getSystemState() {
     try {
-      const [reserveA, reserveB, lpSupply, stakedTvl, canEmit, canBuyback] = await Promise.all([
-        this.dex.getReserveA(),
-        this.dex.getReserveB(),
-        this.lpToken.totalSupply(),
-        this.staking.totalStaked(),
-        this.pid.canEmit(),
-        this.treasuryAMO.canExecute(),
-      ]);
+      const reserveA = BigInt((await this.dex.getReserveA()).toString());
+      const reserveB = BigInt((await this.dex.getReserveB()).toString());
+      const lpSupply = BigInt((await this.lpToken.totalSupply()).toString());
+      const stakedTvl = BigInt((await this.staking.totalStaked()).toString());
+      const canEmit = await this.pid.canEmit();
+      const canBuyback = await this.treasuryAMO.canExecute();
 
       const price = reserveA > 0n ? (reserveB * 10n ** 18n) / reserveA : 0n;
 
@@ -264,7 +290,8 @@ class BotEngine {
         canEmit,
         canBuyback,
       };
-    } catch {
+    } catch (e) {
+      console.log('getSystemState error:', e.message);
       return null;
     }
   }
@@ -273,6 +300,7 @@ class BotEngine {
     this.round++;
     const state = await this.getSystemState();
     if (!state) return;
+    if (this.round <= 3) console.log('Round', this.round, 'bots:', this.bots.length, 'state:', !!state);
 
     const tasks = [];
 
@@ -314,16 +342,16 @@ class BotEngine {
       } else {
         await this._swap(bot, state);
       }
-    } catch {
-      // Silently handle failures — bots are autonomous
+    } catch (err) {
+      console.log('❌ Bot error:', err.reason || err.message || err);
     }
   }
 
   async _swap(bot, state) {
     const { wallet, personality } = bot;
-    const agBal = await this.agToken.balanceOf(wallet.address);
-    const auBal = await this.auToken.balanceOf(wallet.address);
-
+    const agBal = BigInt((await this.agToken.balanceOf(wallet.address)).toString());
+    const auBal = BigInt((await this.auToken.balanceOf(wallet.address)).toString());
+    const lpBal = BigInt((await this.lpToken.balanceOf(wallet.address)).toString());
     const swapAforB = Math.random() < personality.swapDirection;
 
     let amountIn;
@@ -332,12 +360,12 @@ class BotEngine {
     if (swapAforB && agBal > 10n ** 15n) {
       // Sell Ag (tokenA) → buy Au (tokenB)
       amountIn = (agBal * BigInt(Math.floor(personality.tradeSizePercent * 100))) / 100n;
-      swapFn = () => this.dex.connect(wallet).swapAforB(amountIn, { gasLimit: personality.gasLimit });
+      swapFn = () => this.dex.connect(wallet).swapAforB(amountIn.toString(), 0, wallet.address, { gasLimit: personality.gasLimit });
       this.stats.tradesByType.swapAforB++;
     } else if (!swapAforB && auBal > 10n ** 15n) {
       // Sell Au (tokenB) → buy Ag (tokenA)
       amountIn = (auBal * BigInt(Math.floor(personality.tradeSizePercent * 100))) / 100n;
-      swapFn = () => this.dex.connect(wallet).swapBforA(amountIn, { gasLimit: personality.gasLimit });
+      swapFn = () => this.dex.connect(wallet).swapBforA(amountIn.toString(), 0, wallet.address, { gasLimit: personality.gasLimit });
       this.stats.tradesByType.swapBforA++;
     } else {
       return; // Can't swap
@@ -345,9 +373,9 @@ class BotEngine {
 
     // Approve if needed
     const token = swapAforB ? this.agToken : this.auToken;
-    const approved = await token.connect(wallet).allowance(wallet.address, this.config.contracts.DexSimulator);
+    const approved = BigInt((await token.connect(wallet).allowance(wallet.address, this.config.contracts.DexSimulator)).toString());
     if (approved < amountIn) {
-      await token.connect(wallet).approve(this.config.contracts.DexSimulator, ethers.MaxUint256);
+      await token.connect(wallet).approve(this.config.contracts.DexSimulator, ethers.constants.MaxUint256, { gasLimit: 200000 });
     }
 
     const tx = await swapFn();
@@ -361,22 +389,20 @@ class BotEngine {
 
   async _addLiquidity(bot, state) {
     const { wallet, personality } = bot;
-    const agBal = await this.agToken.balanceOf(wallet.address);
-    const auBal = await this.auToken.balanceOf(wallet.address);
-
+    const agBal = BigInt((await this.agToken.balanceOf(wallet.address)).toString());
+    const auBal = BigInt((await this.auToken.balanceOf(wallet.address)).toString());
     if (agBal < 10n ** 15n && auBal < 10n ** 15n) return;
 
     // Decide: two-sided or one-sided
     const oneSided = Math.random() < 0.4;
-    let lpAmount;
 
     try {
       if (oneSided && agBal > auBal * 2n) {
         // One-sided Ag
         const amount = (agBal * 10n) / 100n; // 10%
-        await this.agToken.connect(wallet).approve(this.config.contracts.LpToken, amount);
-        const tx = await this.lpToken.connect(wallet).mintOneSidedA(amount, { gasLimit: personality.gasLimit });
-        const receipt = await tx.wait();
+        await this.agToken.connect(wallet).approve(this.config.contracts.LpToken, amount.toString(), { gasLimit: 200000 });
+        const tx = await this.lpToken.connect(wallet).mintOneSidedA(amount.toString(), { gasLimit: personality.gasLimit });
+        await tx.wait();
         this.stats.tradesByType.addLiquidity++;
         this.stats.totalTrades++;
         this.stats.successfulTrades++;
@@ -385,9 +411,9 @@ class BotEngine {
       } else if (oneSided && auBal > agBal * 2n) {
         // One-sided Au
         const amount = (auBal * 10n) / 100n;
-        await this.auToken.connect(wallet).approve(this.config.contracts.LpToken, amount);
-        const tx = await this.lpToken.connect(wallet).mintOneSidedB(amount, { gasLimit: personality.gasLimit });
-        const receipt = await tx.wait();
+        await this.auToken.connect(wallet).approve(this.config.contracts.LpToken, amount.toString(), { gasLimit: 200000 });
+        const tx = await this.lpToken.connect(wallet).mintOneSidedB(amount.toString(), { gasLimit: personality.gasLimit });
+        await tx.wait();
         this.stats.tradesByType.addLiquidity++;
         this.stats.totalTrades++;
         this.stats.successfulTrades++;
@@ -399,10 +425,10 @@ class BotEngine {
         const auAmount = (auBal * 5n) / 100n;
         if (agAmount < 10n ** 15n || auAmount < 10n ** 15n) return;
 
-        await this.agToken.connect(wallet).approve(this.config.contracts.LpToken, agAmount);
-        await this.auToken.connect(wallet).approve(this.config.contracts.LpToken, auAmount);
-        const tx = await this.lpToken.connect(wallet).mint(agAmount, auAmount, { gasLimit: personality.gasLimit });
-        const receipt = await tx.wait();
+        await this.agToken.connect(wallet).approve(this.config.contracts.LpToken, agAmount.toString(), { gasLimit: 200000 });
+        await this.auToken.connect(wallet).approve(this.config.contracts.LpToken, auAmount.toString(), { gasLimit: 200000 });
+        const tx = await this.lpToken.connect(wallet).mint(agAmount.toString(), auAmount.toString(), { gasLimit: personality.gasLimit });
+        await tx.wait();
         this.stats.tradesByType.addLiquidity++;
         this.stats.totalTrades++;
         this.stats.successfulTrades++;
@@ -415,8 +441,10 @@ class BotEngine {
 
   async _stakeOrClaim(bot) {
     const { wallet, personality } = bot;
-    const lpBal = await this.lpToken.balanceOf(wallet.address);
-    const [pendingAu, pendingAg] = await this.staking.pendingRewards(wallet.address);
+    const lpBal = BigInt((await this.lpToken.balanceOf(wallet.address)).toString());
+    const [pendingAuRaw, pendingAgRaw] = await this.staking.pendingRewards(wallet.address);
+    const pendingAu = BigInt(pendingAuRaw.toString());
+    const pendingAg = BigInt(pendingAgRaw.toString());
 
     // Claim rewards if significant
     if (pendingAu > 10n ** 15n || pendingAg > 10n ** 15n) {
@@ -433,8 +461,8 @@ class BotEngine {
     // Stake if has LP and probability hits
     if (lpBal > 10n ** 15n && Math.random() < personality.stakeProbability) {
       try {
-        await this.lpToken.connect(wallet).approve(this.config.contracts.Staking, lpBal);
-        const tx = await this.staking.connect(wallet).stake(lpBal, { gasLimit: 200000 });
+        await this.lpToken.connect(wallet).approve(this.config.contracts.Staking, lpBal.toString(), { gasLimit: 200000 });
+        const tx = await this.staking.connect(wallet).stake(lpBal.toString(), { gasLimit: 200000 });
         await tx.wait();
         this.stats.tradesByType.stake++;
         this.stats.totalTrades++;
@@ -447,7 +475,8 @@ class BotEngine {
   async _triggerBuyback(bot, state) {
     if (!state.canBuyback) return;
 
-    const maxAmount = await this.treasuryAMO.maxBuybackAmount();
+    const maxAmountRaw = await this.treasuryAMO.maxBuybackAmount();
+    const maxAmount = BigInt(maxAmountRaw.toString());
     if (maxAmount < 10n ** 15n) return;
 
     // Use a fraction of max
@@ -456,12 +485,13 @@ class BotEngine {
 
     try {
       // Fund from bot's Ag balance (bot acts as "keeper")
-      const agBal = await this.agToken.balanceOf(bot.wallet.address);
+      const agBalRaw = await this.agToken.balanceOf(bot.wallet.address);
+      const agBal = BigInt(agBalRaw.toString());
       if (agBal < amount) return;
 
-      await this.agToken.connect(bot.wallet).approve(this.config.contracts.TreasuryAMO, amount);
-      const minAuOut = 0; // Let contract handle slippage
-      const tx = await this.treasuryAMO.connect(bot.wallet).executeBuyback(amount, minAuOut, { gasLimit: 300000 });
+      await this.agToken.connect(bot.wallet).approve(this.config.contracts.TreasuryAMO, amount.toString(), { gasLimit: 300000 });
+      const minAuOut = 0;
+      const tx = await this.treasuryAMO.connect(bot.wallet).executeBuyback(amount.toString(), minAuOut, { gasLimit: 300000 });
       await tx.wait();
       this.stats.tradesByType.buyback++;
       this.stats.totalTrades++;
@@ -488,10 +518,10 @@ class BotEngine {
 
   _logStatus(state) {
     const price = Number(state.price) / 1e18;
-    const tvl = Number(state.stakedTvl) / 1e18;
+    const stakedTvl = Number(state.stakedTvl) / 1e18;
     const agReserve = Number(state.reserveA) / 1e18;
     const auReserve = Number(state.reserveB) / 1e18;
-
+    const tvl = agReserve + auReserve;
     console.log(
       `  📊 Round ${this.round}: ` +
       `Price=${price.toFixed(6)} Au/Ag | ` +
@@ -513,6 +543,7 @@ class BotEngine {
     console.log();
 
     for (let r = 0; r < rounds && this.running; r++) {
+      console.log(`--- Round ${r+1} ---`);
       await this.runRound();
       // Small delay between rounds
       await new Promise(resolve => setTimeout(resolve, 100));

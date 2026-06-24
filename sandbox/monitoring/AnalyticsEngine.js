@@ -144,7 +144,7 @@ class AnalyticsEngine extends EventEmitter {
    */
   async init() {
     // Connect to provider
-    this.provider = new ethers.JsonRpcProvider(this.config.rpcUrl);
+    this.provider = new ethers.providers.JsonRpcProvider(this.config.rpcUrl);
 
     // Verify connection
     try {

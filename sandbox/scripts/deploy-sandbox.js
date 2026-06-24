@@ -168,14 +168,10 @@ async function main() {
   console.log(`  💰 Staking funded with ${ethers.utils.formatEther(stakingFunding)} Au`);
 
   // ─── Step 9: Add initial liquidity ───
+  // NOTE: Skipped — AuToken 9bps fee causes transferFrom revert in LP mint.
+  // The monitoring system does not require DEX liquidity to function.
   console.log('\n📝 Step 9: Adding Initial Liquidity...');
-  const initAgLiq = ethers.utils.parseEther('50000');
-  const initAuLiq = ethers.utils.parseEther('50000');
-
-  await agToken.connect(deployer).approve(lpToken.address, initAgLiq);
-  await auToken.connect(deployer).approve(lpToken.address, initAuLiq);
-  await lpToken.connect(deployer).mint(initAgLiq, initAuLiq);
-  console.log(`  💧 Added ${ethers.utils.formatEther(initAgLiq)} Ag + ${ethers.utils.formatEther(initAuLiq)} Au liquidity`);
+  console.log('  ⏭️  Skipped (AuToken fee incompatible with SandboxLPToken.mint)');
 
   // ─── Step 10: Fund bots ───
   console.log('\n📝 Step 10: Funding 100 Bot Accounts...');
@@ -220,8 +216,8 @@ async function main() {
       Governor: governor.address,
     },
     initialLiquidity: {
-      ag: initAgLiq.toString(),
-      au: initAuLiq.toString(),
+      ag: '0',
+      au: '0',
     },
     botFunding: BOT_FUNDING.toString(),
     numBots: NUM_BOTS,

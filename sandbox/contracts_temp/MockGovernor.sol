@@ -41,8 +41,18 @@ contract MockGovernor {
     }
 
     // ============ Events ============
-    event ProposalCreated(uint256 indexed id, address indexed proposer, string description, address target);
-    event VoteCast(uint256 indexed proposalId, address indexed voter, bool support, uint256 weight);
+    event ProposalCreated(
+        uint256 indexed id,
+        address indexed proposer,
+        string description,
+        address target
+    );
+    event VoteCast(
+        uint256 indexed proposalId,
+        address indexed voter,
+        bool support,
+        uint256 weight
+    );
     event ProposalExecuted(uint256 indexed id);
     event ProposalCanceled(uint256 indexed id);
 

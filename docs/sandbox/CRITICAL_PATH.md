@@ -236,7 +236,7 @@ const PRODUCTION_CONFIG = {
   // Token
   AG_NAME: "ARTIFACT",
   AG_SYMBOL: "ART",
-  AU_NAME: "artifactGOLD",
+  AU_NAME: "Artifact Utility",
   AU_SYMBOL: "AU",
 
   // PID

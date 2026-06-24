@@ -43,8 +43,8 @@ The sandbox is a **dual-token DAO simulation** implementing a positive-feedback 
 
 | Contract | File | Role |
 |----------|------|------|
-| MockAuToken | MockTokens.sol | Reserve/asset token (Au = gold) |
-| MockAgToken | MockTokens.sol | Protocol token (Ag = silver) |
+| MockAuToken | MockTokens.sol | Utility token (Au = Artifact Utility) |
+| MockAgToken | MockTokens.sol | Governance token (Ag = Artifact Governance) |
 | DexSimulator | DexSimulator.sol | AMM with liquidity pools |
 | SandboxLPToken | SandboxLPToken.sol | LP receipt token |
 | MockStaking | MockStaking.sol | Stake LP for Au+Ag yield |
@@ -659,8 +659,8 @@ DexSimulator ◄─────────────────────�
 
 | Term | Definition |
 |------|------------|
-| **Au** | Gold — the reserve/asset token in the system |
-| **Ag** | Silver — the protocol/governance token |
+| **Au** | Artifact Utility — the utility token in the system |
+| **Ag** | Artifact Governance — the governance token |
 | **LP** | Liquidity Provider — someone who deposits tokens into the DEX |
 | **AMO** | Autonomous Market Operation — automated market intervention |
 | **PID** | Proportional-Integral-Derivative — control algorithm for TVL targeting |

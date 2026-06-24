@@ -1,8 +1,9 @@
-# Architectural Specification: Project YIELD-PET (Acoustic Generative LP Vault)
+# Acoustic Generative LP Vault
 **Document Version:** 1.0.0
 **Status:** Architecture Draft
 **Target Runtime:** EVM (UUPS Upgradeable Architecture)
 **Classification:** Board-Critical Infrastructure
+
 ## 1. System Overview
 Project **YIELD-PET** is an immutable, autonomous financial-entertainment wrapper that fuses an active Liquidity Pool (LP) position and yield-rewards routing engine with an on-chain, programmatic Tamagotchi-style entity.
 ```

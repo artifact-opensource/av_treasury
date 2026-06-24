@@ -3,7 +3,7 @@
  * 
  * Deployment Order:
  * 1. AgToken (ARTIFACT) — ERC20 governance token
- * 2. AuToken (artifactGOLD) — ERC20 yield-bearing token
+ * 2. AuToken (Artifact Utility) — ERC20 utility token
  * 3. ArtifactTimelock — Timelock controller for governance
  * 4. GovernorContract — DAO governance (2 params: token, executor)
  * 5. AVLPStaking_v2 — LP staking with 2.5x multiplier (BEFORE PID — PID needs staking)
@@ -40,7 +40,7 @@ const CONFIG = {
   // Token
   AG_NAME: "ARTIFACT",
   AG_SYMBOL: "ART",
-  AU_NAME: "artifactGOLD",
+  AU_NAME: "Artifact Utility",
   AU_SYMBOL: "AU",
   
   // Initial supply (for initial minting if needed)
@@ -149,7 +149,7 @@ async function main() {
   
   // ─── STEP 2: Deploy AuToken ───────────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 STEP 2/7: AuToken (artifactGOLD)");
+  console.log("📦 STEP 2/7: AuToken (Artifact Utility)");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
   const AuToken = await ethers.getContractFactory("AuToken");

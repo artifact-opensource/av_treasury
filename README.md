@@ -5,7 +5,7 @@
 > All smart contracts are open‑source, tested, and ready for production on Base / Ethereum.
 
 Core features include:
-* **Au‑backed tokenomics** – stable‑supply gold‑backed token
+* **Au‑backed tokenomics** – stable‑supply token
 * **Ag‑based emission** – a controlled random‑walk coin that taps into a Treasury AMO (Automated Market Operations)
 * **Dynamic PID controller** – keeps the Au price on target while scaling AG
 * **Governance diamonds** – multi‑step proposal queue, timelock, and stake‑based veto

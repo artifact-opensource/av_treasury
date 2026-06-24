@@ -159,8 +159,8 @@ python3 scripts/visualize_csv.py simulator/simulation_full.csv
 
 ## Credits
 
-- **Core Authors:** Ali Shakil, Adam Rahman, and the AV Team
-- **Security Audit:** Third‑party audit completed 2026‑05‑xx
+- **Core Authors:** Ali Shakil, Adam Rayman, and the AV REASEARCH team
+- **Security Audit:** Third‑party audit completed 2026‑05‑23
 - **Simulation framework:** Custom Python + Hardhat wrapper
 
 ---

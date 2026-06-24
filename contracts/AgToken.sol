@@ -74,13 +74,13 @@ contract AgToken is
         delete upgradeScheduledAt;
     }
 
-    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
+    function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) whenNotPaused {
         require(totalSupply() + amount <= MAX_SUPPLY, "Ag: max supply");
         _mint(to, amount);
         emit Mint(to, amount);
     }
 
-    function burn(address from, uint256 amount) external onlyRole(BURNER_ROLE) {
+    function burn(address from, uint256 amount) external onlyRole(BURNER_ROLE) whenNotPaused {
         _burn(from, amount);
         emit Burn(from, amount);
     }
@@ -98,6 +98,7 @@ contract AgToken is
     }
 
     function _update(address from, address to, uint256 value) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
+        require(!paused(), "Ag: paused");
         super._update(from, to, value);
     }
 

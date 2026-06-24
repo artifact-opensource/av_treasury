@@ -13,10 +13,8 @@ pragma solidity ^0.8.26;
  *          → more TVL → equilibrium. TVL below → reduce emission.
  */
 
-interface IERC20 {
-    function mint(address to, uint256 amount) external;
-    function balanceOf(address account) external view returns (uint256);
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./Interfaces.sol";
 
 interface ITvlSource {
     function getTvl() external view returns (uint256 tvl);
@@ -24,7 +22,7 @@ interface ITvlSource {
 
 contract MockPIDController {
     // ============ State ============
-    IERC20 public agToken;
+    IMintable public agToken;
     ITvlSource public tvlSource;
 
     // PID parameters
@@ -79,7 +77,7 @@ contract MockPIDController {
         uint256 _deadbandBps
     ) {
         if (_agToken == address(0)) revert ZeroAddress();
-        agToken = IERC20(_agToken);
+        agToken = IMintable(_agToken);
         tvlSource = ITvlSource(_tvlSource);
         kp = _kp;
         ki = _ki;

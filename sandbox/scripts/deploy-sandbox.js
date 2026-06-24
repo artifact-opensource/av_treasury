@@ -21,18 +21,41 @@ const BOT_FUNDING = ethers.utils.parseEther('1000');
 const DEPLOYER_FUNDING = ethers.utils.parseEther('10000');
 
 // Contract artifacts (compiled with forge build)
-const ARTIFACTS_DIR = path.join(__dirname, '..', 'artifacts', 'sandbox');
+const ARTIFACTS_DIR = path.join(__dirname, '..', '..', 'artifacts', 'sandbox');
 
 async function getSigner(provider, index) {
   return ethers.Wallet.fromMnemonic(MNEMONIC, `m/44'/60'/0'/0/${index}`).connect(provider);
 }
 
 async function deployContract(name, deployer, ...args) {
-  const artifact = JSON.parse(
-    fs.readFileSync(path.join(ARTIFACTS_DIR, `${name}.sol`, `${name}.json`), 'utf8')
-  );
-  const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, deployer);
-  const contract = await factory.deploy(...args);
+  // Try multiple artifact path patterns since forge uses <filename>.sol/<contractName>.json
+  const patterns = [
+    path.join(ARTIFACTS_DIR, `${name}.sol`, `${name}.json`),
+    path.join(ARTIFACTS_DIR, 'MockTokens.sol', `${name}.json`),
+    path.join(ARTIFACTS_DIR, 'MockStaking.sol', `${name}.json`),
+  ];
+  let artifactPath = null;
+  for (const p of patterns) {
+    if (fs.existsSync(p)) { artifactPath = p; break; }
+  }
+  if (!artifactPath) {
+    // Fallback: search all subdirectories
+    const files = fs.readdirSync(ARTIFACTS_DIR).filter(d => fs.statSync(path.join(ARTIFACTS_DIR, d)).isDirectory());
+    for (const dir of files) {
+      const candidate = path.join(ARTIFACTS_DIR, dir, `${name}.json`);
+      if (fs.existsSync(candidate)) { artifactPath = candidate; break; }
+    }
+  }
+  if (!artifactPath) {
+    throw new Error(`Artifact not found for ${name}. Searched: ${patterns.join(', ')}`);
+  }
+  const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+  // Bytecode may be a string or an object with an 'object' key
+  const bytecode = typeof artifact.bytecode === 'string' ? artifact.bytecode : artifact.bytecode.object;
+  const factory = new ethers.ContractFactory(artifact.abi, bytecode, deployer);
+  // Use legacy transaction type (anvil doesn't support EIP-1559)
+  const overrides = { gasLimit: 8_000_000, type: 0 };
+  const contract = await factory.deploy(...args, overrides);
   await contract.deployed();
   console.log(`  ✅ ${name} deployed at ${contract.address}`);
   return contract;
@@ -58,7 +81,8 @@ async function main() {
 
   // ─── Step 1: Tokens ───
   console.log('📝 Step 1: Deploying Tokens...');
-  const auToken = await deployContract('MockAuToken', deployer);
+  // MockAuToken constructor requires _treasury address
+  const auToken = await deployContract('MockAuToken', deployer, deployer.address);
   const agToken = await deployContract('MockAgToken', deployer);
 
   // ─── Step 2: DEX ───

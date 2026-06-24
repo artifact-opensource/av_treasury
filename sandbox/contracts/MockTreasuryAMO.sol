@@ -14,21 +14,11 @@ pragma solidity ^0.8.26;
  *          → PID mints more Ag → more buyback capacity → spiral up
  */
 
-interface IERC20 {
-    function transfer(address to, uint256 amount) external returns (bool);
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-    function approve(address spender, uint256 amount) external returns (bool);
-}
 
-interface IDexSimulator {
-    function swapAforB(uint256 amountAIn) external returns (uint256 amountBOut);
-    function swapBforA(uint256 amountBIn) external returns (uint256 amountAOut);
-    function getReserveA() external view returns (uint256);
-    function getReserveB() external view returns (uint256);
-    function getTokenA() external view returns (address);
-    function getTokenB() external view returns (address);
-}
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./DexSimulator.sol";
+import "./Interfaces.sol";
 
 contract MockTreasuryAMO {
     // ============ State ============
@@ -132,7 +122,7 @@ contract MockTreasuryAMO {
         agToken.approve(address(dex), agAmount);
 
         // Swap Ag (tokenA) → Au (tokenB)
-        uint256 auReceived = dex.swapAforB(agAmount);
+        uint256 auReceived = dex.swapAforB(agAmount, 0, address(this));
 
         // Clear approval
         agToken.approve(address(dex), 0);

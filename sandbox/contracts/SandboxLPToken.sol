@@ -14,22 +14,11 @@ pragma solidity ^0.8.26;
  * Burning is controlled by calling DexSimulator.removeLiquidity().
  */
 
-interface IERC20 {
-    function transfer(address to, uint256 amount) external returns (bool);
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function approve(address spender, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-}
 
-interface IDexSimulator {
-    function addLiquidity(uint256 amountAIn, uint256 amountBIn) external returns (uint256 lpShares);
-    function removeLiquidity(uint256 lpShares) external returns (uint256 amountA, uint256 amountB);
-    function addOneSidedA(uint256 amountAIn) external returns (uint256 lpShares);
-    function addOneSidedB(uint256 amountBIn) external returns (uint256 lpShares);
-    function removeOneSidedA(uint256 lpShares) external returns (uint256 amountA);
-    function removeOneSidedB(uint256 lpShares) external returns (uint256 amountB);
-    function getLpBalance(address user) external view returns (uint256);
-}
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./DexSimulator.sol";
+import "./Interfaces.sol";
 
 contract SandboxLPToken {
     IDexSimulator public dex;
@@ -53,12 +42,20 @@ contract SandboxLPToken {
      * @notice Add liquidity to DEX and mint LP tokens
      */
     function mint(uint256 amountAIn, uint256 amountBIn) external returns (uint256 lpShares) {
-        // Transfer tokens to this contract
-        IERC20(tokenA).transferFrom(msg.sender, address(dex), amountAIn);
-        IERC20(tokenB).transferFrom(msg.sender, address(dex), amountBIn);
+        // Transfer tokens to this contract first
+        IERC20(tokenA).transferFrom(msg.sender, address(this), amountAIn);
+        IERC20(tokenB).transferFrom(msg.sender, address(this), amountBIn);
 
-        // Add liquidity to DEX
-        lpShares = dex.addLiquidity(amountAIn, amountBIn);
+        // Use actual balances after any transfer fees
+        uint256 actualBalA = IERC20(tokenA).balanceOf(address(this));
+        uint256 actualBalB = IERC20(tokenB).balanceOf(address(this));
+
+        // Approve DEX to spend tokens (use actual balance, not requested amount)
+        IERC20(tokenA).approve(address(dex), actualBalA);
+        IERC20(tokenB).approve(address(dex), actualBalB);
+
+        // Add liquidity to DEX (DEX pulls tokens from this contract)
+        lpShares = dex.addLiquidity(actualBalA, actualBalB);
 
         // Mint LP tokens
         balanceOf[msg.sender] += lpShares;

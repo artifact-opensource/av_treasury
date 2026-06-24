@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./Interfaces.sol";
+
 /**
  * ═══════════════════════════════════════════════════════════════════
  * MockStaking — LP staking + dual-token yield for sandbox
@@ -13,12 +16,6 @@ pragma solidity ^0.8.26;
  *          → more LP demand → more TVL → PID mints more Ag
  */
 
-interface IERC20 {
-    function transfer(address to, uint256 amount) external returns (bool);
-    function transferFrom(address from, address to, uint256 amount) external returns (bool);
-    function balanceOf(address account) external view returns (uint256);
-    function mint(address to, uint256 amount) external;
-}
 
 contract MockStaking {
     // ============ State ============
@@ -163,7 +160,7 @@ contract MockStaking {
             // Mint Ag if not enough balance
             uint256 agBal = agToken.balanceOf(address(this));
             if (agOwed > agBal) {
-                agToken.mint(address(this), agOwed - agBal);
+                IMintable(address(agToken)).mint(address(this), agOwed - agBal);
             }
             agToken.transfer(user, agOwed);
         }

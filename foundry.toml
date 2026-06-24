@@ -10,4 +10,5 @@ src = "sandbox/contracts"
 test = "test"
 out = "out"
 libs = ["lib"]
+evm_version = "cancun"
 fs_permissions = [{ access = "read-write", path = "./" }]

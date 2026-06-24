@@ -69,8 +69,11 @@ contract SandboxLPToken {
      * @notice Add one-sided liquidity (tokenA only)
      */
     function mintOneSidedA(uint256 amountAIn) external returns (uint256 lpShares) {
-        IERC20(tokenA).transferFrom(msg.sender, address(dex), amountAIn);
-        lpShares = dex.addOneSidedA(amountAIn);
+        // Transfer tokens to this contract first
+        IERC20(tokenA).transferFrom(msg.sender, address(this), amountAIn);
+        uint256 actualBal = IERC20(tokenA).balanceOf(address(this));
+        IERC20(tokenA).approve(address(dex), actualBal);
+        lpShares = dex.addOneSidedA(actualBal);
 
         balanceOf[msg.sender] += lpShares;
         totalSupply += lpShares;
@@ -83,8 +86,11 @@ contract SandboxLPToken {
      * @notice Add one-sided liquidity (tokenB only)
      */
     function mintOneSidedB(uint256 amountBIn) external returns (uint256 lpShares) {
-        IERC20(tokenB).transferFrom(msg.sender, address(dex), amountBIn);
-        lpShares = dex.addOneSidedB(amountBIn);
+        // Transfer tokens to this contract first
+        IERC20(tokenB).transferFrom(msg.sender, address(this), amountBIn);
+        uint256 actualBal = IERC20(tokenB).balanceOf(address(this));
+        IERC20(tokenB).approve(address(dex), actualBal);
+        lpShares = dex.addOneSidedB(actualBal);
 
         balanceOf[msg.sender] += lpShares;
         totalSupply += lpShares;
@@ -100,14 +106,20 @@ contract SandboxLPToken {
         require(balanceOf[msg.sender] >= lpShares, "Insufficient LP");
         require(lpShares > 0, "Zero shares");
 
-        balanceOf[msg.sender] -= lpShares;
+        address user = msg.sender;
+        balanceOf[user] -= lpShares;
         totalSupply -= lpShares;
 
-        emit Transfer(msg.sender, address(0), lpShares);
+        emit Transfer(user, address(0), lpShares);
 
-        // Remove liquidity from DEX
+        // Remove liquidity from DEX (tokens come back to this contract)
         if (lpShares > 0) {
-            (amountA, amountB) = dex.removeLiquidity(lpShares);
+            dex.removeLiquidity(lpShares);
+            // Forward actual balances to user (accounts for Au transfer fee)
+            uint256 agBal = IERC20(tokenA).balanceOf(address(this));
+            uint256 auBal = IERC20(tokenB).balanceOf(address(this));
+            if (agBal > 0) IERC20(tokenA).transfer(user, agBal);
+            if (auBal > 0) IERC20(tokenB).transfer(user, auBal);
         }
     }
 

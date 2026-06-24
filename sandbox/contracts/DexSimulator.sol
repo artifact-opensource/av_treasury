@@ -86,6 +86,11 @@ contract DexSimulator {
         require(tokenA.transferFrom(msg.sender, address(this), amountAIn), "Transfer failed");
         require(tokenB.transfer(to, amountBOut), "Transfer failed");
 
+        // Update reserves
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
+        lastSwapBlock[msg.sender] = block.number;
+
         _updateOracle();
         emit Swap(msg.sender, to, amountAIn, 0, 0, amountBOut);
         emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
@@ -106,6 +111,11 @@ contract DexSimulator {
 
         require(tokenB.transferFrom(msg.sender, address(this), amountBIn), "Transfer failed");
         require(tokenA.transfer(to, amountAOut), "Transfer failed");
+
+        // Update reserves
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
+        lastSwapBlock[msg.sender] = block.number;
 
         _updateOracle();
         emit Swap(msg.sender, to, 0, amountBIn, amountAOut, 0);
@@ -139,6 +149,10 @@ contract DexSimulator {
         lpBalance[msg.sender] += lpShares;
         totalLPSupply += lpShares;
 
+        // Update reserves for oracle
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
+
         emit AddLiquidity(msg.sender, amountA, amountB, lpShares);
         emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
     }
@@ -158,6 +172,10 @@ contract DexSimulator {
 
         require(tokenA.transfer(msg.sender, amountA), "Transfer A failed");
         require(tokenB.transfer(msg.sender, amountB), "Transfer B failed");
+
+        // Update reserves for oracle
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
 
         emit RemoveLiquidity(msg.sender, amountA, amountB, lpShares);
         emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
@@ -192,6 +210,11 @@ contract DexSimulator {
         lpBalanceA[msg.sender] += lpShares;
         totalLPA += lpShares;
         accumulatedFeesA += fee;
+
+        // Update reserves
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
+        lastSwapBlock[msg.sender] = block.number;
 
         emit AddOneSided(msg.sender, true, amountAIn, lpShares);
         emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
@@ -240,6 +263,11 @@ contract DexSimulator {
 
         require(tokenA.transfer(msg.sender, amountA), "Transfer failed");
 
+        // Update reserves
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
+        lastSwapBlock[msg.sender] = block.number;
+
         emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
         return amountA;
     }
@@ -255,6 +283,11 @@ contract DexSimulator {
         totalLPB -= lpShares;
 
         require(tokenB.transfer(msg.sender, amountB), "Transfer failed");
+
+        // Update reserves
+        reserveA = uint112(tokenA.balanceOf(address(this)));
+        reserveB = uint112(tokenB.balanceOf(address(this)));
+        lastSwapBlock[msg.sender] = block.number;
 
         emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
         return amountB;
@@ -311,5 +344,20 @@ contract DexSimulator {
         } else if (y != 0) {
             z = 1;
         }
+    }
+
+    // ============ View Functions ============
+
+    function getReserveA() external view returns (uint256) {
+        return reserveA;
+    }
+
+    function getReserveB() external view returns (uint256) {
+        return reserveB;
+    }
+
+    function getTvl() external view returns (uint256 tvl) {
+        // TVL = actual token balances held by DEX
+        tvl = tokenA.balanceOf(address(this)) + tokenB.balanceOf(address(this));
     }
 }

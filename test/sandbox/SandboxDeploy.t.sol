@@ -29,12 +29,18 @@ contract SandboxDeployTest is Test {
         
         auToken = new MockAuToken(deployer);
         agToken = new MockAgToken();
-        dex = new DexSimulator(address(auToken), address(agToken));
-        lpToken = new SandboxLPToken(address(dex), address(auToken), address(agToken));
+        dex = new DexSimulator(address(agToken), address(auToken));
+        lpToken = new SandboxLPToken(address(dex), address(agToken), address(auToken));
         staking = new MockStaking(address(lpToken), address(auToken), address(agToken), 100, 100);
         pid = new MockPIDController(address(agToken), address(dex), 1000, 100, 10, 10000 ether, 1000 ether, 100 ether, 1, 500);
         amo = new MockTreasuryAMO(address(agToken), address(auToken), address(dex), 1, 500, 2000, 1000 ether);
         governor = new MockGovernor(100, 200, 1 ether, 400);
+        
+        // Grant staking contract minter role on Ag (for reward emissions)
+        agToken.grantRole(keccak256("MINTER_ROLE"), address(staking));
+        
+        // Grant staking minter role on Ag (for reward emissions)
+        agToken.grantRole(keccak256("MINTER_ROLE"), address(staking));
         
         // Fund staking contract with Au for rewards
         auToken.mint(address(staking), 10000 ether);
@@ -58,45 +64,32 @@ contract SandboxDeployTest is Test {
     function test_Flywheel() public {
         address user = makeAddr("user");
         vm.deal(user, 100 ether);
-        
-        // Fund user with tokens (owner is deployer, so mint through deployer)
+
+        // Fund user with tokens
         vm.startPrank(deployer);
-        agToken.mint(deployer, 100 ether);
-        auToken.mint(deployer, 100 ether);
-        agToken.transfer(user, 50 ether);
-        auToken.transfer(user, 50 ether);
+        agToken.mint(user, 100 ether);
+        auToken.mint(user, 100 ether);
         vm.stopPrank();
-        
-        // User adds liquidity via LP token contract (account for Au fee)
+
+        // User adds liquidity
         vm.startPrank(user);
-        uint256 userAuBal = auToken.balanceOf(user);
-        uint256 userAgBal = agToken.balanceOf(user);
-        
-        auToken.approve(address(lpToken), userAuBal);
-        agToken.approve(address(lpToken), userAgBal);
-        
-        uint256 lpReceived = lpToken.mint(userAuBal, userAgBal);
+        agToken.approve(address(lpToken), 100 ether);
+        auToken.approve(address(lpToken), 100 ether);
+        uint256 lpReceived = lpToken.mint(100 ether, 100 ether);
         emit log_named_uint("LP received", lpReceived);
-        
+
         // Stake LP tokens
-        uint256 lpBal = lpToken.balanceOf(user);
-        emit log_named_uint("User LP balance", lpBal);
-        lpToken.approve(address(staking), lpBal);
-        staking.stake(lpBal);
-        
-        // Check pending rewards after some time
+        lpToken.approve(address(staking), lpReceived);
+        staking.stake(lpReceived);
+
+        // Advance blocks to accrue rewards
         vm.roll(100);
-        (uint256 auReward, uint256 agReward) = staking.pendingRewards(user);
-        emit log_named_uint("Au reward", auReward);
-        emit log_named_uint("Ag reward", agReward);
-        
+
         // Claim rewards
         staking.claimRewards();
-        uint256 auBalance = auToken.balanceOf(user);
-        uint256 agBalance = agToken.balanceOf(user);
-        emit log_named_uint("Au balance after claim", auBalance);
-        emit log_named_uint("Ag balance after claim", agBalance);
-        
+        emit log_named_uint("Au balance", auToken.balanceOf(user));
+        emit log_named_uint("Ag balance", agToken.balanceOf(user));
+
         vm.stopPrank();
     }
 }

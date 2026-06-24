@@ -76,7 +76,7 @@ start_bots() {
 start_dashboard() {
   log "Starting monitoring dashboard..."
   cd "$ROOT"
-  nohup node "$SANDBOX/monitoring/Dashboard.js" > "$LOGS/dashboard.log" 2>&1 &
+  nohup node "$SANDBOX/monitoring/index.js" --dashboard --alerts --report > "$LOGS/dashboard.log" 2>&1 &
   echo $! > "$LOGS/dashboard.pid"
   success "Dashboard PID: $(cat "$LOGS/dashboard.pid")"
 }

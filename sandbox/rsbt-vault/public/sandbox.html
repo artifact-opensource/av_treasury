@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black text-zinc-300 selection:bg-white/20">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YIELD-PET / Morphspace Lab</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        premium: {
+                            black: '#000000',
+                            darkGray: '#09090B',
+                            midGray: '#18181B',
+                            lightGray: '#27272A',
+                            gold: '#FFFFFF', // Refactored to pristine white for Web3 monochrome
+                            goldDark: '#A1A1AA',
+                            goldLight: '#F4F4F5',
+                            accent: '#FFFFFF', 
+                            accentMuted: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #000; }
+        .mono-font { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(9, 9, 11, 0.4);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .pixelated {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-x-hidden antialiased bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900/40 via-black to-black select-none">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-white/5 bg-black/50 backdrop-blur-xl px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 z-10 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)]">
+                <span class="text-white font-mono font-bold text-lg">⌬</span>
+            </div>
+            <div>
+                <h1 class="text-sm font-semibold tracking-wide text-white flex items-center gap-2">
+                    CORE / MORPHSPACE <span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/20">V3.0.0-WEB3</span>
+                </h1>
+                <p class="text-[10px] text-zinc-500 font-mono tracking-widest mt-0.5">ON-CHAIN SPATIAL RENDER PIPELINE</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="audio-toggle-btn" onmouseenter="playTick()" onclick="toggleAudio()" class="px-4 py-2 rounded-full border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all flex items-center gap-2 text-xs font-mono backdrop-blur-md">
+                🔊 AUDIO: ON
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Viewport -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch overflow-y-auto">
+        
+        <!-- Left Side: Sequencer -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            <div class="glass-panel rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none"></div>
+                <div>
+                    <h2 class="text-[10px] font-bold tracking-widest text-white uppercase">01 / Volumetric Sequencer</h2>
+                    <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">Deconstruct structural layers & alleles.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[9px] font-bold text-zinc-500 mb-1.5 font-mono uppercase tracking-widest">256-BIT SEED STRING</label>
+                        <div class="flex gap-2">
+                            <input id="dna-input-field" type="text" value="0x8F5C9D2E4A7B1C6D0F2E3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D" class="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-lg text-[10px] text-white font-mono tracking-wider focus:outline-none focus:border-white/30 transition-colors">
+                            <button onmouseenter="playTick()" onclick="mutateRandomDNA()" class="px-4 py-2 bg-white text-black hover:bg-zinc-200 text-[10px] font-mono rounded-lg font-bold uppercase transition-all shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                                MUTATE
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Decoded Genomic Parameters -->
+                    <div class="bg-black/40 p-4 rounded-xl border border-white/5 font-mono text-[10px] space-y-3">
+                        <span class="text-[9px] font-bold text-zinc-500 tracking-widest block uppercase">DECODED ALLELES</span>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-zinc-400">
+                            <div>Archetype: <span id="allele-archetype" class="text-white font-medium">-</span></div>
+                            <div>Symmetry: <span id="allele-symmetry" class="text-white font-medium">-</span></div>
+                            <div>Palette ID: <span id="allele-palette" class="text-white font-medium">-</span></div>
+                            <div>Oscillator: <span id="allele-wave" class="text-white font-medium">-</span></div>
+                            <div>Frequency: <span id="allele-pitch" class="text-white font-medium">-</span></div>
+                            <div>Mesh: <span id="allele-mesh" class="text-white font-medium">64x64</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staking Simulator -->
+            <div class="glass-panel rounded-2xl p-6 flex-1 flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-tr from-white/[0.01] to-transparent pointer-events-none"></div>
+                <div class="flex flex-col gap-5">
+                    <div>
+                        <h2 class="text-[10px] font-bold tracking-widest text-white uppercase">02 / Protocol Simulator</h2>
+                        <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">Manipulate liquidity metrics.</p>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-2 font-mono">
+                                <span class="text-zinc-500 tracking-wider">LOCKED VOLUME</span>
+                                <span id="sim-lp-label" class="font-medium text-white">1,000 LP</span>
+                            </div>
+                            <input type="range" id="sim-lp-slider" min="100" max="5000" step="100" value="1000" oninput="handleLPMutator(this.value)" class="w-full accent-white cursor-pointer bg-zinc-900 h-1 rounded-full appearance-none">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-2 font-mono">
+                                <span class="text-zinc-500 tracking-wider">ACCRUED YIELD</span>
+                                <span id="sim-yield-label" class="font-medium text-white">10% APY</span>
+                            </div>
+                            <input type="range" id="sim-yield-slider" min="5" max="120" value="10" oninput="handleYieldMutator(this.value)" class="w-full accent-white cursor-pointer bg-zinc-900 h-1 rounded-full appearance-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <button onmouseenter="playTick()" onclick="tamagotchiInteract('FEED')" class="py-3 px-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-medium text-[10px] tracking-widest uppercase rounded-xl transition-all font-mono backdrop-blur-md">
+                            STAKE (⚡)
+                        </button>
+                        <button onmouseenter="playTick()" onclick="tamagotchiInteract('PLAY')" class="py-3 px-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-medium text-[10px] tracking-widest uppercase rounded-xl transition-all font-mono backdrop-blur-md">
+                            TUNE (🎵)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Center: Modern Web3 Glass Card (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col justify-center items-center p-0 relative">
+            <div id="ambient-glow" class="absolute inset-0 rounded-full filter blur-[100px] pointer-events-none transition-all duration-700 opacity-20"></div>
+            
+            <!-- 2026 Web3 Central Card -->
+            <div id="device-body" class="w-full max-w-[420px] rounded-[2rem] glass-panel p-6 flex flex-col gap-6 relative shadow-[0_0_80px_rgba(255,255,255,0.03)] border border-white/10 group">
+                
+                <!-- Open Source Download Banner & Github Icon inside the Card -->
+                <div class="flex flex-col gap-3 pb-5 border-b border-white/10">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-2">
+                            <span class="h-2 w-2 rounded-full bg-white animate-pulse shadow-[0_0_8px_#fff]"></span>
+                            <span class="text-[10px] font-mono text-zinc-400 tracking-widest uppercase">NODE ACTIVE</span>
+                        </div>
+                        <a href="https://github.com/artifact-opensource/spore" target="_blank" class="text-zinc-400 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300 p-1" title="View Spore Repository">
+                            <svg class="w-5 h-5 drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </a>
+                    </div>
+                    <details class="bg-black/60 rounded-xl border border-white/5 font-mono text-[9px] text-zinc-500 group overflow-hidden">
+                        <summary class="p-3 text-white uppercase tracking-widest font-bold flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            <div class="flex items-center gap-1.5">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> INSTALL SPORE
+                            </div>
+                            <svg class="w-4 h-4 text-zinc-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </summary>
+                        <div class="flex flex-col gap-1.5 leading-relaxed p-3 pt-0 mt-1 border-t border-white/5">
+                            <div class="pt-2"></div>
+                            <p><span class="text-zinc-600">></span> <code class="text-zinc-300">chmod +x spore-*</code></p>
+                            <p><span class="text-zinc-600">></span> <code class="text-zinc-300">./spore setup</code></p>
+                            <p><span class="text-zinc-600">></span> <code class="text-zinc-300">./spore start</code></p>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Web3 Display Screen -->
+                <div class="w-full aspect-square rounded-[1.5rem] bg-black border border-white/10 p-4 flex flex-col justify-between items-center relative overflow-hidden shadow-inner shadow-black/80">
+                    
+                    <!-- Screen Top HUD -->
+                    <div class="w-full flex justify-between items-center text-[9px] font-mono text-zinc-500 z-10 tracking-widest">
+                        <span id="screen-hud-vitality">HP: 100%</span>
+                        <span id="screen-hud-status" class="flex items-center gap-1.5 text-white font-medium">
+                            ● VIBRANT
+                        </span>
+                        <span id="screen-hud-epoch">EP: 1</span>
+                    </div>
+
+                    <!-- Master Canvas -->
+                    <div class="flex-1 flex items-center justify-center relative w-full h-full my-4 z-10">
+                        <!-- Canvas stays exactly as requested for the math/contract -->
+                        <canvas id="tamagotchi-screen" width="128" height="128" class="pixelated h-full max-h-[220px] w-auto aspect-square bg-transparent"></canvas>
+                    </div>
+
+                    <!-- Screen Lower HUD -->
+                    <div class="w-full flex justify-between items-center text-[9px] font-mono text-zinc-500 z-10 pt-2 tracking-widest border-t border-white/5">
+                        <span>VOL: <strong id="hud-volume" class="text-white">1.0K</strong></span>
+                        <span>YLD: <strong id="hud-yield" class="text-white">10%</strong></span>
+                    </div>
+                </div>
+
+                <!-- Interaction Keys & Status LEDs -->
+                <div class="w-full flex flex-col gap-5 pt-2">
+                    <div class="flex justify-between items-center px-2">
+                        <div class="flex gap-2">
+                            <span id="led-1" class="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_#fff]"></span>
+                            <span id="led-2" class="h-1.5 w-1.5 rounded-full bg-zinc-800 transition-colors duration-300"></span>
+                            <span id="led-3" class="h-1.5 w-1.5 rounded-full bg-zinc-800 transition-colors duration-300"></span>
+                        </div>
+                        <span class="text-[8px] font-mono text-zinc-600 tracking-widest">0xPROTOCOL</span>
+                    </div>
+
+                    <div class="w-full flex justify-center items-center px-2 gap-4">
+                        <button onmouseenter="playTick()" onclick="handleRetroButton('C')" class="h-12 w-12 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.05)]">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Side: Diagnostics (3 Cols) -->
+        <section class="lg:col-span-3 flex flex-col justify-between">
+            <div class="glass-panel rounded-2xl p-6 flex-1 flex flex-col gap-5 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-bl from-white/[0.01] to-transparent pointer-events-none"></div>
+                <div>
+                    <h2 class="text-[10px] font-bold uppercase tracking-widest text-white">03 / Diagnostics</h2>
+                    <p class="text-[10px] font-mono text-zinc-500 mt-1">ON-CHAIN STATE LOGS</p>
+                </div>
+
+                <div class="p-4 bg-black/40 rounded-xl border border-white/5 text-[10px] font-mono text-zinc-400 leading-relaxed space-y-2">
+                    <span class="text-[9px] font-bold text-white tracking-widest block uppercase">RENDER ENGINE SPECS</span>
+                    <p class="text-[10px] leading-relaxed">Implicit rendering equations map volumetric Gielis fields. Lighting, depth, and specular reflections are solved point-by-point directly via the smart contract state.</p>
+                </div>
+
+                <div class="flex-1 flex flex-col justify-between bg-black/60 border border-white/5 rounded-xl p-4 min-h-[180px]">
+                    <span class="text-[9px] font-mono text-zinc-500 tracking-widest block uppercase mb-3">TERMINAL FEED</span>
+                    <div id="console-logs" class="flex-1 font-mono text-[9px] text-zinc-400 space-y-2 overflow-y-auto leading-relaxed custom-scrollbar pr-2">
+                        <div>[SYSTEM] Connecting to consensus layer...</div>
+                        <div>[SYSTEM] Volumetric state initialized.</div>
+                        <div>[SYSTEM] Embedded TinyML Core loaded.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Framework Alert Messages -->
+    <div id="framework-toast" class="fixed bottom-6 right-6 max-w-sm glass-panel p-5 rounded-2xl shadow-2xl border-l-4 border-l-white transform translate-y-24 opacity-0 transition-all duration-300 flex gap-4 items-start z-50">
+        <div>
+            <h4 id="toast-title" class="text-[10px] font-bold text-white uppercase tracking-widest">ALGORITHM STABLE</h4>
+            <p id="toast-body" class="text-[10px] text-zinc-400 mt-1.5 leading-relaxed"></p>
+        </div>
+    </div>
+
+    <!-- Script Matrix Logic -->
+    <script>
+        let isAudioOn = true;
+        let audioCtx = null;
+        let mainVolumeNode = null;
+        let delayNode = null;
+        let delayFeedbackNode = null;
+
+        let dnaString = "0x8F5C9D2E4A7B1C6D0F2E3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D";
+        
+        // Decoded Alleles Block
+        let geneArchetype = 0; // 0: Blob, 1: Star, 2: Box, 3: Spike
+        let geneSymmetry = 5;
+        let genePalette = 0;
+        let geneWave = 'sine';
+        let genePitch = 440;
+        let geneSize = 14;
+
+        // Interactive States
+        let petVitality = 100;
+        let poolLPAmount = 1000;
+        let poolYieldRate = 10;
+        let breatheAnimationStep = 0;
+        let statusText = "VIBRANT";
+
+        // Particle System Matrix
+        let particles = [];
+        let expressionTimer = 0;
+        let activeExpression = "idle"; // "idle", "happy", "glitch"
+
+        // Pixel Color Palette Definitions
+        const palettes = [
+            { 
+                primary: '#D4AF37', 
+                secondary: '#8A6F1E', 
+                highlight: '#FFF4D0', 
+                shadow: '#2B2105', 
+                background: '#040405', 
+                particles: ['#D4AF37', '#9A7B1C', '#FFECB3'] 
+            }, // Gold Standard
+            { 
+                primary: '#0047FF', 
+                secondary: '#002699', 
+                highlight: '#E0E8FF', 
+                shadow: '#000830', 
+                background: '#030305', 
+                particles: ['#0047FF', '#336BFF', '#001A80'] 
+            }, // Cobalt Contrast
+            { 
+                primary: '#10B981', 
+                secondary: '#059669', 
+                highlight: '#D1FAE5', 
+                shadow: '#062E1E', 
+                background: '#020302', 
+                particles: ['#10B981', '#34D399', '#047857'] 
+            }, // Emerald Matrix
+            { 
+                primary: '#E53E3E', 
+                secondary: '#9B2C2C', 
+                highlight: '#FED7D7', 
+                shadow: '#3B0C0C', 
+                background: '#050202', 
+                particles: ['#E53E3E', '#FC8181', '#741B1B'] 
+            }  // Alert Ruby
+        ];
+
+        let creatureBrain = null;
+
+        class EmbeddedNeuralNet {
+            constructor(seedHex) {
+                // Seed PRNG using first 8 chars of hex
+                let a = parseInt(seedHex.substring(0, 8), 16) || 12345;
+                this.rng = function() {
+                    let t = a += 0x6D2B79F5;
+                    t = Math.imul(t ^ t >>> 15, t | 1);
+                    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+                
+                let in_size = 9, h_size = 16, out_size = 5;
+                this.w1 = Array(in_size * h_size).fill().map(() => (this.rng() * 2 - 1));
+                this.b1 = Array(h_size).fill().map(() => (this.rng() * 2 - 1));
+                this.w2 = Array(h_size * out_size).fill().map(() => (this.rng() * 2 - 1));
+                this.b2 = Array(out_size).fill().map(() => (this.rng() * 2 - 1));
+                this.memory = Array(out_size).fill(0);
+                this.state = [0, 0, 0, 0, 0];
+            }
+            
+            forward(time, yieldRate, lp) {
+                let inputs = [
+                    Math.sin(time * 0.1),
+                    Math.cos(time * 0.1),
+                    yieldRate / 100.0,
+                    lp / 5000.0,
+                    this.memory[0],
+                    this.memory[1],
+                    this.memory[2],
+                    this.memory[3],
+                    this.memory[4]
+                ];
+                
+                let hidden = [];
+                for (let i=0; i<this.b1.length; i++) {
+                    let sum = this.b1[i];
+                    for(let j=0; j<inputs.length; j++) {
+                        sum += inputs[j] * this.w1[j * this.b1.length + i];
+                    }
+                    hidden.push(Math.tanh(sum));
+                }
+                
+                let outputs = [];
+                for(let i=0; i<this.b2.length; i++) {
+                    let sum = this.b2[i];
+                    for(let j=0; j<hidden.length; j++) {
+                        sum += hidden[j] * this.w2[j * this.b2.length + i];
+                    }
+                    outputs.push(Math.tanh(sum));
+                }
+                this.memory = outputs;
+                
+                // Smooth state transitions for organic movement
+                for(let i=0; i<5; i++) {
+                    this.state[i] = this.state[i] * 0.95 + outputs[i] * 0.05;
+                }
+                return this.state;
+            }
+        }
+
+        // Decouple DNA String into parameters
+        function decodeDNA() {
+            let hex = dnaString.startsWith("0x") ? dnaString.substring(2) : dnaString;
+            
+            creatureBrain = new EmbeddedNeuralNet(hex);
+            
+            geneArchetype = parseInt(hex.substring(0, 2), 16) % 4;
+            geneSymmetry = 3 + (parseInt(hex.substring(2, 4), 16) % 10);
+            genePalette = parseInt(hex.substring(4, 6), 16) % palettes.length;
+            
+            let waveOpts = ['sine', 'triangle', 'sawtooth', 'square'];
+            geneWave = waveOpts[parseInt(hex.substring(6, 8), 16) % 4];
+            
+            genePitch = 220 + (parseInt(hex.substring(8, 12), 16) % 600);
+            geneSize = 13 + (parseInt(hex.substring(12, 14), 16) % 6);
+
+            // Update UI Interface Readout Elements
+            document.getElementById('allele-archetype').innerText = ["Wyvern", "Drake", "Leviathan", "Serpent"][geneArchetype];
+            document.getElementById('allele-symmetry').innerText = geneSymmetry + "-fold";
+            document.getElementById('allele-palette').innerText = "Palette #" + genePalette;
+            document.getElementById('allele-wave').innerText = geneWave.toUpperCase();
+            document.getElementById('allele-pitch').innerText = genePitch + " Hz";
+
+            document.getElementById('hud-volume').innerText = (poolLPAmount / 1000).toFixed(1) + "K";
+            document.getElementById('hud-yield').innerText = poolYieldRate + "%";
+
+            // Ambient Glow Color matching primary palette
+            const activeColor = palettes[genePalette].primary;
+            document.getElementById('ambient-glow').style.backgroundImage = `radial-gradient(${activeColor}15 0%, transparent 70%)`;
+            
+            // Dynamic LED animations
+            updateLEDSystem();
+        }
+
+        function updateLEDSystem() {
+            const led1 = document.getElementById('led-1');
+            const led2 = document.getElementById('led-2');
+            const led3 = document.getElementById('led-3');
+            const activeColor = palettes[genePalette].primary;
+
+            led1.style.backgroundColor = activeColor;
+            led2.style.backgroundColor = poolLPAmount > 2000 ? activeColor : '#1D1D20';
+            led3.style.backgroundColor = poolYieldRate > 50 ? activeColor : '#1D1D20';
+        }
+
+        // Initialize Web Audio Engine with Premium Space Echo nodes
+        function initAudioEngine() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Main Gain
+                mainVolumeNode = audioCtx.createGain();
+                mainVolumeNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                
+                // Spatial Echo Delay loop Setup
+                delayNode = audioCtx.createDelay(1.0);
+                delayNode.delayTime.setValueAtTime(0.24, audioCtx.currentTime);
+
+                delayFeedbackNode = audioCtx.createGain();
+                delayFeedbackNode.gain.setValueAtTime(0.45, audioCtx.currentTime);
+
+                // Route Echo Loop
+                delayNode.connect(delayFeedbackNode);
+                delayFeedbackNode.connect(delayNode);
+
+                // Route Node System
+                mainVolumeNode.connect(audioCtx.destination);
+                mainVolumeNode.connect(delayNode);
+                delayNode.connect(audioCtx.destination);
+            }
+        }
+
+        function toggleAudio() {
+            isAudioOn = !isAudioOn;
+            const btn = document.getElementById('audio-toggle-btn');
+            btn.innerHTML = isAudioOn ? "🔊 AUDIO: ON (SPATIAL ECHO)" : "🔇 MUTED";
+            if (isAudioOn) {
+                initAudioEngine();
+                playSweep(440, 880, 0.2, 'sine');
+            }
+        }
+
+        // Tactile Click Ticks
+        function playTick() {
+            if (!isAudioOn) return;
+            initAudioEngine();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.015);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.015);
+        }
+
+        // High-fidelity analog-modeled filter sweeps
+        function playSweep(startFreq, endFreq, duration, waveType = 'sine') {
+            if (!isAudioOn) return;
+            initAudioEngine();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = waveType;
+            osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+
+            filter.type = 'lowpass';
+            filter.Q.setValueAtTime(9, audioCtx.currentTime);
+            filter.frequency.setValueAtTime(startFreq * 1.5, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(endFreq * 1.2, audioCtx.currentTime + duration);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(mainVolumeNode);
+
+            gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // Dynamic Polyphonic chord sweep arpeggiator (Echo-enabled)
+        function playEvolutionChime(baseFreq, major = true) {
+            if (!isAudioOn) return;
+            initAudioEngine();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const intervals = major ? [1, 1.25, 1.5, 2] : [1, 1.2, 1.5, 1.8];
+            const now = audioCtx.currentTime;
+
+            intervals.forEach((ratio, index) => {
+                const timeOffset = index * 0.08;
+                const noteFreq = baseFreq * ratio;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(noteFreq, now + timeOffset);
+                osc.frequency.exponentialRampToValueAtTime(noteFreq * 1.05, now + timeOffset + 0.3);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(1400, now + timeOffset);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(mainVolumeNode);
+
+                gain.gain.setValueAtTime(0, now + timeOffset);
+                gain.gain.linearRampToValueAtTime(0.08, now + timeOffset + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + timeOffset + 0.4);
+
+                osc.start(now + timeOffset);
+                osc.stop(now + timeOffset + 0.4);
+            });
+        }
+
+        // Decoupled vector-field orbital particle engine
+        function spawnParticles(x, y, count) {
+            const palette = palettes[genePalette];
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x + (Math.random() * 8 - 4),
+                    y: y + (Math.random() * 8 - 4),
+                    vx: (Math.random() * 2 - 1) * 0.8,
+                    vy: (Math.random() * -1.8) - 0.3, 
+                    life: 1.0,
+                    decay: 0.03 + Math.random() * 0.06,
+                    color: palette.particles[Math.floor(Math.random() * palette.particles.length)]
+                });
+            }
+        }
+
+        function triggerRandomSound(intensity) {
+            if (!isAudioOn) return;
+            
+            // Map TinyML thought intensity to sound pitch and style
+            let freq = 400 + (intensity * 800);
+            
+            if (intensity > 0.85) {
+                // Happy / Excited chirp
+                playSweep(freq, freq * 1.5, 0.1, 'sine');
+                setTimeout(() => playSweep(freq * 1.5, freq * 2.0, 0.15, 'sine'), 100);
+            } else if (intensity > 0.75) {
+                // Curious click / purr
+                playTick();
+                setTimeout(() => playTick(), 50);
+                setTimeout(() => playTick(), 100);
+            } else {
+                // Ambient low hum or bubble
+                playSweep(freq * 0.5, freq * 0.4, 0.2, 'triangle');
+            }
+        }
+
+        function triggerRandomExpression(intensity) {
+            let exprs = ["happy", "surprised", "sleepy", "curious", "glitch"];
+            let idx = Math.floor(Math.abs(intensity) * exprs.length);
+            if (idx >= exprs.length) idx = exprs.length - 1;
+            
+            activeExpression = exprs[idx];
+            expressionTimer = 20 + Math.floor(Math.random() * 40); // 20-60 frames
+            
+            logToConsole("TINYBRAIN", `Autonomous expression mapped: ${activeExpression}`);
+        }
+
+        function updateAndDrawParticles(ctx) {
+            particles.forEach((p, idx) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                
+                if (p.life <= 0) {
+                    particles.splice(idx, 1);
+                    return;
+                }
+
+                ctx.fillStyle = p.color;
+                ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
+            });
+        }
+
+        // Mutation Operations
+        function mutateRandomDNA() {
+            const chars = "0123456789ABCDEF";
+            let newHex = "0x";
+            for (let i = 0; i < 64; i++) {
+                newHex += chars[Math.floor(Math.random() * 16)];
+            }
+            dnaString = newHex;
+            document.getElementById('dna-input-field').value = dnaString;
+            
+            decodeDNA();
+            playEvolutionChime(genePitch, true);
+            logToConsole("MUTATION", `New genetic sequence parsed: ${dnaString.substring(0,8)}...`);
+            
+            activeExpression = "happy";
+            expressionTimer = 20;
+            spawnParticles(32, 32, 24);
+            drawPixelCreature();
+        }
+
+        // Volumetric normal shader calculation & render pipeline (64x64)
+        // Uses implicit field equations to guarantee clean, gap-free concave geometry
+        function drawPixelCreature() {
+            const canvas = document.getElementById('tamagotchi-screen');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            const activePalette = palettes[genePalette];
+
+            // Clear screen buffer
+            ctx.fillStyle = activePalette.background;
+            ctx.fillRect(0, 0, width, height);
+
+            // No scaling amplitude, only dynamic bobbing
+            let currentSize = geneSize;
+
+            let lpModifier = (poolLPAmount / 5000) * 2.0; // 0.0 to 2.0 based on Volume
+            currentSize = Math.min(48, currentSize * (0.8 + lpModifier));
+
+            const gridWidth = 128;
+            const gridHeight = 128;
+            const center_x = gridWidth / 2;
+            const center_y = gridHeight / 2;
+
+            // Ambient orbital particles spawn
+            if (Math.random() < 0.22 && petVitality > 30) {
+                spawnParticles(center_x, center_y + 4, 1);
+            }
+
+            // Mathematical Normal Mapping Array for Gielis Entity
+            let depthMap = Array(gridWidth).fill().map(() => Array(gridHeight).fill(null));
+
+            // 1. Implicit Volumetric Field Solver Evaluation (Gielis Superformula)
+            let time = breatheAnimationStep;
+            
+            // TinyML Embedded Core adjusts parameters autonomously
+            let mlMood = 0, mlCuriosity = 0, mlEnergy = 0;
+            if (creatureBrain) {
+                let thoughts = creatureBrain.forward(time, poolYieldRate, poolLPAmount);
+                mlMood = thoughts[0];
+                mlCuriosity = thoughts[1];
+                mlEnergy = thoughts[2];
+                
+                // Sound and Expression Triggers
+                if (Math.random() < 0.01) { // Scarce trigger check
+                    if (thoughts[3] > 0.7 && expressionTimer === 0) {
+                        triggerRandomSound(thoughts[3]);
+                    }
+                    if (thoughts[4] > 0.6 && expressionTimer === 0) {
+                        triggerRandomExpression(thoughts[4]);
+                    }
+                }
+            } else {
+                mlMood = Math.sin(time * 0.2); 
+                mlCuriosity = Math.cos(time * 0.15);
+                mlEnergy = Math.sin(time * 0.1);
+            }
+            
+            let symmetryPointsCount = geneSymmetry + Math.floor(poolYieldRate / 15.0) + Math.abs(Math.floor(mlMood * 2.0));
+            
+            let n1_coefficient = 1.0;
+            let n2_coefficient = 1.0;
+            let n3_coefficient = 1.0;
+
+            if (geneArchetype === 1) { // Star Archetype
+                n1_coefficient = 0.3; n2_coefficient = 1.8; n3_coefficient = 1.8;
+            } else if (geneArchetype === 2) { // Polygon Archetype
+                n1_coefficient = 2.2; n2_coefficient = 0.5; n3_coefficient = 0.5;
+            } else if (geneArchetype === 3) { // Spiky Archetype
+                n1_coefficient = 0.12; n2_coefficient = 2.7; n3_coefficient = 0.2;
+            }
+
+            // Yield dramatically mutates the underlying morphology shape
+            let yieldEffect = poolYieldRate / 10.0; // Scale from slider (5-120) to approx 0.5 - 12.0
+            n2_coefficient += yieldEffect + (mlCuriosity * 1.5);
+            n3_coefficient += (yieldEffect * 0.5) + (mlMood * 1.0);
+            
+            // Add subtle breathing to shape boundaries
+            let breatheCycle = Math.sin(time * (1.0 + Math.abs(mlEnergy))) * 0.5;
+            n1_coefficient += breatheCycle + (mlEnergy * 0.5);
+
+            // BOUND THE COEFFICIENTS PRECISELY TO PREVENT MATH EXPLOSIONS
+            n1_coefficient = Math.max(0.2, Math.min(n1_coefficient, 5.0));
+            n2_coefficient = Math.max(0.2, Math.min(n2_coefficient, 15.0));
+            n3_coefficient = Math.max(0.2, Math.min(n3_coefficient, 15.0));
+            
+            // Autonomous hover & translation driven by TinyML core
+            let bobY = Math.sin(time * (1.5 + mlEnergy)) * (2.0 + Math.abs(mlMood)); 
+            let mlOffsetX = Math.sin(time * 0.5) * (5.0 * mlCuriosity);
+
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    let dx = x - center_x - mlOffsetX;
+                    let dy = y - center_y - bobY;
+                    let actual_r = Math.sqrt(dx*dx + dy*dy);
+                    let phi = Math.atan2(dy, dx);
+
+                    if (actual_r > 0) {
+                        // Gielis Superformula
+                        let t1 = Math.pow(Math.abs(Math.cos((symmetryPointsCount * phi) / 4)), Math.max(0.1, n2_coefficient));
+                        let t2 = Math.pow(Math.abs(Math.sin((symmetryPointsCount * phi) / 4)), Math.max(0.1, n3_coefficient));
+                        let theoretical_r = Math.pow(t1 + t2, -1 / Math.max(0.1, n1_coefficient)) * currentSize;
+                        
+                        // Prevent explosive bounds from math limitations
+                        theoretical_r = Math.min(theoretical_r, currentSize * 2.5);
+
+                        if (actual_r <= theoretical_r) {
+                            // Normalizing distance for pseudo-3D spherical depth calculation
+                            let normalized_dist = 1.0 - (actual_r / theoretical_r);
+                            let z = Math.sqrt(Math.max(0, normalized_dist));
+
+                            depthMap[x][y] = {
+                                z: z,
+                                dx: dx,
+                                dy: dy
+                            };
+                        }
+                    } else if (actual_r === 0) {
+                        depthMap[x][y] = { z: 1.0, dx: 0, dy: 0 };
+                    }
+                }
+            }
+
+            // 2. Volumetric lighting and central differences shader pass
+            // Dynamic Light vector source moving around the scene
+            const lightVector = { 
+                x: -0.6 + Math.sin(time * 0.8) * 0.5, 
+                y: -0.6 + Math.cos(time * 0.5) * 0.3, 
+                z: 0.8 + Math.sin(time * 1.2) * 0.2 
+            };
+            const lightLen = Math.sqrt(lightVector.x*lightVector.x + lightVector.y*lightVector.y + lightVector.z*lightVector.z);
+            lightVector.x /= lightLen; lightVector.y /= lightLen; lightVector.z /= lightLen;
+
+            for (let y = 0; y < gridHeight; y++) {
+                for (let x = 0; x < gridWidth; x++) {
+                    let pixel = depthMap[x][y];
+                    if (pixel !== null) {
+                        // Calculate finite differences to generate beautiful 3D surface normals
+                        let zLeft  = (x > 0 && depthMap[x-1][y]) ? depthMap[x-1][y].z : 0;
+                        let zRight = (x < gridWidth-1 && depthMap[x+1][y]) ? depthMap[x+1][y].z : 0;
+                        let zUp    = (y > 0 && depthMap[x][y-1]) ? depthMap[x][y-1].z : 0;
+                        let zDown  = (y < gridHeight-1 && depthMap[x][y+1]) ? depthMap[x][y+1].z : 0;
+
+                        // Surface normal components
+                        let nx = (zLeft - zRight) * 2.0;
+                        let ny = (zUp - zDown) * 2.0;
+                        let nz = 1.0;
+
+                        // Normalize surface normal
+                        let normLen = Math.sqrt(nx*nx + ny*ny + nz*nz);
+                        nx /= normLen; ny /= normLen; nz /= normLen;
+
+                        // Dot product for diffuse lighting
+                        let dot = nx * lightVector.x + ny * lightVector.y + nz * lightVector.z;
+                        let intensity = Math.max(0, dot);
+
+                        // Volumetric Color Mapping
+                        if (intensity > 0.82) {
+                            ctx.fillStyle = activePalette.highlight; // Specular highlights
+                        } else if (intensity > 0.45) {
+                            ctx.fillStyle = activePalette.primary;   // Midtones
+                        } else if (intensity > 0.18) {
+                            ctx.fillStyle = activePalette.secondary; // Core Shadows
+                        } else {
+                            ctx.fillStyle = activePalette.shadow;    // Deep ambient occlusion
+                        }
+
+                        // Hard crisp outline check
+                        let isOutline = false;
+                        const neighbors = [
+                            {x: x-1, y: y}, {x: x+1, y: y}, {x: x, y: y-1}, {x: x, y: y+1}
+                        ];
+                        for (let n of neighbors) {
+                            if (n.x < 0 || n.x >= gridWidth || n.y < 0 || n.y >= gridHeight || depthMap[n.x][n.y] === null) {
+                                isOutline = true;
+                                break;
+                            }
+                        }
+
+                        if (isOutline) {
+                            ctx.fillStyle = activePalette.primary; // Hard outline definition
+                        }
+
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+
+            // Draw Expressions (Positioned near center)
+            let timeHead = breatheAnimationStep;
+            
+            let headX = Math.round(center_x + mlOffsetX);
+            let headY = Math.round(center_y + bobY - (currentSize * 0.15));
+            
+            drawExpressions(ctx, headX, headY, activePalette);
+
+            // Draw particles on top layer
+            updateAndDrawParticles(ctx);
+        }
+
+        // Modular Expression Rendering System (Front Profile)
+        function drawExpressions(ctx, cx, cy, activePalette) {
+            ctx.fillStyle = "#FFFFFF";
+            let eyeY = cy;
+            let eyeXL = cx - 2;
+            let eyeXR = cx + 2;
+
+            if (expressionTimer > 0) {
+                expressionTimer--;
+                if (expressionTimer === 0) activeExpression = "idle";
+            }
+
+            if (petVitality <= 40) {
+                activeExpression = "glitch";
+            }
+
+            if (activeExpression === "happy") {
+                ctx.fillStyle = activePalette.primary;
+                // Left Eye
+                ctx.fillRect(eyeXL - 1, eyeY - 1, 3, 1);
+                ctx.fillRect(eyeXL, eyeY, 1, 1);
+                // Right Eye
+                ctx.fillRect(eyeXR - 1, eyeY - 1, 3, 1);
+                ctx.fillRect(eyeXR, eyeY, 1, 1);
+
+                // Happy smiling mouth
+                ctx.fillRect(cx - 1, cy + 2, 3, 1);
+                ctx.fillRect(cx - 2, cy + 1, 1, 1);
+                ctx.fillRect(cx + 2, cy + 1, 1, 1);
+
+                // Soft pink floating heart
+                ctx.fillStyle = "#EC4899";
+                ctx.fillRect(cx + 4, cy - 8, 1, 1);
+                ctx.fillRect(cx + 3, cy - 9, 3, 1);
+                ctx.fillRect(cx + 3, cy - 10, 1, 1);
+                ctx.fillRect(cx + 5, cy - 10, 1, 1);
+            } 
+            else if (activeExpression === "surprised") {
+                ctx.fillStyle = activePalette.primary;
+                // Wide open eyes
+                ctx.fillRect(eyeXL - 1, eyeY - 1, 3, 3);
+                ctx.fillRect(eyeXR - 1, eyeY - 1, 3, 3);
+                // O shaped mouth
+                ctx.fillRect(cx - 1, cy + 2, 3, 3);
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(cx, cy + 3, 1, 1);
+            }
+            else if (activeExpression === "sleepy") {
+                ctx.fillStyle = activePalette.primary;
+                // Closed flat eyes
+                ctx.fillRect(eyeXL - 1, eyeY + 1, 3, 1);
+                ctx.fillRect(eyeXR - 1, eyeY + 1, 3, 1);
+                // Small snoring Z
+                ctx.fillStyle = "#A1A1AA";
+                ctx.fillRect(cx + 4, cy - 6, 2, 1);
+                ctx.fillRect(cx + 5, cy - 7, 1, 1);
+                ctx.fillRect(cx + 4, cy - 8, 2, 1);
+            }
+            else if (activeExpression === "curious") {
+                ctx.fillStyle = activePalette.primary;
+                // One eye wide, one eye squinting
+                ctx.fillRect(eyeXL - 1, eyeY - 1, 3, 3);
+                ctx.fillRect(eyeXR - 1, eyeY, 3, 1);
+                // Slightly open mouth
+                ctx.fillRect(cx - 1, cy + 2, 2, 2);
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(cx, cy + 3, 1, 1);
+            }
+            else if (activeExpression === "glitch") {
+                // Warning Red Glitch style micro expression
+                ctx.fillStyle = "#FF3333";
+                ctx.fillRect(eyeXL, eyeY, 1, 1);
+                ctx.fillRect(eyeXR, eyeY, 1, 1);
+                
+                // Flat mouth
+                ctx.fillRect(cx - 1, cy + 2, 3, 1);
+
+                // Real-time horizontal pixel-slippage glitches
+                if (Math.random() < 0.35) {
+                    ctx.fillStyle = "rgba(255, 51, 51, 0.45)";
+                    ctx.fillRect(cx - 10 + (Math.random() * 20), 5, 1, 54);
+                }
+            } 
+            else { // IDLE state with multi-frame smooth blinking
+                let blinkProgress = Math.floor(breatheAnimationStep * 0.7) % 15;
+                
+                if (blinkProgress === 0) { // Closed
+                    ctx.fillStyle = activePalette.primary;
+                    ctx.fillRect(eyeXL - 1, eyeY, 3, 1);
+                    ctx.fillRect(eyeXR - 1, eyeY, 3, 1);
+                } else if (blinkProgress === 1 || blinkProgress === 14) { // Half-open
+                    ctx.fillStyle = activePalette.primary;
+                    ctx.fillRect(eyeXL - 1, eyeY, 3, 1);
+                    ctx.fillRect(eyeXL, eyeY - 1, 1, 1);
+                    ctx.fillRect(eyeXR - 1, eyeY, 3, 1);
+                    ctx.fillRect(eyeXR, eyeY - 1, 1, 1);
+                } else { // Fully open
+                    ctx.fillRect(eyeXL - 1, eyeY, 2, 2);
+                    ctx.fillRect(eyeXR - 1, eyeY, 2, 2);
+                    ctx.fillStyle = "#000000"; // pupil
+                    ctx.fillRect(eyeXL, eyeY, 1, 1);
+                    ctx.fillRect(eyeXR, eyeY, 1, 1);
+                }
+
+                // Normal Mouth
+                ctx.fillStyle = activePalette.primary;
+                ctx.fillRect(cx - 1, cy + 2, 3, 1);
+            }
+        }
+
+        // Real-Time Staking Modifier Handlers
+        function handleLPMutator(val) {
+            poolLPAmount = parseInt(val);
+            document.getElementById('sim-lp-label').innerText = `${poolLPAmount.toLocaleString()} LP`;
+            decodeDNA();
+            drawPixelCreature();
+        }
+
+        function handleYieldMutator(val) {
+            poolYieldRate = parseInt(val);
+            document.getElementById('sim-yield-label').innerText = `${poolYieldRate}% APY`;
+            decodeDNA();
+            drawPixelCreature();
+        }
+
+        // Web Speech API for TinyBrain Mic
+        let recognition = null;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = function() {
+                logToConsole("AI VOICE", "Listening to environment...");
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                logToConsole("USER", `"${transcript}"`);
+                
+                // Excite the neural net slightly
+                if (creatureBrain) {
+                    creatureBrain.memory[3] = 1.0; // Force expression
+                    creatureBrain.memory[4] = 1.0; // Force sound
+                }
+                
+                setTimeout(() => {
+                    logToConsole("TINYBRAIN", "Processing auditory input...");
+                    triggerRandomSound(0.9);
+                    triggerRandomExpression(0.9);
+                }, 800);
+            };
+            
+            recognition.onerror = function(event) {
+                logToConsole("ERROR", "Speech recognition failed: " + event.error);
+            };
+        }
+
+        // Discrete Button Controls Simulation
+        function handleRetroButton(btn) {
+            if (btn === 'C') {
+                if (!isAudioOn) toggleAudio();
+                setTimeout(() => synthBeep(1200, 0.1, 'sine'), 50);
+                setTimeout(() => synthBeep(1600, 0.15, 'sine'), 150);
+                activeExpression = "happy";
+                expressionTimer = 30;
+                
+                if (recognition) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        logToConsole("ERROR", e.message);
+                    }
+                } else {
+                    logToConsole("ERROR", "Speech Recognition API not supported in this browser.");
+                }
+            }
+        }
+
+        // Synthesized single sounds
+        function synthBeep(freq, duration, waveType = 'sine') {
+            if (!isAudioOn) return;
+            initAudioEngine();
+            playSweep(freq, freq * 1.5, duration, waveType);
+        }
+
+        // Handle micro-interactions
+        function tamagotchiInteract(type) {
+            if (type === 'FEED') {
+                petVitality = Math.min(100, petVitality + 20);
+                
+                playEvolutionChime(genePitch, true); // Majestic Golden sweep
+                activeExpression = "happy";
+                expressionTimer = 22;
+                spawnParticles(32, 32, 22);
+                
+                document.getElementById('screen-hud-vitality').innerText = `HP: ${petVitality}%`;
+                document.getElementById('screen-hud-status').innerText = "● VIBRANT";
+                
+                logToConsole("VAULT FEED", "Staking rewards locked. Volumetric density increased.");
+            } 
+            else if (type === 'PLAY') {
+                playSweep(genePitch * 0.8, genePitch * 2, 0.25, geneWave);
+                activeExpression = "happy";
+                expressionTimer = 18;
+                spawnParticles(32, 32, 12);
+                
+                logToConsole("PLAYTIME", "Modulating resonant filter parameters across active oscillators.");
+            }
+            
+            drawPixelCreature();
+        }
+
+        // Laboratory Diagnostics Logger
+        function logToConsole(module, message) {
+            const logsBox = document.getElementById('console-logs');
+            let timestamp = new Date().toLocaleTimeString();
+            logsBox.innerHTML += `<div>[${timestamp}] <span class="text-premium-gold">${module}</span>: ${message}</div>`;
+            logsBox.scrollTop = logsBox.scrollHeight;
+        }
+
+        // Constant breathing cycle thread loop
+        setInterval(() => {
+            try {
+                breatheAnimationStep += 0.22;
+                drawPixelCreature();
+            } catch (e) {
+                logToConsole("ERROR", e.message);
+            }
+        }, 120);
+
+        // Constant stability decay simulation cycle
+        setInterval(() => {
+            if (petVitality > 15) {
+                petVitality -= 1;
+                document.getElementById('screen-hud-vitality').innerText = `HP: ${petVitality}%`;
+                if (petVitality <= 40) {
+                    document.getElementById('screen-hud-status').innerText = "● DECAY";
+                    if(isAudioOn && Math.random() < 0.3) {
+                        playSweep(220, 110, 0.45, 'sawtooth'); // Resonant alert warning drone
+                    }
+                }
+            }
+        }, 12000);
+
+        // Program Startup initialization
+        window.onload = function() {
+            decodeDNA();
+            drawPixelCreature();
+            logToConsole("ENGINE", "AURA-IX physical emulators active. Symmetries calibrated.");
+        }
+    </script>
+</body>
+</html>

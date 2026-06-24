@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-premium-black: #0A0A0B;
+  --color-premium-darkGray: #121214;
+  --color-premium-midGray: #1D1D20;
+  --color-premium-lightGray: #2D2D32;
+  --color-premium-gold: #D4AF37;
+  --color-premium-goldDark: #9A7B1C;
+  --color-premium-goldLight: #F3E5AB;
+  --color-premium-accent: #0047FF;
+  --color-premium-accentMuted: rgba(0, 71, 255, 0.15);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.glass-panel {
+  background: rgba(18, 18, 20, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.gold-glow { box-shadow: 0 0 50px -10px rgba(212, 175, 55, 0.35); }
+.accent-glow { box-shadow: 0 0 50px -10px rgba(0, 71, 255, 0.35); }
+.premium-grid {
+  background-image: radial-gradient(rgba(212, 175, 55, 0.02) 1px, transparent 0);
+  background-size: 16px 16px;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.brushed-metal {
+  background: linear-gradient(145deg, #18181B 0%, #0A0A0B 100%);
+  position: relative;
+}
+
+.brushed-metal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, #fff, #fff 1px, transparent 1px, transparent 4px);
+}

@@ -15,7 +15,6 @@ import "../contracts/ArtifactTimelock.sol";
 
 /// @title DeployProduction
 /// @notice Full production deployment of the AV Treasury ecosystem
-/// @dev Deploys all contracts in correct dependency order, configures roles, and writes deployed.json
 contract DeployProduction is Script {
     using stdJson for string;
 
@@ -29,127 +28,67 @@ contract DeployProduction is Script {
     address public timelock;
     address public governor;
 
-    struct DeployConfig {
-        string agTokenName;
-        string agTokenSymbol;
-        string auTokenName;
-        string auTokenSymbol;
-        address lpNFTAddress;
-        bool deployMockNFT;
-        uint256 pidKp;
-        uint256 pidKi;
-        uint256 pidKd;
-        uint256 pidSetpoint;
-        uint256 pidEmissionCap;
-        uint256 pidBootstrapMonths;
-        address aerodromeRouter;
-        address uniswapRouter;
-        uint256 amoBuybackPct;
-        uint256 amoCooldownSecs;
-        uint256 amoMaxPriceDeviationBps;
-        uint256 amoMinRunway;
-        uint256 amoMaxBuyback;
-        uint256 proposalThreshold;
-        uint256 votingPeriod;
-        uint256 votingDelay;
-        uint256 quorumNumerator;
-        uint256 timelockDelay;
-        address admin;
-        address emergencyAdmin;
-        uint256 initialTreasuryFunding;
-    }
-
-    DeployConfig public config;
-
-    function _defaultConfig() internal view returns (DeployConfig memory) {
-        address deployer = vm.addr(1);
-        return DeployConfig({
-            agTokenName: "AV Governance Token",
-            agTokenSymbol: "Ag",
-            auTokenName: "AV Reserve Token",
-            auTokenSymbol: "Au",
-            lpNFTAddress: address(0),
-            deployMockNFT: false,
-            pidKp: 1e15,
-            pidKi: 1e14,
-            pidKd: 1e14,
-            pidSetpoint: 5e16,
-            pidEmissionCap: 1e20,
-            pidBootstrapMonths: 9,
-            aerodromeRouter: address(0),
-            uniswapRouter: address(0),
-            amoBuybackPct: 50,
-            amoCooldownSecs: 1 hours,
-            amoMaxPriceDeviationBps: 500,
-            amoMinRunway: 1e18,
-            amoMaxBuyback: 1e18,
-            proposalThreshold: 1e18,
-            votingPeriod: 50400,
-            votingDelay: 1,
-            quorumNumerator: 4,
-            timelockDelay: 2 days,
-            admin: deployer,
-            emergencyAdmin: deployer,
-            initialTreasuryFunding: 10000e18
-        });
-    }
-
     function run() external {
-        config = _defaultConfig();
-
-        // Read router from environment (required for TreasuryAMO)
         address router = vm.envAddress("AERODROME_ROUTER");
         require(router != address(0), "AERODROME_ROUTER env var required");
-        config.aerodromeRouter = router;
-
         address deployer = vm.addr(1);
 
-        console.log("══════════════════════════════════════════════════");
-        console.log("  AV TREASURY — PRODUCTION DEPLOYMENT");
-        console.log("══════════════════════════════════════════════════");
+        console.log("==================================================");
+        console.log("  AV TREASURY - PRODUCTION DEPLOYMENT");
+        console.log("==================================================");
         console.log("  Deployer:", deployer);
         console.log("  Network:", block.chainid);
-        console.log("══════════════════════════════════════════════════");
+        console.log("==================================================");
 
-        // ─── Phase 1: Tokens ───────────────────────────────────
+        _deployTokens(deployer);
+        _deployOracle(deployer);
+        _deployLPNFT();
+        _deployStaking();
+        _deployPID(deployer);
+        _deployTreasuryAMO(deployer, router);
+        _deployGovernance(deployer);
+        _configureRoles(deployer);
+        _fundTreasury(deployer);
+        _writeDeployedAddresses(router);
+    }
+
+    function _deployTokens(address deployer) internal {
         console.log("\n[1/8] Deploying tokens...");
 
         AgToken ag = new AgToken();
-        ag.initialize(config.admin);
+        ag.initialize(deployer);
         agToken = address(ag);
         console.log("  AgToken:", agToken);
 
         AuToken au = new AuToken();
-        au.initialize(config.admin);
+        au.initialize(deployer);
         auToken = address(au);
         console.log("  AuToken:", auToken);
+    }
 
-        // ─── Phase 2: Oracle ───────────────────────────────────
+    function _deployOracle(address deployer) internal {
         console.log("\n[2/8] Deploying oracle...");
 
         AvOracle oracle = new AvOracle(
             auToken,
             agToken,
-            config.admin,
-            config.admin
+            deployer,
+            deployer
         );
         avOracle = address(oracle);
         console.log("  AvOracle:", avOracle);
+    }
 
-        // ─── Phase 3: LP NFT ───────────────────────────────────
+    function _deployLPNFT() internal {
         console.log("\n[3/8] LP NFT...");
 
-        if (config.lpNFTAddress != address(0)) {
-            lpNFT = config.lpNFTAddress;
-            console.log("  Using external LP NFT:", lpNFT);
-        } else if (config.deployMockNFT) {
-            console.log("  WARNING: MockLPNFT not included — deploy separately");
-            revert("LP NFT must be provided for production");
-        } else {
-            revert("LP NFT address required");
-        }
+        address nft = vm.envAddress("LP_NFT_ADDRESS");
+        require(nft != address(0), "LP_NFT_ADDRESS env var required for production");
+        lpNFT = nft;
+        console.log("  Using LP NFT:", lpNFT);
+    }
 
-        // ─── Phase 4: Staking ──────────────────────────────────
+    function _deployStaking() internal {
         console.log("\n[4/8] Deploying LP staking...");
 
         AVLPStaking_v2 staking = new AVLPStaking_v2();
@@ -160,84 +99,114 @@ contract DeployProduction is Script {
         );
         lpStaking = address(staking);
         console.log("  AVLPStaking_v2:", lpStaking);
+    }
 
-        // ─── Phase 5: PID Controller ───────────────────────────
+    function _deployPID(address deployer) internal {
         console.log("\n[5/8] Deploying PID controller...");
 
         PID_Emission_Controller_v2 pid = new PID_Emission_Controller_v2(
-            config.admin,
+            deployer,
             lpStaking,
             agToken,
-            config.pidSetpoint,
-            config.pidKp,
-            config.pidKi,
-            config.pidKd
+            5e16,
+            1e15,
+            1e14,
+            1e14
         );
         pidController = address(pid);
         console.log("  PID_Controller:", pidController);
+    }
 
-        // ─── Phase 6: Treasury AMO ────────────────────────────
+    function _deployTreasuryAMO(address deployer, address router) internal {
         console.log("\n[6/8] Deploying Treasury AMO...");
 
         TreasuryAMO amo = new TreasuryAMO(
             auToken,
             agToken,
-            config.aerodromeRouter,
-            config.admin
+            router,
+            deployer
         );
         treasuryAMO = address(amo);
         console.log("  TreasuryAMO:", treasuryAMO);
+    }
 
-        // ─── Phase 7: Governance ───────────────────────────────
+    function _deployGovernance(address deployer) internal {
         console.log("\n[7/8] Deploying governance...");
 
         ArtifactTimelock tl = new ArtifactTimelock(
-            governor,       // proposer
-            address(0),     // executor (anyone)
-            config.admin    // canceler
+            deployer,
+            address(0),
+            deployer
         );
         timelock = address(tl);
         console.log("  ArtifactTimelock:", timelock);
 
         GovernorContract gov = new GovernorContract(
-            agToken,    // IVotes compatible (ERC20VotesUpgradeable)
+            IVotes(address(agToken)),
             timelock
         );
         governor = address(gov);
         console.log("  GovernorContract:", governor);
 
-        // ─── Phase 8: Role Configuration ───────────────────────
+        vm.startPrank(deployer);
+        tl.grantRole(keccak256("PROPOSER_ROLE"), governor);
+        tl.renounceRole(keccak256("PROPOSER_ROLE"), deployer);
+        vm.stopPrank();
+        console.log("  + Governor set as PROPOSER on Timelock");
+    }
+
+    function _configureRoles(address deployer) internal {
         console.log("\n[8/8] Configuring roles...");
 
-        bytes32 EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-        amo.grantRole(EXECUTOR_ROLE, timelock);
-        console.log("  + EXECOR_ROLE -> Timelock on TreasuryAMO");
-
         bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
-        ag.grantRole(MINTER_ROLE, pidController);
+        AuToken(auToken).grantRole(MINTER_ROLE, deployer);
+        console.log("  + MINTER_ROLE -> Deployer on AuToken");
+
+        vm.startPrank(deployer);
+
+        AgToken(agToken).grantRole(MINTER_ROLE, pidController);
         console.log("  + MINTER_ROLE -> PID on AgToken");
 
-        ag.grantRole(MINTER_ROLE, lpStaking);
+        AgToken(agToken).grantRole(MINTER_ROLE, lpStaking);
         console.log("  + MINTER_ROLE -> Staking on AgToken");
 
         bytes32 GOVERNOR_ROLE = keccak256("GOVERNOR");
-        oracle.grantRole(GOVERNOR_ROLE, governor);
+        AvOracle(avOracle).grantRole(GOVERNOR_ROLE, governor);
         console.log("  + GOVERNOR -> Governor on AvOracle");
 
-        // Governor already set as proposer in constructor
-        console.log("  + Governor set as proposer on Timelock (in constructor)");
+        vm.stopPrank();
 
-        // ─── Funding ───────────────────────────────────────────
+        vm.startPrank(deployer);
+        bytes32 EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+        TreasuryAMO(treasuryAMO).grantRole(EXECUTOR_ROLE, timelock);
+        console.log("  + EXECUTOR_ROLE -> Timelock on TreasuryAMO");
+        vm.stopPrank();
+    }
+
+    function _fundTreasury(address deployer) internal {
         console.log("\n  Funding treasury...");
 
-        au.mint(deployer, config.initialTreasuryFunding);
-        au.transfer(treasuryAMO, config.initialTreasuryFunding);
-        console.log("  + Minted & funded TreasuryAMO with", config.initialTreasuryFunding / 1e18, "Au");
+        // AuToken maxWallet = totalSupply * 1000 / 10000 = totalSupply / 10.
+        // First mint: balanceOf(to) = X, maxWallet = X/10, X > X/10 always fails.
+        // Fix: temporarily set maxWalletAmountBps to 10000 (100%, no limit),
+        // mint, then restore to 1000 (10%).
+        uint256 treasuryAmount = 10000e18;
 
-        // ─── Summary ───────────────────────────────────────────
-        console.log("\n══════════════════════════════════════════════════");
+        AuToken(auToken).setMaxWalletAmount(10000);
+        console.log("  + Temporarily set AuToken max wallet to 100% for bootstrap");
+
+        vm.startPrank(deployer);
+        AuToken(auToken).mint(treasuryAMO, treasuryAmount);
+        vm.stopPrank();
+        console.log("  + Minted treasury funding to TreasuryAMO");
+
+        AuToken(auToken).setMaxWalletAmount(1000);
+        console.log("  + Restored AuToken max wallet to 10%");
+
+        // Summary
+        console.log("\n==================================================");
         console.log("  DEPLOYMENT COMPLETE");
-        console.log("══════════════════════════════════════════════════");
+        console.log("==================================================");
         console.log("  AgToken:        ", agToken);
         console.log("  AuToken:        ", auToken);
         console.log("  AvOracle:       ", avOracle);
@@ -247,12 +216,10 @@ contract DeployProduction is Script {
         console.log("  TreasuryAMO:    ", treasuryAMO);
         console.log("  Timelock:       ", timelock);
         console.log("  Governor:       ", governor);
-        console.log("══════════════════════════════════════════════════");
-
-        _writeDeployedAddresses();
+        console.log("==================================================");
     }
 
-    function _writeDeployedAddresses() internal {
+    function _writeDeployedAddresses(address router) internal {
         string memory path = string.concat("deployed_", _uintToString(block.chainid), ".json");
 
         string memory json = "{";
@@ -268,7 +235,7 @@ contract DeployProduction is Script {
         json = string.concat(json, "\"Treasury_AMO\":\"", _addrToString(treasuryAMO), "\",");
         json = string.concat(json, "\"Timelock\":\"", _addrToString(timelock), "\",");
         json = string.concat(json, "\"Governor\":\"", _addrToString(governor), "\",");
-        json = string.concat(json, "\"Aerodrome_Router\":\"", _addrToString(config.aerodromeRouter), "\"");
+        json = string.concat(json, "\"Aerodrome_Router\":\"", _addrToString(router), "\"");
         json = string.concat(json, "}}");
 
         vm.writeFile(path, json);

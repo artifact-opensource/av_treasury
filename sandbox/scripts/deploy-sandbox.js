@@ -33,6 +33,9 @@ async function deployContract(name, deployer, ...args) {
     path.join(ARTIFACTS_DIR, `${name}.sol`, `${name}.json`),
     path.join(ARTIFACTS_DIR, 'MockTokens.sol', `${name}.json`),
     path.join(ARTIFACTS_DIR, 'MockStaking.sol', `${name}.json`),
+    path.join(ARTIFACTS_DIR, 'sandbox', 'contracts_temp', `${name}.sol`, `${name}.json`),
+    path.join(ARTIFACTS_DIR, 'sandbox', 'contracts_temp', 'MockTokens.sol', `${name}.json`),
+    path.join(ARTIFACTS_DIR, 'sandbox', 'contracts_temp', 'MockStaking.sol', `${name}.json`),
   ];
   let artifactPath = null;
   for (const p of patterns) {

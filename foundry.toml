@@ -3,6 +3,7 @@ src = "contracts"
 test = "test/invariants"
 out = "out"
 libs = ["lib"]
+via_ir = true
 fs_permissions = [{ access = "read-write", path = "./" }]
 
 [profile.sandbox]

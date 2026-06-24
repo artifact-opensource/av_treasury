@@ -72,11 +72,11 @@ contract GovernorContract is
     /**
      * @notice Deploys the governor contract.
      * @param _token The IVotes-compatible governance token (AgToken).
-     * @param _executor The timelock or executor address.
+     * @param executorParam The timelock or executor address.
      */
     constructor(
         IVotes _token,
-        address _executor
+        address executorParam
     )
         Governor("ArtifactGovernor")
         GovernorSettings(
@@ -87,7 +87,7 @@ contract GovernorContract is
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(INITIAL_QUORUM_BPS)
     {
-        executorAddress = _executor;
+        executorAddress = executorParam;
     }
 
     // ─── View Overrides ───────────────────────────────────────────────

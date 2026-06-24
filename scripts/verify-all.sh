@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ═══════════════════════════════════════════════════════════════════════════════
-# verify-all.sh — Etherscan V2 Verification for AV Treasury (Base)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
+# verify-all.sh - Etherscan V2 Verification for AV Treasury (Base)
+# ===============================================================================
 #
 # Etherscan V2 API: https://api.etherscan.io/v2/api?chainid=8453
 # 
@@ -17,16 +17,16 @@
 #   ETHERSCAN_API_V2=your_key bash scripts/verify-all.sh [deployed_json_path]
 #
 # Optional env vars:
-#   DEPLOYER_ADDRESS — deployer address (for constructor args)
-#   AERODROME_ROUTER — Aerodrome router address (Base mainnet)
-#   UNISWAP_ROUTER   — Uniswap V2 router address (Base mainnet)
+#   DEPLOYER_ADDRESS - deployer address (for constructor args)
+#   AERODROME_ROUTER - Aerodrome router address (Base mainnet)
+#   UNISWAP_ROUTER   - Uniswap V2 router address (Base mainnet)
 #
 # Default JSON: deployed_8453.json
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 
 set -euo pipefail
 
-# ─── Configuration ────────────────────────────────────────────────────────────
+# --- Configuration ------------------------------------------------------------
 ETHERSCAN_API_KEY="${ETHERSCAN_API_V2:?ERROR: ETHERSCAN_API_V2 env var required}"
 DEPLOYED_JSON="${1:-deployed_8453.json}"
 CHAIN_ID="8453"
@@ -49,7 +49,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 log_ok()    { echo -e "${GREEN}[OK]${NC} $1"; }
 log_step()  { echo -e "${BLUE}[STEP]${NC} $1"; }
 
-# ─── Pre-flight checks ───────────────────────────────────────────────────────
+# --- Pre-flight checks -------------------------------------------------------
 if [ ! -f "$DEPLOYED_JSON" ]; then
     log_error "Deployed addresses file not found: $DEPLOYED_JSON"
     echo "  Run DeployProduction.s.sol first to generate deployed JSON"
@@ -66,7 +66,7 @@ if ! command -v cast &> /dev/null; then
     exit 1
 fi
 
-# ─── Read deployed addresses ─────────────────────────────────────────────────
+# --- Read deployed addresses -------------------------------------------------
 read_address() {
     python3 -c "
 import json, sys
@@ -110,17 +110,17 @@ print(data.get('deployer', '0x0000000000000000000000000000000000000001'))
 ")}"
 
 echo ""
-echo "═══════════════════════════════════════════════════════════════"
-echo "  ETHERSCAN V2 VERIFICATION — BASE MAINNET"
-echo "═══════════════════════════════════════════════════════════════"
+echo "==============================================================="
+echo "  ETHERSCAN V2 VERIFICATION - BASE MAINNET"
+echo "==============================================================="
 echo "  Chain ID:    $CHAIN_ID"
 echo "  API:         $VERIFIER_URL"
 echo "  Deployer:    $DEPLOYER"
 echo "  Aero Router: $AERODROME_ROUTER"
-echo "═══════════════════════════════════════════════════════════════"
+echo "==============================================================="
 echo ""
 
-# ─── Helper: verify a contract ──────────────────────────────────────────────
+# --- Helper: verify a contract ----------------------------------------------
 # Usage: verify_contract <name> <address> <source_path> [constructor_args_hex]
 verify_contract() {
     local name="$1"
@@ -149,11 +149,11 @@ verify_contract() {
     cmd+=("$address" "$source_path")
     
     if "${cmd[@]}"; then
-        log_ok "  ✅ $name VERIFIED"
+        log_ok "  PASS $name VERIFIED"
         echo ""
         return 0
     else
-        log_error "  ❌ $name VERIFICATION FAILED"
+        log_error "  FAIL $name VERIFICATION FAILED"
         echo ""
         return 1
     fi
@@ -161,94 +161,94 @@ verify_contract() {
 
 FAILED=0
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 1: AgToken
-# Constructor: () — no args
+# Constructor: () - no args
 # Has initialize(address admin) called post-deploy
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 verify_contract "AgToken" "$AG_TOKEN" "contracts/AgToken.sol:AgToken" "" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 2: AuToken
-# Constructor: () — no args
+# Constructor: () - no args
 # Has initialize(address admin) called post-deploy
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 verify_contract "AuToken" "$AU_TOKEN" "contracts/AuToken.sol:AuToken" "" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 3: AvOracle
 # Constructor: (address auToken, address agToken, address admin, address governor)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 ORACLE_ARGS=$(cast abi-encode "constructor(address,address,address,address)" \
     "$AU_TOKEN" "$AG_TOKEN" "$DEPLOYER" "$DEPLOYER" 2>/dev/null || \
     echo "0x000000000000000000000000$(echo $AU_TOKEN | sed 's/0x//')000000000000000000000000$(echo $AG_TOKEN | sed 's/0x//')000000000000000000000000$(echo $DEPLOYER | sed 's/0x//')000000000000000000000000$(echo $DEPLOYER | sed 's/0x//')")
 verify_contract "AvOracle" "$AV_ORACLE" "contracts/AvOracle.sol:AvOracle" "$ORACLE_ARGS" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 4: PID_Emission_Controller_v2
 # Constructor: (admin, staking, agToken, targetTVL, kp, ki, kd)
 # Default: admin=deployer, staking=lpStaking, agToken=agToken
 #          targetTVL=5e16, kp=1e15, ki=1e14, kd=1e14
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 PID_ARGS=$(cast abi-encode "constructor(address,address,address,uint256,uint256,uint256,uint256)" \
     "$DEPLOYER" "$LP_STAKING" "$AG_TOKEN" \
     "50000000000000000" "1000000000000000" "100000000000000" "100000000000000")
 verify_contract "PID_Emission_Controller_v2" "$PID_CONTROLLER" \
     "contracts/PID_Emission_Controller_v2.sol:PID_Emission_Controller_v2" "$PID_ARGS" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 5: AVLPStaking_v2
-# Constructor: () — no args
+# Constructor: () - no args
 # Has initialize(auToken, agToken, lpNFT) called post-deploy
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 verify_contract "AVLPStaking_v2" "$LP_STAKING" "contracts/AVLPStaking_v2.sol:AVLPStaking_v2" "" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 6: TreasuryAMO
 # Constructor: (auToken, reserveToken, aerodromeRouter, admin)
 # NOTE: aerodromeRouter must match the address used during deployment
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 log_info "  Using Aerodrome router: $AERODROME_ROUTER"
 TREASURY_ARGS=$(cast abi-encode "constructor(address,address,address,address)" \
     "$AU_TOKEN" "$AG_TOKEN" "$AERODROME_ROUTER" "$DEPLOYER")
 verify_contract "TreasuryAMO" "$TREASURY_AMO" "contracts/TreasuryAMO.sol:TreasuryAMO" "$TREASURY_ARGS" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 7: ArtifactTimelock
 # Constructor: (proposer, executor, canceler)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 TIMELOCK_ARGS=$(cast abi-encode "constructor(address,address,address)" \
     "$GOVERNOR" "0x0000000000000000000000000000000000000000" "$DEPLOYER")
 verify_contract "ArtifactTimelock" "$TIMELOCK" "contracts/ArtifactTimelock.sol:ArtifactTimelock" "$TIMELOCK_ARGS" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # PHASE 8: GovernorContract
 # Constructor: (IVotes _token, address _executor)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 GOVERNOR_ARGS=$(cast abi-encode "constructor(address,address)" \
     "$AG_TOKEN" "$TIMELOCK")
 verify_contract "GovernorContract" "$GOVERNOR" "contracts/GovernorContract.sol:GovernorContract" "$GOVERNOR_ARGS" || ((FAILED++))
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# PHASE 9: LP NFT (external — skip)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
+# PHASE 9: LP NFT (external - skip)
+# ===============================================================================
 if [ -n "$LP_NFT" ] && [ "$LP_NFT" != "0x0000000000000000000000000000000000000000" ]; then
-    log_info "LP NFT at $LP_NFT — external contract, skipping verification"
+    log_info "LP NFT at $LP_NFT - external contract, skipping verification"
 else
-    log_info "LP NFT — external contract or not provided, skipping verification"
+    log_info "LP NFT - external contract or not provided, skipping verification"
 fi
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # SUMMARY
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 echo ""
-echo "═══════════════════════════════════════════════════════════════"
+echo "==============================================================="
 if [ "$FAILED" -eq 0 ]; then
     log_ok "  ALL CONTRACTS VERIFIED SUCCESSFULLY"
 else
     log_error "  $FAILED CONTRACT(S) FAILED VERIFICATION"
 fi
-echo "═══════════════════════════════════════════════════════════════"
+echo "==============================================================="
 echo ""
 log_info "Check status at: https://basescan.org/address/<contract_address>#code"
 echo ""

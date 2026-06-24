@@ -743,7 +743,7 @@ Identical to `contracts/DexSimulator.sol` — see production analysis above.
 | **Pragma** | solidity 0.8.26 |
 
 **State:**
-- agToken (reserve), auToken (buyback target), dex (IDexSimulator)
+- agToken (governance, minted when PID expands), auToken (buyback target), dex (IDexSimulator)
 - cooldown, lastBuybackBlock
 - maxSlippageBps, maxBuybackPerEpochBps, runway
 - totalBuybacksExecuted, totalAuBought, totalAgSpent

@@ -22,8 +22,8 @@ import "./Interfaces.sol";
 
 contract MockTreasuryAMO {
     // ============ State ============
-    IERC20 public agToken;    // Ag — used as reserve for buybacks
-    IERC20 public auToken;    // Au — token to buyback
+    IERC20 public agToken;    // AgToken (Artifact Governance) — minted when PID expands supply
+    IERC20 public auToken;    // AuToken (Artifact Utility) — token to buyback on DEX
     IDexSimulator public dex;
 
     uint256 public cooldown;

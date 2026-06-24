@@ -208,7 +208,7 @@ contract AVLPStaking_v2 is
             return MAX_MULTIPLIER;
         }
         // multiplier = 10000 + (15000 * agBalance) / agThreshold
-        return MULTIPLIER_DENOMINATOR + (5_000 * agBalance) / agThreshold;
+        return MULTIPLIER_DENOMINATOR + (15_000 * agBalance) / agThreshold;
     }
 
     // ============ STAKING ============

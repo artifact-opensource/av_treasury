@@ -21,16 +21,16 @@
 
 ## 1. Overview <a name="overview"></a>
 
-The AV Treasury is a **experimental workspace** for developing, testing, and validating an algorithmic stablecoin system built around two sister tokens:
+The AV Treasury is a **experimental workspace** for developing, testing, and validating a dual-token governance and utility system built around two sister tokens:
 
 | Token | Role | Supply |
 |-------|------|--------|
-| **Ag** (AgToken) | Algorithmic stablecoin — soft-pegged to USD | Elastic (minted/burned by PID controller) |
-| **Au** (AuToken) | Governance & staking token — deflationary | Fixed (burned on transfers) |
+| **Ag** (AgToken) | Artifact Governance — governance token, seigniorage capture | Elastic (minted/burned by PID controller) |
+| **Au** (AuToken) | Artifact Utility — utility medium of exchange, compliance-ready | Fixed 1B (deflationary via transfer fees) |
 
 The system is governed by **GovernorContract** (time-locked governance), stabilized by **TreasuryAMO** (automated market operations), and emits Ag to stakers via a **PID controller** that targets a TVL setpoint.
 
-**Core flywheel:** Au transfers → 9bps fee → half burned, half to Treasury → Treasury buys Au on open market → stakers earn Au + Ag → PID adjusts Ag emission → Ag holders govern → system grows → more fees.
+**Core flywheel:** Au transfers → fee redistributed to stakers → stakers earn Au + Ag → PID adjusts Ag emission → Ag holders govern → system grows → more fees.
 
 ---
 
@@ -91,29 +91,30 @@ The system is governed by **GovernorContract** (time-locked governance), stabili
 
 ## 3. Contract Specifications <a name="contract-specifications"></a>
 
-### 3.1 AgToken (Algorithmic Stablecoin)
+### 3.1 AgToken (Artifact Governance)
 
 **File:** `contracts/AgToken.sol` | **Lines:** 108
 
 - ERC-20 compatible (openzeppelin-based)
 - **Elastic supply** — `mint()` and `burn()` callable only by authorized contracts (PID controller, TreasuryAMO)
-- `MINTER_ROLE` and `BURNER_ROLE` viaAccessControl
+- `MINTER_ROLE` and `BURNER_ROLE` via AccessControl
 - Compatible with Aerodrome router (approval optimization for router contracts)
 - No rebase — supply changes are discrete mint/burn events
+- **Governance token**: holders vote on protocol parameters via GovernorContract
 
-### 3.2 AuToken (Governance Token)
+### 3.2 AuToken (Artifact Utility)
 
 **File:** `contracts/AuToken.sol` | **Lines:** 363
 
-- ERC-20 with **transfer fee mechanism** (9 bps = 0.09%)
-  - **4.5 bps burned** — permanent supply reduction (deflationary pressure)
-  - **4.5 bps routed to Treasury** — funds buyback operations
+- ERC-20 with **transfer fee mechanism** (default 0.5%)
+  - Fees redistributed to Au stakers — incentivizes holding and reduces sell pressure
 - **Anti-whale protection:**
   - Max transfer: 5% of total supply per transaction
   - Max holding: 10% of total supply per address
 - **Blacklist functionality** — governance can block specific addresses
 - **Pausable** — emergency pause via governance
 - **Timelock on governance actions** — 48h delay for parameter changes
+- **Utility token**: medium of exchange, RSBT collateral, staking yield
 
 ### 3.3 TreasuryAMO (Automated Market Operations)
 
@@ -496,8 +497,8 @@ All deployment parameters are in `hardhat.config.js`:
 ```
 av_treasury/
 ├── contracts/                    # Solidity smart contracts
-│   ├── AgToken.sol              # Algorithmic stablecoin
-│   ├── AuToken.sol              # Governance token (fee + burn)
+│   ├── AgToken.sol              # Artifact Governance (elastic supply)
+│   ├── AuToken.sol              # Artifact Utility (fixed supply, fees)
 │   ├── TreasuryAMO.sol          # Automated market operations
 │   ├── PID_Emission_v2.sol      # PID controller for Ag emission
 │   ├── AvOracle.sol             # TVL oracle aggregator
@@ -550,8 +551,8 @@ av_treasury/
 
 | Component | File | Lines | Purpose |
 |-----------|------|-------|---------|
-| AgToken | `contracts/AgToken.sol` | 108 | Algorithmic USD stablecoin |
-| AuToken | `contracts/AuToken.sol` | 363 | Governance + fee token |
+| AgToken | `contracts/AgToken.sol` | 108 | Artifact Governance (elastic supply) |
+| AuToken | `contracts/AuToken.sol` | 363 | Artifact Utility (fixed supply, fees) |
 | TreasuryAMO | `contracts/TreasuryAMO.sol` | 738 | Automated buybacks |
 | PID Controller | `contracts/PID_Emission_v2.sol` | 936 | TVL-targeted emission |
 | AvOracle | `contracts/AvOracle.sol` | 614 | TVL aggregation |

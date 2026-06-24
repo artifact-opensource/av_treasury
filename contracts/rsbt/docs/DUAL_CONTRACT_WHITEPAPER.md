@@ -12,8 +12,8 @@
 1. [Executive Summary](#1-executive-summary)
 2. [Motivation & Design Philosophy](#2-motivation--design-philosophy)
 3. [The Dual-Token Model](#3-the-dual-token-model)
-4. [AgToken — The Elastic Governance Token](#4-agtoken--the-elastic-governance-token)
-5. [AuToken — The Reserve-Backed Stable Unit](#5-autoken--the-reserve-backed-stable-unit)
+4. [AgToken — Artifact Governance (Ag)](#4-agtoken--artifact-governance-ag)
+5. [AuToken — Artifact Utility (Au)](#5-autoken--artifact-utility-au)
 6. [Monetary Policy & PID Control](#6-monetary-policy--pid-control)
 7. [Reserve Architecture](#7-reserve-architecture)
 8. [Staking & Yield System](#8-staking--yield-system)
@@ -29,9 +29,9 @@
 
 ## 1. Executive Summary
 
-The AV Treasury introduces a **dual-token architecture** that separates the functions of governance/utility (AgToken) and stable exchange medium (AuToken) into two purpose-built contracts. This separation enables independent optimization of each token for its specific role while maintaining tight economic coupling through shared reserves, PID-controlled emissions, and a soulbound staking receipt system (RSBT).
+The AV Treasury introduces a **dual-token architecture** that separates the functions of **governance** (AgToken) and **utility** (AuToken) into two purpose-built contracts. This separation enables independent optimization of each token for its specific role while maintaining tight economic coupling through shared reserves, PID-controlled emissions, and a soulbound staking receipt system (RSBT).
 
-**Key Innovation:** Unlike single-token stablecoin systems that must balance governance, stability, and yield within one token, our dual-token model allows AgToken to absorb volatility and capture seigniorage while AuToken provides a stable, yield-bearing unit of account. The PID controller algorithmically manages the relationship between the two, creating a self-stabilizing monetary system.
+**Key Innovation:** Unlike single-token systems that must balance governance, utility, and yield within one token, our dual-token model allows AgToken to serve as the elastic governance and seigniorage token while AuToken provides a fixed-supply, deflationary utility medium with built-in compliance features. The PID controller algorithmically manages AgToken supply, creating a self-stabilizing monetary system.
 
 ---
 
@@ -61,8 +61,8 @@ A single token serving all three roles creates conflicting incentives. Elastic s
 
 | Function | Token | Property |
 |----------|-------|----------|
-| **Stability** | AuToken | Overcollateralized, basket-pegged |
-| **Governance** | AgToken | Elastic supply, transferable |
+| **Governance** | AgToken (Artifact Governance) | Elastic supply, PID-controlled, Governor-compatible |
+| **Utility** | AuToken (Artifact Utility) | Fixed supply, deflationary, compliance-ready |
 | **Yield** | Both | LP fees + seigniorage + vault yield |
 
 ### 2.3 Design Principles
@@ -70,7 +70,7 @@ A single token serving all three roles creates conflicting incentives. Elastic s
 1. **Minimalism** — Each contract does one thing well
 2. **Composability** — Contracts interact through well-defined interfaces
 3. **Self-Stabilization** — PID control creates negative feedback loops
-4. **Overcollateralization** — All Au minted is backed by real assets
+4. **Fixed Supply Utility** — AuToken has a hard cap; value accrues via fee redistribution, not inflation
 5. **Progressive Decentralization** — Governance rights transfer to community over time
 
 ---
@@ -104,9 +104,10 @@ A single token serving all three roles creates conflicting incentives. Elastic s
                      │                    │
               ┌──────▼──────┐      ┌──────▼──────┐
               │   AgToken   │      │   AuToken   │
-              │  (Silver)   │      │   (Gold)    │
-              │  Elastic    │      │  Stable     │
-              │  Supply     │      │  Pegged     │
+              │  (Artifact  │      │  (Artifact  │
+              │  Governance)│      │  Utility)   │
+              │  Elastic    │      │  Fixed      │
+              │  Supply     │      │  Supply     │
               └──────┬──────┘      └──────┬──────┘
                      │                    │
               ┌──────▼────────────────────▼──────┐
@@ -121,34 +122,35 @@ A single token serving all three roles creates conflicting incentives. Elastic s
 
 | Action | AgToken Effect | AuToken Effect | Reserve Effect |
 |--------|---------------|----------------|----------------|
-| LP Deposits ↑ | Mint more (if ρ > ρ*) | More backing | Reserves ↑ |
-| LP Deposits ↓ | Burn (if ρ < ρ*) | Less backing | Reserves ↓ |
-| Au Demand ↑ | — | Supply ↑ | Reserves ↑ |
-| Au Demand ↓ | — | Supply ↓ | Reserves ↓ |
+| LP Deposits ↑ | Mint more (if ρ > ρ*) | More staking demand | Reserves ↑ |
+| LP Deposits ↓ | Burn (if ρ < ρ*) | Less staking demand | Reserves ↓ |
+| Au Demand ↑ | — | Fee redistribution ↑ | — |
+| Au Demand ↓ | — | Fee redistribution ↓ | — |
 | Ag Price ↑ | — | — | Reserves ↑ |
 | Ag Price ↓ | — | — | Reserves ↓ |
 
 ---
 
-## 4. AgToken — The Elastic Governance Token
+## 4. AgToken — Artifact Governance (Ag)
 
 ### 4.1 Overview
 
-AgToken is the **seigniorage absorber** and **governance token** of the protocol. Its supply is elastic — expanding when reserves exceed targets and contracting when reserves fall below targets.
+AgToken is the **governance and seigniorage token** of the protocol. Its supply is elastic — expanding when reserves exceed targets and contracting when reserves fall below targets. It is the primary token for governance participation, protocol revenue sharing, and monetary policy.
 
 ### 4.2 Token Specification
 
 | Property | Value |
 |----------|-------|
-| Name | AV AgToken |
+| Name | Artifact Governance |
 | Symbol | Ag |
 | Decimals | 18 |
-| Standard | ERC-20 + Permit + Votes |
-| Initial Supply | 0 (fair launch) |
-| Supply Cap | None (elastic, PID-controlled) |
+| Standard | ERC-20 + Permit + Votes + UUPS Upgradeable |
+| Initial Supply | 0 (fair launch, minted via PID) |
+| Supply Cap | 100,000,000 (100M, governed by PID) |
 | Transfer Fee | 0% |
-| Mint Authority | TreasuryAMO (via PID) |
+| Mint Authority | TreasuryAMO (via PID) / MINTER role |
 | Burn Mechanism | Buyback-and-burn + voluntary burn |
+| Governance | OpenZeppelin Governor compatible (IVotes) |
 
 ### 4.3 Supply Dynamics
 
@@ -195,67 +197,60 @@ AgToken captures value through:
 
 ---
 
-## 5. AuToken — The Reserve-Backed Stable Unit
+## 5. AuToken — Artifact Utility (Au)
 
 ### 5.1 Overview
 
-AuToken is the **stable, yield-bearing unit of account** — designed to maintain value stability against a basket of diversified assets. It is not pegged to a single currency but rather to a weighted basket, providing natural diversification and resilience.
+AuToken is the **utility token** of the protocol — a fixed-supply, deflationary medium of exchange with built-in transfer fees, blocklist enforcement, and cooldown mechanics. It serves as the primary unit of account within the ecosystem and is required for RSBT minting.
 
 ### 5.2 Token Specification
 
 | Property | Value |
 |----------|-------|
-| Name | AV AuToken |
+| Name | Artifact Utility |
 | Symbol | Au |
 | Decimals | 18 |
 | Standard | ERC-20 + Permit + Votes + ReentrancyGuard |
-| Initial Supply | 0 (100% collateralized mint) |
-| Peg Mechanism | Basket-of-assets |
-| Default Collateral Ratio | 110% (overcollateralized) |
-| Redemption Fee | 0.5% (governed) |
-| Yield Sources | LP fees, vault yield, protocol revenue |
+| Initial Supply | 1,000,000,000 (1B, fixed — no further minting) |
+| Transfer Fee | Enabled (governed, default 0.5%) |
+| Blocklist | Enabled (compliance module) |
+| Cooldowns | Enabled (anti-whale, configurable per-account) |
+| Transferability | Fully transferable (subject to fees/restrictions) |
 
-### 5.3 Basket Peg Mechanism
+### 5.3 Fixed Supply Model
 
-Unlike single-peg stablecoins (e.g., USDC, DAI), AuToken maintains a **basket peg**:
-
-```
-Basket Composition (Initial):
-  ┌──────────┬────────┬─────────────────────┐
-  │ Asset    │ Weight │ Role                │
-  ├──────────┼────────┼─────────────────────┤
-  │ USDC     │ 30%    │ Stability anchor    │
-  │ ETH      │ 25%    │ Growth exposure     │
-  │ LP Tokens│ 35%    │ Yield generation    │
-  │ Acoustic │ 10%    │ Strategy yield      │
-  └──────────┴────────┴─────────────────────┘
-
-Basket Price = Σ(weight_i × oraclePrice_i)
-```
-
-**Advantages over single-peg:**
-- **Diversification**: No single asset failure can break the peg
-- **Yield Generation**: LP and acoustic vault components earn yield
-- **Resilience**: If one asset depegs, others maintain value
-- **Growth Exposure**: ETH component captures upside
-
-### 5.4 Minting & Redemption
+AuToken has a **hard-capped supply of 1 billion tokens**. No further minting is possible. Value accrues to holders through:
 
 ```
-MINTING:
-  User → Deposit Collateral → Verify Value ≥ Au × 1.1 → Mint Au
+Supply Mechanics:
+  Total Supply:    1,000,000,000 Au (fixed forever)
+  Circulating:     Total Supply - Blocked - Locked
+  Deflation:       Transfer fees burned → supply decreases over time
   
-  Example: To mint 100 Au at basket price $1.00
-    Required: 100 × 1.00 × 1.10 = $110 of collateral
-    Accepted: USDC, ETH, LP tokens (at oracle prices)
+Value Accrual:
+  Fee Redistribution: Transfer fees redistributed to Au stakers
+  Utility Demand:    Required for RSBT minting → constant demand sink
+  Governance:        Au holders participate in protocol governance
+```
 
-REDEMPTION:
-  User → Burn Au → Calculate Collateral Value → Deduct 0.5% Fee → Return Collateral
+### 5.4 Compliance Features
+
+AuToken includes built-in compliance mechanisms for institutional-grade utility:
+
+```
+Transfer Fee:
+  fee = amount × feeRate (default 0.5%)
+  feeRecipient → Staking pool (redistributed to stakers)
   
-  Example: Redeem 100 Au at basket price $1.00
-    Value: 100 × 1.00 = $100
-    Fee: $100 × 0.005 = $0.50
-    Received: $99.50 of collateral
+Blocklist:
+  blockedAddresses: mapping(address → bool)
+  Transfers to/from blocked addresses revert
+  Managed by governance (compliance officer role)
+
+Cooldown:
+  cooldownDuration: mapping(address → uint256)
+  Minimum time between large transfers per account
+  Configurable per-address by governance
 ```
 
 ### 5.5 Yield Distribution
@@ -267,25 +262,25 @@ Yield Per Au Token (Estimated):
   ┌─────────────────────┬───────────┬──────────┐
   │ Source              │ APY Range │ Share    │
   ├─────────────────────┼───────────┼──────────┤
-  │ LP Trading Fees     │ 3–8%      │ 40%      │
+  │ Transfer Fee Share  │ 2–4%      │ 35%      │
   │ Acoustic Vault Yield│ 2–5%      │ 25%      │
   │ Protocol Revenue    │ 1–3%      │ 20%      │
+  │ RSBT Multiplier     │ 0–5%      │ 10%      │
   │ Seigniorage Flow    │ 0–2%      │ 10%      │
-  │ RSBT Multiplier     │ 0–5%      │ 5%       │
   ├─────────────────────┼───────────┼──────────┤
-  │ Total Estimated APY │ 6–23%     │ 100%     │
+  │ Total Estimated APY │ 5–19%     │ 100%     │
   └─────────────────────┴───────────┴──────────┘
 ```
 
-### 5.6 Peg Stability Mechanisms
+### 5.6 Demand Drivers
 
-| Mechanism | Trigger | Effect |
-|-----------|---------|--------|
-| **Arbitrage** | Au trades above basket price | Users mint Au cheaply, sell at premium → price ↓ |
-| **Arbitrage** | Au trades below basket price | Users buy cheap, redeem for full value → price ↑ |
-| **PID Adjustment** | Reserve ratio deviates | Adjusts Ag emission to influence reserve levels |
-| **Collateral Ratio** | Volatility spike | Increase required collateralization |
-| **Redemption Fee** | Large redemptions | Fee increases to slow outflows |
+| Mechanism | Description |
+|-----------|-------------|
+| **RSBT Minting** | Au is required to mint RSBT positions — constant demand from LP stakers |
+| **Governance** | Au holders govern protocol parameters and treasury allocation |
+| **Fee Sink** | Transfer fees are redistributed to stakers, incentivizing holding |
+| **Medium of Exchange** | Primary unit of account for all ecosystem transactions |
+| **Staking Yield** | Staked Au earns protocol revenue, incentivizing long-term holding |
 
 ---
 
@@ -383,7 +378,6 @@ Target Reserve Allocation:
   │      │       │      │      │      │      │      │
   ▼      ▼       ▼      ▼      ▼      ▼      ▼      ▼
  CRIT   DANGER  MIN    SAFE   TARGET GROWTH MAX   EXCESS
-  │      │       │      │      │      │      │      │
   │      │       │      │      │      │      │      │
   ▼      ▼       ▼      ▼      ▼      ▼      ▼      ▼
  EMERG  SLOW    NORMAL NORMAL HOLD   MINT   MINT   BUY
@@ -504,7 +498,7 @@ function _beforeTokenTransfer(address from, address to, uint256) internal overri
 
 ### 10.1 Overview
 
-Acoustic Vaults are **yield-generating reserve pools** that deploy protocol reserves into diversified yield strategies. They are the primary mechanism for generating sustainable, non-inflationary yield.
+Acoustic Vaults are **yield-generating reserve pools** that deploy protocol reserves into diversified yield strategies. They are the primary mechanism for generating sustainable, non-inflationary yield for AuToken stakers.
 
 ### 10.2 Vault Architecture
 
@@ -581,7 +575,7 @@ Acoustic Vaults are **yield-generating reserve pools** that deploy protocol rese
 | Condition | Action | Who |
 |-----------|--------|-----|
 | Unusual activity detected | Pause contracts | Guardian |
-| Reserve ratio < 90% | Halt Au minting | Guardian |
+| Reserve ratio < 90% | Halt Ag minting | Guardian |
 | Reserve ratio < 80% | Emergency shutdown | Guardian |
 | Oracle failure | Switch to fallback oracle | Owner |
 | Critical bug found | Pause + prepare migration | Guardian + Owner |
@@ -595,7 +589,7 @@ Acoustic Vaults are **yield-generating reserve pools** that deploy protocol rese
 | ID | Property | Formalization |
 |----|----------|--------------|
 | S1 | No unauthorized minting | `∀t: mint(t) → msg.sender ∈ AuthorizedMinters` |
-| S2 | Overcollateralization | `∀t: ReserveValue(t) ≥ AuSupply(t) × Price(t) × CollateralRatio` |
+| S2 | Ag supply cap enforced | `∀t: totalSupply(t) ≤ MAX_SUPPLY` |
 | S3 | Soulbound enforcement | `∀t: transfer(rsbtId) → revert` |
 | S4 | Cooldown enforcement | `∀t: redeem(t) → block.timestamp ≥ stakeTime + 7 days` |
 | S5 | PID output bounded | `∀t: |u(t)| ≤ maxOutput` |
@@ -624,7 +618,7 @@ Phase 1: Foundation
 Phase 2: Policy
   4. Deploy TreasuryAMO (depends on Ag, Au, PID)
   5. Configure TreasuryAMO as AgToken owner
-  6. Configure TreasuryAMO as AuToken minter
+  6. Configure AuToken fee parameters
 
 Phase 3: Staking
   7. Deploy AVLPStaking_v2 (depends on AgToken)
@@ -633,10 +627,10 @@ Phase 3: Staking
 Phase 4: Reserves
   9. Deploy Acoustic Vaults
   10. Fund vaults with initial reserves
-  11. Set basket weights and oracle configuration
+  11. Set vault strategies and yield oracles
 
 Phase 5: Governance
-  2. Deploy Timelock
+  12. Deploy Timelock
   13. Transfer ownership to Timelock
   14. Configure governance parameters
 ```
@@ -682,9 +676,9 @@ Phase 5: Governance
 
 ## 15. Conclusion
 
-The AV Treasury dual-token architecture represents a principled approach to decentralized monetary policy. By separating the stability function (AuToken) from the governance/utility function (AgToken), each token can be optimized for its specific role while maintaining economic coupling through shared reserves and algorithmic control.
+The AV Treasury dual-token architecture represents a principled approach to decentralized monetary policy. By separating the governance function (AgToken) from the utility function (AuToken), each token can be optimized for its specific role while maintaining economic coupling through shared reserves and algorithmic control.
 
-The PID controller provides **automated, non-discretionary monetary policy** that responds to market conditions in real-time. The RSBT system creates **long-term alignment** through soulbound positions with yield multipliers. The acoustic vaults generate **sustainable, non-inflationary yield** from real economic activity.
+AgToken provides **algorithmic monetary policy** through PID-controlled elastic supply, enabling the protocol to self-stabilize around a target reserve ratio. AuToken provides a **fixed-supply, compliance-ready utility medium** with deflationary mechanics and built-in fee redistribution. The RSBT system creates **long-term alignment** through soulbound positions with yield multipliers. The acoustic vaults generate **sustainable, non-inflationary yield** from real economic activity.
 
 Together, these components form a **self-stabilizing monetary system** that can maintain value stability while providing attractive yields — a combination that has eluded most DeFi protocols.
 

@@ -1,0 +1,138 @@
+🔧 Initializing BotEngine...
+   RPC: http://127.0.0.1:8545
+   Bots: 100
+   Stress mode: normal
+   ✅ Loaded deployed contracts: [
+  'agUSD',    'AVAX',
+  'USDC',     'dex',
+  'deployer', 'network',
+  'chainId',  'timestamp'
+]
+   ✅ 100 bots initialized
+   Personalities: conservative, moderate, aggressive, whale, momentum, arbitrageur
+💰 Funding bots with test tokens...
+   Funded bots 0-19...
+   Funded bots 20-39...
+   Funded bots 40-59...
+   Funded bots 60-79...
+   Funded bots 80-99...
+   ✅ All 100 bots funded with 100k agUSD + 50k AVAX
+🚀 Starting bot trading simulation...
+  DEBUG Bot 0: balA=730467422., pct=0.150, mult=0.3, type=swap
+  DEBUG Bot 0: balA=693944051., pct=0.107, mult=0.3, type=oneSidedLP
+  DEBUG Bot 0: balA=666186289., pct=0.042, mult=0.3, type=swap
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 10                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      620                          │
+│  Unique Traders:    100                          │
+│  Total Volume:      91820575.276591092218529238  │
+│  Avg Trade Size:    148097.702059017890675047    │
+│  Failed Trades:     0                            │
+│  Trade Types:       S:324 LP1:193 LP2:103            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 20                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      1217                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      195432199.337101905051138517 │
+│  Avg Trade Size:    160585.20898693665164432     │
+│  Failed Trades:     0                            │
+│  Trade Types:       S:627 LP1:389 LP2:201            │
+└─────────────────────────────────────────────────────┘
+  ⚠️ Bot 1 swap: cannot estimate gas; transaction may fail or may require manual gas limit [ See:
+  ⚠️ Bot 4 oneSidedLP: nonce has already been used [ See: https://links.ethers.org/v5-errors-NONCE_EXPI
+  ⚠️ Bot 7 twoSidedLP: approve: nonce has already been used [ See: https://links.ethers.org/v5-errors-N
+  ⚠️ Bot 6 oneSidedLP: approve A: nonce has already been used [ See: https://links.ethers.org/v5-errors
+  ⚠️ Bot 5 swap: approve B: nonce has already been used [ See: https://links.ethers.org/v5-errors
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 30                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      1823                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      241560761.154729372536336612 │
+│  Avg Trade Size:    132507.274358052316256904    │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:922 LP1:611 LP2:290            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 40                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      2405                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      295168514.101557890661765543 │
+│  Avg Trade Size:    122731.190894618665555827    │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:1205 LP1:834 LP2:366            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 50                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      3025                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      316189588.030409733727223218 │
+│  Avg Trade Size:    104525.483646416440901561    │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:1534 LP1:1037 LP2:454            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 60                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      3614                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      383845784.621755105054229111 │
+│  Avg Trade Size:    106210.787111719730230832    │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:1826 LP1:1248 LP2:540            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 70                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      4201                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      397680116.024861685119694645 │
+│  Avg Trade Size:    94663.203052811636543607     │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:2090 LP1:1472 LP2:639            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 80                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      4816                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      424625897.496002462824773546 │
+│  Avg Trade Size:    88169.829214286225669595     │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:2391 LP1:1704 LP2:721            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 90                                │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      5415                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      486802489.303586617239475731 │
+│  Avg Trade Size:    89898.889991428738179035     │
+│  Failed Trades:     7                            │
+│  Trade Types:       S:2695 LP1:1913 LP2:807            │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ 📊 METRICS — Round 100                               │
+├─────────────────────────────────────────────────────┤
+│  Total Trades:      6034                         │
+│  Unique Traders:    100                          │
+│  Total Volume:      500761422.934443247260675866 │
+│  Avg Trade Size:    82989.960711707531862889     │
+│  Failed Trades:     12                           │
+│  Trade Types:       S:3006 LP1:2119 LP2:909            │
+└─────────────────────────────────────────────────────┘

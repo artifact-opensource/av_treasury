@@ -1,4 +1,4 @@
-# AV Treasury Sandbox — Monitoring System
+# Sandbox Monitoring System
 
 ## Overview
 

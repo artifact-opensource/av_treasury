@@ -44,6 +44,11 @@ function parseArgs(argv) {
     history: null,
     refresh: 2000,
     quiet: false,
+    // Speed control
+    simulate: false,
+    days: 365,
+    maxSpeed: 1000000,
+    tickMs: 100,
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -85,6 +90,18 @@ function parseArgs(argv) {
       case '--quiet':
         args.quiet = true;
         break;
+      case '--simulate':
+        args.simulate = true;
+        break;
+      case '--days':
+        args.days = parseInt(argv[++i]) || args.days;
+        break;
+      case '--max-speed':
+        args.maxSpeed = parseInt(argv[++i]) || args.maxSpeed;
+        break;
+      case '--tick-ms':
+        args.tickMs = parseInt(argv[++i]) || args.tickMs;
+        break;
       case '--help':
       case '-h':
         printHelp();
@@ -120,11 +137,17 @@ ${chalk.bold('Options:')}
   --history <n>        Collect N data points then exit (default: unlimited)
   --refresh <ms>       Dashboard refresh interval in ms (default: 2000)
   --quiet              Suppress dashboard output (useful for headless)
+  --simulate           Run time-compressed simulation (exponential speed)
+  --days <n>           Simulated days to run (default: 365)
+  --max-speed <n>      Max speed multiplier (default: 1000000)
+  --tick-ms <ms>       Real-time ms per tick (default: 100)
   --help, -h           Show this help
 
 ${chalk.bold('Examples:')}
   node sandbox/monitoring/index.js
   node sandbox/monitoring/index.js --interval 10000 --quiet
+  node sandbox/monitoring/index.js --simulate --days 365 --max-speed 1000000
+  node sandbox/monitoring/index.js --simulate --days 30 --max-speed 1000000 --tick-ms 50
   node sandbox/monitoring/index.js --export ./snapshot.json --history 50
   node sandbox/monitoring/index.js --no-dashboard --alerts --report-periods 5min
 `);
@@ -370,10 +393,161 @@ class MonitoringApp {
   }
 }
 
+// ── Simulation Mode ──────────────────────────────────────────────
+
+/**
+ * Run a time-compressed simulation using the SpeedController.
+ * This bypasses the live monitoring loop and instead advances
+ * simulated time at exponential speed.
+ */
+async function runSimulationMode(args) {
+  const { SpeedController, createSpeedRamp } = require('./SpeedController');
+  const AnalyticsEngine = require('./AnalyticsEngine');
+  const AlertSystem = require('./AlertSystem');
+
+  console.log(chalk.cyan(`
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   🚀 AV TREASURY SANDBOX — SIMULATION MODE                   ║
+║                                                               ║
+║   Exponential Time Compression • Speed Control               ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+`));
+
+  console.log(chalk.gray(`  Target:     ${args.days} simulated days`));
+  console.log(chalk.gray(`  Max speed:  ${args.maxSpeed}x`));
+  console.log(chalk.gray(`  Tick rate:  ${args.tickMs}ms`));
+  console.log('');
+
+  // Initialize components
+  const speed = new SpeedController({
+    initialSpeed: 1,
+    maxSpeed: args.maxSpeed,
+    autoThrottle: true,
+    enableEventSampling: true,
+  });
+
+  // Lightweight analytics for simulation mode (no RPC needed)
+  const analytics = {
+    healthHistory: [],
+    tickCount: 0,
+    anomalyCount: 0,
+    recordHealth(score, tick) {
+      this.healthHistory.push({ tick, score, time: Date.now() });
+      this.tickCount++;
+    },
+    recordTick(tickData) {
+      this.tickCount++;
+    },
+    getFullReport() {
+      const scores = this.healthHistory.map(h => h.score);
+      return {
+        tickCount: this.tickCount,
+        anomalyCount: this.anomalyCount,
+        avgHealth: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0,
+        minHealth: scores.length ? Math.min(...scores) : 0,
+        maxHealth: scores.length ? Math.max(...scores) : 0,
+        healthHistory: this.healthHistory.slice(-100),
+      };
+    },
+  };
+
+  const alerts = new AlertSystem({ silent: false });
+
+  // Wire events
+  speed.on('healthUpdate', (data) => analytics.recordHealth(data.score, data.tick));
+  speed.on('emergencyBrake', (data) => {
+    alerts.raise('EMERGENCY', `Health ${data.healthScore.toFixed(2)} — throttled to realtime`);
+  });
+  speed.on('throttle', (data) => {
+    alerts.raise('WARNING', `Auto-throttle at health ${data.healthScore.toFixed(2)}`);
+  });
+
+  // Speed ramp schedule
+  const ramp = createSpeedRamp(speed, [
+    { atTick: 0,   action: 'setPreset', value: 'REALTIME' },
+    { atTick: 10,  action: 'setPreset', value: 'FAST' },
+    { atTick: 50,  action: 'setPreset', value: 'ACCELERATED' },
+    { atTick: 100, action: 'setPreset', value: 'FAST_FORWARD' },
+    { atTick: 200, action: 'setPreset', value: 'HYPERSPEED' },
+    { atTick: 500, action: 'setPreset', value: 'WARP' },
+    { atTick: 1000, action: 'setPreset', value: 'LUDICROUS' },
+  ]);
+
+  speed.start();
+
+  const targetDays = args.days;
+  let lastLog = Date.now();
+
+  while (speed.simulatedDays < targetDays && speed.running) {
+    ramp();
+    const tickData = speed.tick();
+
+    // Stochastic health model (replace with real forge state reads)
+    const health = calculateHealth(tickData);
+    speed.updateHealth(health);
+    analytics.recordTick(tickData);
+
+    if (Date.now() - lastLog > 2000) {
+      speed.printStatus();
+      lastLog = Date.now();
+    }
+
+    if (speed.healthScore < 0.05) {
+      console.log('\n🛑 CRITICAL: Health collapsed. Stopping.');
+      break;
+    }
+
+    await new Promise(r => setTimeout(r, args.tickMs));
+  }
+
+  const report = speed.stop();
+  const fullReport = {
+    speed: report,
+    analytics: analytics.getFullReport(),
+    alerts: alerts.getHistory(),
+  };
+
+  // Write results
+  const fs = require('fs');
+  const path = require('path');
+  const outDir = './simulation_results';
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(path.join(outDir, 'simulation_report.json'), JSON.stringify(fullReport, null, 2));
+  console.log(`\n📊 Results written to ${outDir}/simulation_report.json`);
+
+  return fullReport;
+}
+
+function calculateHealth(tickData) {
+  const { simulatedDays, tick, speed } = tickData;
+  let health = 1.0 - (simulatedDays / 3650) * 0.1;
+  health += (Math.random() - 0.5) * 0.02;
+  if (Math.random() < 0.0001) health -= 0.3;
+  if (speed > 100000) health -= 0.001 * Math.log10(speed / 100000);
+  health += 0.001;
+  return Math.max(0, Math.min(1, health));
+}
+
 // ── Entry Point ────────────────────────────────────────────────────
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  // Simulation mode
+  if (args.simulate) {
+    try {
+      await runSimulationMode(args);
+    } catch (err) {
+      console.error(chalk.red('\n❌ Simulation failed:'), err.message);
+      console.error(err.stack);
+      process.exit(1);
+    }
+    return;
+  }
+
+  // Normal monitoring mode
   const app = new MonitoringApp(args);
 
   try {

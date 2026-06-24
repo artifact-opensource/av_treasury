@@ -134,6 +134,21 @@ python3 scripts/visualize_csv.py simulator/simulation_full.csv
 
 ---
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [WORKSPACE.md](docs/WORKSPACE.md) | **Master workspace doc** — all contracts, innovations, sandbox, test suites |
+| [ARCHITECTURE.md](docs/technical/ARCHITECTURE.md) | Technical architecture deep-dive (909 lines) |
+| [TOKENOMICS.md](docs/technical/TOKENOMICS.md) | Token economic model and parameter derivation |
+| [whitepaper.md](docs/whitepaper/whitepaper.md) | Full protocol whitepaper |
+| [vision.md](docs/whitepaper/vision.md) | Protocol vision and roadmap |
+| [simulation_report.md](docs/reports/simulation_report.md) | Monte-Carlo simulation results |
+| [analyst_report.md](docs/reports/analyst_report.md) | Quantitative analyst review |
+| [pentest_report.md](docs/reports/pentest_report.md) | Security audit report |
+
+---
+
 ## Support & Channels
 
 - **Discord** – `#treasury-dev` (aliases: `#heartbeat-monitor`, `#ava`) – general dev discussion.

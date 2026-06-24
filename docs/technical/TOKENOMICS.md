@@ -175,8 +175,8 @@ The system has a **fixed initial distribution** across three token categories:
 
 | Category | Token | Amount | % of Total | Description |
 |----------|-------|--------|------------|-------------|
-| **AgToken (Silver)** | Ag | 999,000,000 | 99.84% | Supply-elastic governance/utility token |
-| **AuToken (Gold)** | Au | 300,000 | 0.03% | Initial liquidity seed (stable unit) |
+| **AgToken** (Artifact Governance) | Ag | 999,000,000 | 99.84% | Supply-elastic governance token |
+| **AuToken** (Artifact Utility) | Au | 300,000 | 0.03% | Initial liquidity seed (utility token) |
 | **Genesis Allocation** | Ag | 700,000 | 0.07% | Team, advisors, early backers |
 | **TOTAL** | — | **1,000,000,000** | **100%** | — |
 
@@ -612,8 +612,8 @@ Reserve Ratio < 100%  →  DEFEND: Emergency measures, Au redemption priority
 | Tier | Requirement | Base APY | Multiplier Range | Lock Time |
 |------|------------|----------|-----------------|-----------|
 | **Base** | Stake LP | 5–15% | 1.0x | None |
-| **Silver** | Stake LP + hold 1000 Ag | 8–20% | 1.0–1.5x | None |
-| **Gold** | Stake LP + RSBT active | 12–35% | 1.5–2.0x | 7 days |
+| **Utility** | Stake LP + hold 1000 Ag | 8–20% | 1.0–1.5x | None |
+| **Artifact** | Stake LP + RSBT active | 12–35% | 1.5–2.0x | 7 days |
 | **Platinum** | Stake LP + RSBT + Ag lock | 18–50% | 2.0–2.5x | 14 days |
 
 ### 7.3 RSBT Multiplier Mechanics

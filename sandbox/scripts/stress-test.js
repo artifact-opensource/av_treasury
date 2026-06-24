@@ -1,8 +1,21 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════════
- * Stress Test Scenarios — Applies pressure variations to the sandbox
+ * Stress Test Scenarios — Dual-Token Architecture (Au + Ag)
  * ═══════════════════════════════════════════════════════════════════
+ *
+ * Tests the full dual-token system under adversarial conditions:
+ * - Au: governance token with 9bps transfer fee
+ * - Ag: algorithmic stablecoin with elastic supply
+ *
+ * Scenarios:
+ * - crash:     Mass sell Ag for Au (panic selling)
+ * - squeeze:    Whale buys large amount of Ag (price impact)
+ * - drain:     Repeated small drains on one-sided LP
+ * - onesided:  20 small LPs add one-sided liquidity
+ * - whale:     Large asymmetric trades (manipulation attempt)
+ *
+ * Usage: node sandbox/scripts/stress-test.js <scenario>
  */
 
 const { ethers } = require('ethers');
@@ -10,176 +23,267 @@ const fs = require('fs');
 const path = require('path');
 
 const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:8545';
+const MNEMONIC = 'test test test test test test test test test test test junk';
 
 const ERC20_ABI = [
-  'function approve(address spender, uint256 amount) external returns (bool)',
-  'function balanceOf(address account) external view returns (uint256)',
-  'function transfer(address to, uint256 amount) external returns (bool)',
+  'function balanceOf(address) view returns (uint256)',
+  'function approve(address, uint256) returns (bool)',
+  'function totalSupply() view returns (uint256)',
+  'function transfer(address, uint256) returns (bool)',
 ];
 
 const DEX_ABI = [
-  'function swapAforB(uint256 amountAIn) external returns (uint256)',
-  'function swapBforA(uint256 amountBIn) external returns (uint256)',
-  'function addOneSidedLiquidity(uint256 amountA, uint256 amountB) external returns (uint256)',
-  'function removeLiquidity(uint256 liquidityOut) external',
+  'function swapAforB(uint256) returns (uint256)',
+  'function swapBforA(uint256) returns (uint256)',
+  'function addLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB)',
+  'function addOneSidedLiquidity(address token, uint256 amount)',
+  'function getPrice(address tokenA, address tokenB) view returns (uint256)',
+  'function getReserves() view returns (uint256, uint256)',
 ];
 
-async function loadAddresses() {
+const AU_FEE_BPS = 9;
+const FEE_DENOM = 100_000;
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function getSigner(provider, index) {
+  return ethers.HDNodeWallet.fromMnemonic(
+    ethers.Mnemonic.fromPhrase(MNEMONIC),
+    `m/44'/60'/0'/0/${index}`
+  ).connect(provider);
+}
+
+async function getDexPrice(provider, dex, auAddr, agAddr) {
+  try {
+    return await dex.getPrice(auAddr, agAddr);
+  } catch {
+    return 0n;
+  }
+}
+
+function applyFee(amount) {
+  const fee = (amount * BigInt(AU_FEE_BPS)) / BigInt(FEE_DENOM);
+  return amount - fee;
+}
+
+async function main() {
+  const scenario = process.argv[2] || 'crash';
+
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
   const configPath = path.join(__dirname, '..', 'config', 'deployed.json');
-  return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-}
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-async function getSigner(provider, index = 0) {
-  const mnemonic = 'test test test test test test test test test test test junk';
-  const wallet = ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/${index}`);
-  return wallet.connect(provider);
-}
+  const auAddr = config.auToken;
+  const agAddr = config.agToken;
+  const dexAddr = config.dex;
 
-async function getDexPrice(provider, dexAddress) {
-  const slot2 = await provider.getStorageAt(dexAddress, 2);
-  const bn = ethers.BigNumber.from(slot2);
-  const mask = ethers.BigNumber.from('0x' + 'f'.repeat(28)); // 112 bits
-  const reserveA = bn.and(mask);
-  const reserveB = bn.shr(112).and(mask);
-  if (reserveA.eq(0)) return ethers.BigNumber.from(0);
-  return reserveB.mul(ethers.utils.parseEther('1')).div(reserveA);
-}
+  const auToken = new ethers.Contract(auAddr, ERC20_ABI, provider);
+  const agToken = new ethers.Contract(agAddr, ERC20_ABI, provider);
+  const dex = new ethers.Contract(dexAddr, DEX_ABI, provider);
 
-async function getDexReserves(provider, dexAddress) {
-  const slot2 = await provider.getStorageAt(dexAddress, 2);
-  const bn = ethers.BigNumber.from(slot2);
-  const mask = ethers.BigNumber.from('0x' + 'f'.repeat(28));
-  const reserveA = bn.and(mask);
-  const reserveB = bn.shr(112).and(mask);
-  return [reserveA, reserveB];
-}
+  const initialPrice = await getDexPrice(provider, dex, auAddr, agAddr);
+  const initialAuSupply = await auToken.totalSupply();
+  const initialAgSupply = await agToken.totalSupply();
 
-async function runScenario(mode) {
-  const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  const addresses = await loadAddresses();
-  const signer = await getSigner(provider, 0);
-
-  const dex = new ethers.Contract(addresses.dex, DEX_ABI, signer);
-  const tokenA = new ethers.Contract(addresses.agUSD, ERC20_ABI, signer);
-  const tokenB = new ethers.Contract(addresses.AVAX, ERC20_ABI, signer);
-
-  console.log(`\n🔥 STRESS TEST: ${mode.toUpperCase()}`);
   console.log('═══════════════════════════════════════════════════════════════');
+  console.log(`  🔥 STRESS TEST: ${scenario.toUpperCase()} — Dual-Token (Au + Ag)`);
+  console.log('═══════════════════════════════════════════════════════════════');
+  console.log(`  Initial Price: ${ethers.formatEther(initialPrice)} Ag per Au`);
+  console.log(`  Au Supply:     ${ethers.formatEther(initialAuSupply)}`);
+  console.log(`  Ag Supply:     ${ethers.formatEther(initialAgSupply)}`);
+  console.log('───────────────────────────────────────────────────────────────\n');
 
-  const initPrice = await getDexPrice(provider, addresses.dex);
-  const [initRA, initRB] = await getDexReserves(provider, addresses.dex);
-  console.log(`  Initial price: ${ethers.utils.formatEther(initPrice)}`);
-  console.log(`  Initial reserves: ${ethers.utils.formatEther(initRA)} agUSD | ${ethers.utils.formatEther(initRB)} AVAX`);
-
-  switch (mode) {
+  switch (scenario) {
     case 'crash':
-      await runCrashScenario(provider, addresses, dex, tokenA, tokenB);
+      await runCrashScenario(provider, config, auToken, agToken, dex);
       break;
     case 'squeeze':
-      await runSqueezeScenario(provider, addresses, dex, tokenA, tokenB);
+      await runSqueezeScenario(provider, config, auToken, agToken, dex);
+      break;
+    case 'drain':
+      await runDrainScenario(provider, config, auToken, agToken, dex);
       break;
     case 'onesided':
-      await runOneSidedScenario(provider, addresses, dex, tokenA, tokenB);
+      await runOneSidedScenario(provider, config, auToken, agToken, dex);
       break;
     case 'whale':
-      await runWhaleScenario(provider, addresses, dex, tokenA, tokenB);
+      await runWhaleScenario(provider, config, auToken, agToken, dex);
       break;
     default:
-      console.log('  Unknown mode.');
+      console.error(`Unknown scenario: ${scenario}`);
+      console.error('Available: crash, squeeze, drain, onesided, whale');
+      process.exit(1);
   }
 
-  const finalPrice = await getDexPrice(provider, addresses.dex);
-  const [finalRA, finalRB] = await getDexReserves(provider, addresses.dex);
-  const change = initPrice.gt(0) ? finalPrice.sub(initPrice).mul(10000).div(initPrice) : 0;
+  // Final state
+  const finalPrice = await getDexPrice(provider, dex, auAddr, agAddr);
+  const finalAuSupply = await auToken.totalSupply();
+  const finalAgSupply = await agToken.totalSupply();
 
-  console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log(`  📊 RESULTS`);
-  console.log(`  Price: ${ethers.utils.formatEther(initPrice)} → ${ethers.utils.formatEther(finalPrice)} (${change.toNumber() / 100}%)`);
-  console.log(`  Reserves: ${ethers.utils.formatEther(finalRA)} agUSD | ${ethers.utils.formatEther(finalRB)} AVAX`);
-  console.log('═══════════════════════════════════════════════════════════════');
+  const priceChange = initialPrice > 0n
+    ? ((finalPrice - initialPrice) * 10000n) / initialPrice
+    : 0n;
+
+  console.log('\n───────────────────────────────────────────────────────────────');
+  console.log('  📊 RESULTS');
+  console.log('───────────────────────────────────────────────────────────────');
+  console.log(`  Price:   ${ethers.formatEther(initialPrice)} → ${ethers.formatEther(finalPrice)}`);
+  console.log(`  Change:  ${Number(priceChange) / 100}%`);
+  console.log(`  Au Sup:  ${ethers.formatEther(initialAuSupply)} → ${ethers.formatEther(finalAuSupply)}`);
+  console.log(`  Ag Sup:  ${ethers.formatEther(initialAgSupply)} → ${ethers.formatEther(finalAgSupply)}`);
+  console.log(`  Au Burn: ${ethers.formatEther(initialAuSupply - finalAuSupply)}`);
+  console.log('═══════════════════════════════════════════════════════════════\n');
 }
 
-async function runCrashScenario(provider, addresses, _dex, _tokenA, _tokenB) {
-  console.log('  📉 Simulating flash crash — mass sell AVAX for agUSD...');
-  const ABI = [
-    'function balanceOf(address) view returns (uint256)',
-    'function approve(address, uint256) returns (bool)',
-    'function swapBforA(uint256) returns (uint256)',
-  ];
+// ── Scenario: Crash ─────────────────────────────────────────────
+// 20 bots with dumper personality mass-sell Ag for Au
+async function runCrashScenario(provider, config, auToken, agToken, dex) {
+  console.log('  📉 Simulating bank run — mass sell Ag for Au...');
+  const auAddr = config.auToken;
+  const agAddr = config.agToken;
+  const dexAddr = config.dex;
+
   for (let round = 0; round < 5; round++) {
     for (let i = 1; i <= 20; i++) {
       const bot = await getSigner(provider, i);
-      const tokenB = new ethers.Contract(addresses.AVAX, ABI, bot);
-      const dex = new ethers.Contract(addresses.dex, ABI, bot);
+      const tokenB = new ethers.Contract(agAddr, ERC20_ABI, bot);
+      const dexC = new ethers.Contract(dexAddr, DEX_ABI, bot);
       const balB = await tokenB.balanceOf(bot.address);
-      if (balB.gt(ethers.utils.parseEther('1'))) {
-        const sell = balB.div(2);
-        await tokenB.approve(addresses.dex, sell);
-        try { await dex.swapBforA(sell, { gasLimit: 500000 }); } catch (_) {}
+      if (balB > ethers.parseEther('100')) {
+        const sell = balB / 2n;
+        await tokenB.approve(dexAddr, sell);
+        try { await dexC.swapBforA(sell, { gasLimit: 500000 }); } catch (_) {}
       }
     }
-    const p = await getDexPrice(provider, addresses.dex);
-    console.log(`    Round ${round + 1}: ${ethers.utils.formatEther(p)} agUSD/AVAX`);
+    const p = await getDexPrice(provider, dex, auAddr, agAddr);
+    console.log(`    Round ${round + 1}: ${ethers.formatEther(p)} Ag per Au`);
+    await sleep(1000);
   }
 }
 
-async function runSqueezeScenario(provider, addresses, _dex, _tokenA, _tokenB) {
-  console.log('  📈 Simulating whale buyback — massive agUSD buys...');
+// ── Scenario: Squeeze ────────────────────────────────────────────
+// Whale buys 500K Ag worth of Au (drives up Au price)
+async function runSqueezeScenario(provider, config, auToken, agToken, dex) {
+  console.log('  📈 Simulating whale squeeze — large Ag→Au buy...');
+  const auAddr = config.auToken;
+  const agAddr = config.agToken;
+  const dexAddr = config.dex;
   const whale = await getSigner(provider, 0);
-  const whaleBal = await _tokenA.balanceOf(whale.address);
-  const buyAmount = whaleBal.div(2);
-  await _tokenA.connect(whale).approve(addresses.dex, buyAmount);
-  const chunk = buyAmount.div(10);
-  for (let i = 0; i < 10; i++) {
-    try {
-      await _dex.connect(whale).swapAforB(chunk);
-    } catch (_) {}
-    const p = await getDexPrice(provider, addresses.dex);
-    console.log(`    Chunk ${i + 1}/10: ${ethers.utils.formatEther(p)}`);
-  }
-}
 
-async function runOneSidedScenario(provider, addresses, _dex, _tokenA, _tokenB) {
-  console.log('  📐 One-sided liquidity pressure — adding only AVAX...');
-  for (let i = 1; i <= 30; i++) {
-    const bot = await getSigner(provider, i);
-    const balB = await _tokenB.balanceOf(bot.address);
-    if (balB.gt(ethers.utils.parseEther('500'))) {
-      const amount = balB.div(4);
-      await _tokenB.connect(bot).approve(addresses.dex, amount);
-      try { await _dex.connect(bot).addOneSidedLiquidity(0, amount); } catch (_) {}
-    }
-    if (i % 10 === 0) {
-      const p = await getDexPrice(provider, addresses.dex);
-      console.log(`    Bot ${i}: ${ethers.utils.formatEther(p)}`);
-    }
-  }
-}
+  const tokenA = new ethers.Contract(agAddr, ERC20_ABI, whale);
+  const dexC = new ethers.Contract(dexAddr, DEX_ABI, whale);
 
-async function runWhaleScenario(provider, addresses, _dex, _tokenA, _tokenB) {
-  console.log('  🐋 Whale manipulation — large asymmetric trades...');
-  const whale = await getSigner(provider, 0);
-  const tokenA = new ethers.Contract(addresses.agUSD, [
-    'function mint(address to, uint256 amount) external',
-    'function approve(address, uint256) returns (bool)',
-  ], whale);
-  const dex = new ethers.Contract(addresses.dex, [
-    'function swapAforB(uint256) returns (uint256)',
-  ], whale);
-  const amount = ethers.utils.parseEther('100000');
-  await tokenA.mint(whale.address, amount);
-  await tokenA.approve(addresses.dex, amount);
+  // Mint whale a large amount of Ag
+  await agToken.mint(whale.address, ethers.parseEther('500000'));
+
+  const amount = ethers.parseEther('100000');
+  await tokenA.approve(dexAddr, amount);
+
   const chunks = 5;
-  const chunk = amount.div(chunks);
+  const chunk = amount / BigInt(chunks);
   for (let i = 0; i < chunks; i++) {
-    try { await dex.swapAforB(chunk, { gasLimit: 500000 }); } catch (_) {}
-    const p = await getDexPrice(provider, addresses.dex);
-    console.log(`    Chunk ${i + 1}/${chunks}: ${ethers.utils.formatEther(p)}`);
+    try { await dexC.swapAforB(chunk, { gasLimit: 500000 }); } catch (_) {}
+    const p = await getDexPrice(provider, dex, auAddr, agAddr);
+    console.log(`    Chunk ${i + 1}/${chunks}: ${ethers.formatEther(p)} Ag per Au`);
+    await sleep(500);
   }
 }
 
-const mode = process.argv[2] || 'crash';
-runScenario(mode).catch(err => {
-  console.error('💥 Stress test failed:', err.message);
+// ── Scenario: Drain ──────────────────────────────────────────────
+// Repeatedly drain one-sided LP positions
+async function runDrainScenario(provider, config, auToken, agToken, dex) {
+  console.log('  🕳️  Simulating LP drain — repeated small withdrawals...');
+  const auAddr = config.auToken;
+  const agAddr = config.agToken;
+  const dexAddr = config.dex;
+
+  for (let round = 0; round < 10; round++) {
+    for (let i = 1; i <= 10; i++) {
+      const bot = await getSigner(provider, i);
+      const tokenB = new ethers.Contract(auAddr, ERC20_ABI, bot);
+      const dexC = new ethers.Contract(dexAddr, DEX_ABI, bot);
+      const bal = await tokenB.balanceOf(bot.address);
+      if (bal > ethers.parseEther('1000')) {
+        const sell = bal / 10n;
+        await tokenB.approve(dexAddr, sell);
+        try { await dexC.swapBforA(sell, { gasLimit: 300000 }); } catch (_) {}
+      }
+    }
+    const p = await getDexPrice(provider, dex, auAddr, agAddr);
+    console.log(`    Round ${round + 1}: ${ethers.formatEther(p)} Ag per Au`);
+    await sleep(500);
+  }
+}
+
+// ── Scenario: One-Sided LP ───────────────────────────────────────
+// 20 small LPs add one-sided Au liquidity
+async function runOneSidedScenario(provider, config, auToken, agToken, dex) {
+  console.log('  💧 Simulating one-sided LP additions...');
+  const auAddr = config.auToken;
+  const agAddr = config.agToken;
+  const dexAddr = config.dex;
+
+  for (let round = 0; round < 3; round++) {
+    for (let i = 1; i <= 20; i++) {
+      const bot = await getSigner(provider, i);
+      const tokenA = new ethers.Contract(auAddr, ERC20_ABI, bot);
+      const dexC = new ethers.Contract(dexAddr, DEX_ABI, bot);
+      const bal = await tokenA.balanceOf(bot.address);
+      if (bal > ethers.parseEther('500')) {
+        const amount = bal / 4n;
+        await tokenA.approve(dexAddr, amount);
+        try { await dexC.addOneSidedLiquidity(auAddr, amount, { gasLimit: 400000 }); } catch (_) {}
+      }
+    }
+    const p = await getDexPrice(provider, dex, auAddr, agAddr);
+    console.log(`    Round ${round + 1}: ${ethers.formatEther(p)} Ag per Au`);
+    await sleep(1000);
+  }
+}
+
+// ── Scenario: Whale ──────────────────────────────────────────────
+// Large asymmetric trades to manipulate price
+async function runWhaleScenario(provider, config, auToken, agToken, dex) {
+  console.log('  🐋 Simulating whale manipulation — large asymmetric trades...');
+  const auAddr = config.auToken;
+  const agAddr = config.agToken;
+  const dexAddr = config.dex;
+  const whale = await getSigner(provider, 0);
+
+  const tokenA = new ethers.Contract(agAddr, ERC20_ABI, whale);
+  const tokenB = new ethers.Contract(auAddr, ERC20_ABI, whale);
+  const dexC = new ethers.Contract(dexAddr, DEX_ABI, whale);
+
+  // Mint whale 1M Ag
+  await agToken.mint(whale.address, ethers.parseEther('1000000'));
+
+  // Phase 1: Buy Au with Ag (drive Au price up)
+  console.log('    Phase 1: Buying Au with Ag...');
+  const buyAmount = ethers.parseEther('200000');
+  await tokenA.approve(dexAddr, buyAmount);
+  try { await dexC.swapAforB(buyAmount, { gasLimit: 500000 }); } catch (_) {}
+  let p = await getDexPrice(provider, dex, auAddr, agAddr);
+  console.log(`    Price after buy: ${ethers.formatEther(p)}`);
+
+  await sleep(500);
+
+  // Phase 2: Sell Au for Ag (drive Au price down)
+  console.log('    Phase 2: Selling Au for Ag...');
+  const auBal = await tokenB.balanceOf(whale.address);
+  if (auBal > 0n) {
+    const sellAmount = auBal / 2n;
+    await tokenB.approve(dexAddr, sellAmount);
+    try { await dexC.swapBforA(sellAmount, { gasLimit: 500000 }); } catch (_) {}
+  }
+  p = await getDexPrice(provider, dex, auAddr, agAddr);
+  console.log(`    Price after sell: ${ethers.formatEther(p)}`);
+
+  console.log('    ✅ Whale scenario complete');
+}
+
+main().catch((err) => {
+  console.error('❌ Stress test failed:', err.message);
   process.exit(1);
 });

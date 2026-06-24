@@ -4,3 +4,10 @@ test = "test/invariants"
 out = "out"
 libs = ["lib"]
 fs_permissions = [{ access = "read-write", path = "./" }]
+
+[profile.sandbox]
+src = "sandbox/contracts"
+test = "test"
+out = "out"
+libs = ["lib"]
+fs_permissions = [{ access = "read-write", path = "./" }]

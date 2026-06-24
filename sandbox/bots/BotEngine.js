@@ -1,458 +1,377 @@
-#!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════════
- * BotEngine — Simulates 100 realistic traders on ganache testnet
- * 
- * Each bot has its own EOA, personality profile, and trading strategy.
- * Behaviors include: market making, momentum trading, whale manipulation,
- * arbitrage simulation, and one-sided LP provisioning.
+ * Bot Engine — Dual-Trading Bots (Au + Ag)
  * ═══════════════════════════════════════════════════════════════════
+ *
+ * 100 autonomous trading agents with 6 personality types trading
+ * the Au/Ag pair on the DexSimulator AMM.
+ *
+ * Personality types:
+ * - whale:    Large trades, low frequency (tests price impact)
+ * - dayTrader: Medium trades, trend-following (tests momentum)
+ * - dolphin:  Small arbitrage, DEX-to-DEX (tests efficiency)
+ * - lp:       Provides one-sided liquidity (tests LP revenue)
+ * - dumper:   Sells Ag aggressively (tests sell pressure)
+ * - accumulator: Buys Ag consistently (tests buy pressure)
+ *
+ * Each bot signs its own transactions — no relayer needed.
+ *
+ * Usage: node sandbox/bots/BotEngine.js
  */
 
 const { ethers } = require('ethers');
 const fs = require('fs');
 const path = require('path');
 
-// ─── Configuration ───────────────────────────────────────────
-const CONFIG = {
-  rpcUrl: process.env.RPC_URL || 'http://127.0.0.1:8545',
-  totalBots: parseInt(process.env.BOT_COUNT) || 100,
-  baseBalanceEth: 1000,
-  
-  // Contract addresses (populated after deployment)
-  addresses: {
-    agUSD: null,
-    AVAX: null,
-    USDC: null,
-    dex: null,
-    treasuryAMO: null,
-  },
+// ── Configuration ────────────────────────────────────────────────
+const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:8545';
+const MNEMONIC = 'test test test test test test test test test test test junk';
+const BOT_COUNT = 100;
+const ROUNDS = 20;
+const ROUND_INTERVAL_MS = 2000;
 
-  // Trading parameters
-  swapIntervalMs: { min: 2000, max: 8000 },
-  tradeSizePercent: { min: 0.01, max: 0.15 },  // 1-15% of balance per trade
-  oneSidedRatio: 0.35,   // 35% of trades are one-sided LP
-  swapRatio: 0.50,       // 50% are swaps
-  addLiquidityRatio: 0.15, // 15% are two-sided LP adds
-
-  // Stress test parameters
-  stressMode: process.env.STRESS_MODE || 'normal', // normal | high | extreme
-  whaleDropAmount: ethers.utils.parseEther('500'),  // 500 ETH whale trades
-  flashCrashThreshold: 0.30,  // 30% price drop triggers panic
-};
-
-// ─── Bot Personalities ───────────────────────────────────────
-const PERSONALITIES = [
-  { name: 'conservative', swapFreq: 0.3, sizeMult: 0.3, holdBias: 0.8 },
-  { name: 'moderate',     swapFreq: 0.6, sizeMult: 0.6, holdBias: 0.5 },
-  { name: 'aggressive',   swapFreq: 1.0, sizeMult: 1.0, holdBias: 0.2 },
-  { name: 'whale',        swapFreq: 0.1, sizeMult: 3.0, holdBias: 0.9 },
-  { name: 'momentum',     swapFreq: 0.9, sizeMult: 0.8, holdBias: 0.3 },
-  { name: 'arbitrageur',  swapFreq: 0.4, sizeMult: 0.5, holdBias: 0.7 },
-];
-
-// ─── ABIs ────────────────────────────────────────────────────
+// ── Contract ABIs ────────────────────────────────────────────────
 const ERC20_ABI = [
-  'function approve(address spender, uint256 amount) external returns (bool)',
-  'function balanceOf(address account) external view returns (uint256)',
-  'function transfer(address to, uint256 amount) external returns (bool)',
-  'function totalSupply() external view returns (uint256)',
-  'function decimals() external view returns (uint8)',
-  'function mint(address to, uint256 amount) external',
+  'function balanceOf(address) view returns (uint256)',
+  'function approve(address, uint256) returns (bool)',
+  'function transfer(address, uint256) returns (bool)',
+  'function totalSupply() view returns (uint256)',
+  'function allowance(address, address) view returns (uint256)',
 ];
 
 const DEX_ABI = [
-  'function addLiquidity(uint256 amountA, uint256 amountB) external returns (uint256)',
-  'function addOneSidedLiquidity(uint256 amountA, uint256 amountB) external returns (uint256)',
-  'function removeLiquidity(uint256 liquidityOut) external',
-  'function swapAforB(uint256 amountAIn) external returns (uint256)',
-  'function swapBforA(uint256 amountBIn) external returns (uint256)',
-  'function totalLiquidity() external view returns (uint256)',
-  'event Swap(address indexed swapper, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut)',
-  'event PriceUpdate(uint256 priceA, uint256 priceB)',
+  'function swapAforB(uint256 amountAIn) returns (uint256 amountBOut)',
+  'function swapBforA(uint256 amountBIn) returns (uint256 amountAOut)',
+  'function addLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB)',
+  'function removeLiquidity(address tokenA, address tokenB, uint256 amount)',
+  'function getPrice(address tokenA, address tokenB) view returns (uint256)',
+  'function getReserves() view returns (uint256, uint256)',
+  'function addOneSidedLiquidity(address token, uint256 amount)',
 ];
 
-const TREASURY_AMO_ABI = [
-  'function executeBuyback(uint256 amount) external',
-  'function getTreasuryBalance() external view returns (uint256)',
-  'function getBuybackCap() external view returns (uint256)',
-  'function getLastBuybackTime() external view returns (uint256)',
-  'function COOLDOWN_PERIOD() external view returns (uint256)',
-];
+// ── Personality Definitions ──────────────────────────────────────
+const PERSONALITIES = {
+  whale: {
+    tradeSizePercent: 0.3,     // 30% of balance per trade
+    intervalMs: 30000,          // Every 30s
+    swapDirection: 0.5,         // 50/50 buy/sell
+    oneSidedLP: false,
+    gasLimit: 500000,
+  },
+  dayTrader: {
+    tradeSizePercent: 0.15,
+    intervalMs: 5000,
+    swapDirection: 0.7,         // 70% buy Ag (momentum)
+    oneSidedLP: false,
+    gasLimit: 300000,
+  },
+  dolphin: {
+    tradeSizePercent: 0.05,
+    intervalMs: 15000,
+    swapDirection: 0.5,
+    oneSidedLP: false,
+    gasLimit: 200000,
+  },
+  lp: {
+    tradeSizePercent: 0.1,
+    intervalMs: 20000,
+    swapDirection: 0.0,         // No swaps, only LP
+    oneSidedLP: true,
+    gasLimit: 400000,
+  },
+  dumper: {
+    tradeSizePercent: 0.2,
+    intervalMs: 3000,
+    swapDirection: 1.0,         // 100% sell Ag
+    oneSidedLP: false,
+    gasLimit: 200000,
+  },
+  accumulator: {
+    tradeSizePercent: 0.12,
+    intervalMs: 10000,
+    swapDirection: 0.0,         // 100% buy Ag
+    oneSidedLP: false,
+    gasLimit: 200000,
+  },
+};
 
-// ─── Bot Class ───────────────────────────────────────────────
-class Bot {
-  constructor(id, wallet, personality) {
-    this.id = id;
-    this.wallet = wallet;
-    this.personality = personality;
-    this.tradeCount = 0;
-    this.volumeGenerated = ethers.BigNumber.from(0);
-    this.lastTradeTime = 0;
-    this.alive = true;
-    this.holdings = { agUSD: 0, AVAX: 0 };
-  }
-
-  async executeTrade() {
-    if (!this.alive) return null;
-
-    const dex = new ethers.Contract(CONFIG.addresses.dex, DEX_ABI, this.wallet);
-    const tokenA = new ethers.Contract(CONFIG.addresses.agUSD, ERC20_ABI, this.wallet);
-    const tokenB = new ethers.Contract(CONFIG.addresses.AVAX, ERC20_ABI, this.wallet);
-
-    const rand = Math.random();
-    let tradeType;
-    if (rand < CONFIG.oneSidedRatio) {
-      tradeType = 'oneSidedLP';
-    } else if (rand < CONFIG.oneSidedRatio + CONFIG.swapRatio) {
-      tradeType = 'swap';
-    } else {
-      tradeType = 'twoSidedLP';
-    }
-
-    try {
-      const balanceA = await tokenA.balanceOf(this.wallet.address);
-      const balanceB = await tokenB.balanceOf(this.wallet.address);
-
-      if (balanceA.lt(ethers.utils.parseEther('1')) && balanceB.lt(ethers.utils.parseEther('1'))) {
-        this.alive = false;
-        return null;
-      }
-
-      const sizePercent = CONFIG.tradeSizePercent.min + 
-        Math.random() * (CONFIG.tradeSizePercent.max - CONFIG.tradeSizePercent.min);
-      const sizeMult = this.personality.sizeMult;
-
-      if (this.id === 0 && this.tradeCount < 3) {
-        console.log(`  DEBUG Bot 0: balA=${ethers.utils.formatEther(balanceA).substring(0,10)}, pct=${sizePercent.toFixed(3)}, mult=${sizeMult}, type=${tradeType}`);
-      }
-
-      let tx;
-      let tradeAmount;
-
-      switch (tradeType) {
-        case 'swap': {
-          const direction = Math.random() > 0.5;
-          if (direction) {
-            tradeAmount = balanceA.mul(Math.ceil(sizePercent * sizeMult * 100)).div(100);
-            if (tradeAmount.gt(0)) {
-              try {
-                const approveTx = await tokenA.approve(dex.address, tradeAmount);
-                await approveTx.wait();
-                tx = await dex.swapAforB(tradeAmount);
-              } catch (e) {
-                return { bot: this.id, type: tradeType, error: 'approve/swap A: ' + e.message };
-              }
-            }
-          } else {
-            tradeAmount = balanceB.mul(Math.ceil(sizePercent * sizeMult * 100)).div(100);
-            if (tradeAmount.gt(0)) {
-              try {
-                const approveTx = await tokenB.approve(dex.address, tradeAmount);
-                await approveTx.wait();
-              } catch (e) {
-                return { bot: this.id, type: tradeType, error: 'approve B: ' + e.message };
-              }
-              tx = await dex.swapBforA(tradeAmount);
-            }
-          }
-          break;
-        }
-
-        case 'oneSidedLP': {
-          const useTokenA = Math.random() > 0.5;
-          if (useTokenA) {
-            tradeAmount = balanceA.mul(Math.ceil(sizePercent * sizeMult * 100)).div(100);
-            if (tradeAmount.gt(0)) {
-              try {
-                const approveTx = await tokenA.approve(dex.address, tradeAmount);
-                await approveTx.wait();
-              } catch (e) {
-                return { bot: this.id, type: tradeType, error: 'approve A: ' + e.message };
-              }
-              tx = await dex.addOneSidedLiquidity(tradeAmount, 0);
-            }
-          } else {
-            tradeAmount = balanceB.mul(Math.ceil(sizePercent * sizeMult * 100)).div(100);
-            if (tradeAmount.gt(0)) {
-              try {
-                const approveTx = await tokenB.approve(dex.address, tradeAmount);
-                await approveTx.wait();
-              } catch (e) {
-                return { bot: this.id, type: tradeType, error: 'approve B: ' + e.message };
-              }
-              tx = await dex.addOneSidedLiquidity(0, tradeAmount);
-            }
-          }
-          break;
-        }
-
-        case 'twoSidedLP': {
-          const amountA = balanceA.mul(Math.ceil(sizePercent * sizeMult * 50)).div(100);
-          const amountB = balanceB.mul(Math.ceil(sizePercent * sizeMult * 50)).div(100);
-          if (amountA.gt(0) && amountB.gt(0)) {
-            try {
-              await tokenA.approve(dex.address, amountA);
-              await tokenB.approve(dex.address, amountB);
-            } catch (e) {
-              return { bot: this.id, type: tradeType, error: 'approve: ' + e.message };
-            }
-            tx = await dex.addLiquidity(amountA, amountB);
-          }
-          break;
-        }
-      }
-
-      if (tx) {
-        const receipt = await tx.wait();
-        this.tradeCount++;
-        this.volumeGenerated = this.volumeGenerated.add(tradeAmount || 0);
-        this.lastTradeTime = Date.now();
-        return { bot: this.id, type: tradeType, amount: tradeAmount, hash: receipt.transactionHash };
-      }
-    } catch (err) {
-      // Bot failed trade — could be slippage, low balance, etc.
-      return { bot: this.id, type: tradeType, error: err.message };
-    }
-    return null;
-  }
+// Assign personality based on bot index
+function getPersonality(index) {
+  const types = ['whale', 'dayTrader', 'dolphin', 'lp', 'dumper', 'accumulator'];
+  // Distribution: 5 whales, 20 dayTraders, 15 dolphins, 20 LPs, 20 dumpers, 20 accumulators
+  if (index <= 5) return types[0];
+  if (index <= 25) return types[1];
+  if (index <= 40) return types[2];
+  if (index <= 60) return types[3];
+  if (index <= 80) return types[4];
+  return types[5];
 }
 
-// ─── Main Engine ─────────────────────────────────────────────
+// ── Main Engine ──────────────────────────────────────────────────
 class BotEngine {
   constructor() {
-    this.provider = new ethers.providers.JsonRpcProvider(CONFIG.rpcUrl);
+    this.provider = new ethers.JsonRpcProvider(RPC_URL);
     this.bots = [];
-    this.metrics = {
-      totalTrades: 0,
-      totalVolume: ethers.BigNumber.from(0),
-      uniqueTraders: new Set(),
-      failedTrades: 0,
-      avgTradeSize: 0,
-      priceHistory: [],
-      tradeTypeCounts: { swap: 0, oneSidedLP: 0, twoSidedLP: 0 },
-    };
+    this.round = 0;
     this.running = false;
-  }
-
-  async initialize() {
-    console.log('🔧 Initializing BotEngine...');
-    console.log(`   RPC: ${CONFIG.rpcUrl}`);
-    console.log(`   Bots: ${CONFIG.totalBots}`);
-    console.log(`   Stress mode: ${CONFIG.stressMode}`);
-
-    // Load contract addresses
-    const addrFile = path.join(__dirname, '..', 'config', 'deployed.json');
-    if (fs.existsSync(addrFile)) {
-      CONFIG.addresses = JSON.parse(fs.readFileSync(addrFile, 'utf8'));
-      console.log('   ✅ Loaded deployed contracts:', Object.keys(CONFIG.addresses).filter(k => CONFIG.addresses[k]));
-    } else {
-      console.log('   ⚠️  No deployed.json found — run deploy-sandbox.js first');
-    }
-
-    // Create 100 bot wallets from mnemonic
-    const mnemonic = 'test test test test test test test test test test test junk';
-    const hdNode = ethers.utils.HDNode.fromMnemonic(mnemonic);
-
-    for (let i = 0; i < CONFIG.totalBots; i++) {
-      const path = `m/44'/60'/0'/0/${i}`;
-      const wallet = ethers.Wallet.fromMnemonic(mnemonic, path).connect(this.provider);
-      const personality = PERSONALITIES[i % PERSONALITIES.length];
-      this.bots.push(new Bot(i, wallet, personality));
-    }
-
-    console.log(`   ✅ ${this.bots.length} bots initialized`);
-    console.log(`   Personalities: ${PERSONALITIES.map(p => p.name).join(', ')}`);
-  }
-
-  async fundBots(tokenA, tokenB) {
-    console.log('💰 Funding bots with test tokens...');
-    const mnemonic = 'test test test test test test test test test test test junk';
-    const ownerWallet = ethers.Wallet.fromMnemonic(mnemonic, "m/44'/60'/0'/0/0").connect(this.provider);
-
-    for (let i = 0; i < this.bots.length; i++) {
-      const bot = this.bots[i];
-      
-      // Mint agUSD to each bot
-      await tokenA.connect(ownerWallet).mint(bot.wallet.address, ethers.utils.parseEther('100000'));
-      
-      // Mint AVAX to each bot
-      await tokenB.connect(ownerWallet).mint(bot.wallet.address, ethers.utils.parseEther('50000'));
-
-      if (i % 20 === 0) {
-        console.log(`   Funded bots ${i}-${Math.min(i + 19, this.bots.length - 1)}...`);
-      }
-    }
-    console.log(`   ✅ All ${this.bots.length} bots funded with 100k agUSD + 50k AVAX`);
-  }
-
-  async startTrading() {
-    this.running = true;
-    console.log('🚀 Starting bot trading simulation...');
-
-    // Set stress mode parameters
-    let interval = CONFIG.swapIntervalMs;
-    if (CONFIG.stressMode === 'high') {
-      interval = { min: 500, max: 2000 };
-    } else if (CONFIG.stressMode === 'extreme') {
-      interval = { min: 100, max: 500 };
-    }
-
-    let round = 0;
-    while (this.running) {
-      round++;
-      const activeBots = this.bots.filter(b => b.alive);
-      
-      if (activeBots.length === 0) {
-        console.log('💀 All bots drained. Stopping.');
-        break;
-      }
-
-      // Random subset of bots trade each round
-      const tradingNow = activeBots.filter(() => Math.random() < 0.6);
-      
-      const promises = tradingNow.map(async (bot) => {
-        const result = await bot.executeTrade();
-        if (result) {
-          this.metrics.totalTrades++;
-          this.metrics.uniqueTraders.add(bot.id);
-          if (result.type) this.metrics.tradeTypeCounts[result.type]++;
-          if (result.amount) this.metrics.totalVolume = this.metrics.totalVolume.add(result.amount);
-          if (result.error) {
-            this.metrics.failedTrades++;
-            if (this.metrics.failedTrades <= 5) {
-              console.log(`  ⚠️ Bot ${result.bot} ${result.type}: ${result.error.substring(0, 80)}`);
-            }
-          }
-        }
-        return result;
-      });
-
-      await Promise.allSettled(promises);
-
-      // Record price snapshot from storage (slot 2 has packed reserves)
-      try {
-        const slot2 = await this.provider.getStorageAt(CONFIG.addresses.dex, 2);
-        const reserveA = ethers.BigNumber.from(slot2).and(ethers.BigNumber.from('0x' + 'f'.repeat(28)));
-        const reserveB = ethers.BigNumber.from(slot2).shr(112).and(ethers.BigNumber.from('0x' + 'f'.repeat(28)));
-        const priceA = reserveA.gt(0) ? reserveB.mul(1e18).div(reserveA) : 0;
-        this.metrics.priceHistory.push({
-          round,
-          timestamp: Date.now(),
-          priceA: ethers.utils.formatEther(priceA),
-          reserveA: ethers.utils.formatEther(reserveA),
-          reserveB: ethers.utils.formatEther(reserveB),
-          activeBots: activeBots.length,
-        });
-      } catch (e) {
-        // Ignore oracle errors
-      }
-
-      // Log every 10 rounds
-      if (round % 10 === 0) {
-        this.logMetrics(round);
-      }
-
-      // Random delay between rounds
-      const delay = interval.min + Math.random() * (interval.max - interval.min);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-
-  logMetrics(round) {
-    const avgSize = this.metrics.totalTrades > 0
-      ? ethers.utils.formatEther(this.metrics.totalVolume.div(this.metrics.totalTrades))
-      : '0';
-    
-    const latestPrice = this.metrics.priceHistory.length > 0
-      ? this.metrics.priceHistory[this.metrics.priceHistory.length - 1]
-      : null;
-
-    console.log('');
-    console.log('┌─────────────────────────────────────────────────────┐');
-    console.log(`│ 📊 METRICS — Round ${String(round).padEnd(34)}│`);
-    console.log('├─────────────────────────────────────────────────────┤');
-    console.log(`│  Total Trades:      ${String(this.metrics.totalTrades).padEnd(29)}│`);
-    console.log(`│  Unique Traders:    ${String(this.metrics.uniqueTraders.size).padEnd(29)}│`);
-    console.log(`│  Total Volume:      ${ethers.utils.formatEther(this.metrics.totalVolume).padEnd(29)}│`);
-    console.log(`│  Avg Trade Size:    ${avgSize.padEnd(29)}│`);
-    console.log(`│  Failed Trades:     ${String(this.metrics.failedTrades).padEnd(29)}│`);
-    console.log(`│  Trade Types:       S:${this.metrics.tradeTypeCounts.swap} LP1:${this.metrics.tradeTypeCounts.oneSidedLP} LP2:${this.metrics.tradeTypeCounts.twoSidedLP}${' '.repeat(12)}│`);
-    if (latestPrice) {
-      console.log(`│  Price (agUSD/AVAX): ${latestPrice.priceA.padEnd(28)}│`);
-      console.log(`│  Active Bots:       ${String(latestPrice.activeBots).padEnd(29)}│`);
-    }
-    console.log('└─────────────────────────────────────────────────────┘');
-  }
-
-  async saveMetrics() {
-    const outputPath = path.join(__dirname, '..', 'logs', 'bot-metrics.json');
-    const data = {
-      config: {
-        totalBots: CONFIG.totalBots,
-        stressMode: CONFIG.stressMode,
-        timestamp: new Date().toISOString(),
-      },
-      metrics: {
-        totalTrades: this.metrics.totalTrades,
-        uniqueTraders: this.metrics.uniqueTraders.size,
-        totalVolume: this.metrics.totalVolume.toString(),
-        failedTrades: this.metrics.failedTrades,
-        tradeTypeCounts: this.metrics.tradeTypeCounts,
-      },
-      priceHistory: this.metrics.priceHistory,
-      botSummaries: this.bots.map(b => ({
-        id: b.id,
-        personality: b.personality.name,
-        tradeCount: b.tradeCount,
-        volume: b.volumeGenerated.toString(),
-        alive: b.alive,
-      })),
+    this.stats = {
+      totalTrades: 0,
+      successfulTrades: 0,
+      failedTrades: 0,
+      totalVolume: 0n,
+      tradesByType: {},
+      uniqueTraders: new Set(),
     };
-    fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
-    console.log(`📁 Metrics saved to ${outputPath}`);
+  }
+
+  async init() {
+    const configPath = path.join(__dirname, '..', 'config', 'deployed.json');
+    if (!fs.existsSync(configPath)) {
+      throw new Error('deployed.json not found. Run deploy-sandbox.js first.');
+    }
+
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    this.config = config;
+
+    this.auToken = new ethers.Contract(config.auToken, ERC20_ABI, this.provider);
+    this.agToken = new ethers.Contract(config.agToken, ERC20_ABI, this.provider);
+    this.dex = new ethers.Contract(config.dex, DEX_ABI, this.provider);
+
+    // Initialize bots
+    for (let i = 1; i <= BOT_COUNT; i++) {
+      const wallet = ethers.HDNodeWallet.fromMnemonic(
+        ethers.Mnemonic.fromPhrase(MNEMONIC),
+        `m/44'/60'/0'/0/${i}`
+      ).connect(this.provider);
+
+      const personality = getPersonality(i);
+      this.bots.push({
+        index: i,
+        wallet,
+        personality,
+        config: PERSONALITIES[personality],
+        lastTrade: 0,
+        tradeCount: 0,
+      });
+    }
+
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('  🤖 BOT ENGINE — Dual-Token Trading (Au + Ag)');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log(`  Bots:     ${BOT_COUNT}`);
+    console.log(`  Rounds:   ${ROUNDS}`);
+    console.log(`  Au:       ${config.auToken}`);
+    console.log(`  Ag:       ${config.agToken}`);
+    console.log(`  DEX:      ${config.dex}`);
+    console.log('───────────────────────────────────────────────────────────────');
+  }
+
+  async start() {
+    this.running = true;
+    const startTime = Date.now();
+
+    console.log('\n🚀 Starting bot engine...\n');
+
+    // Print header
+    console.log('  Round │ Au Price  │ Volume       │ Trades │ Failed │ Unique');
+    console.log('  ──────┼───────────┼──────────────┼────────┼────────┼───────');
+
+    for (let round = 1; round <= ROUNDS && this.running; round++) {
+      this.round = round;
+      await this.runRound();
+
+      // Print round summary
+      const price = await this.getPrice();
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      const vol = ethers.formatEther(this.stats.totalVolume);
+
+      console.log(
+        `  ${String(round).padStart(5)} │ ` +
+        `${ethers.formatEther(price).padStart(9)} │ ` +
+        `${vol.padStart(12)} │ ` +
+        `${String(this.stats.totalTrades).padStart(6)} │ ` +
+        `${String(this.stats.failedTrades).padStart(6)} │ ` +
+        `${String(this.stats.uniqueTraders.size).padStart(5)}`
+      );
+
+      // Wait between rounds
+      if (round < ROUNDS) {
+        await this.sleep(ROUND_INTERVAL_MS);
+      }
+    }
+
+    this.printFinalStats();
+  }
+
+  async runRound() {
+    const promises = this.bots.map((bot) => this.trade(bot));
+    await Promise.allSettled(promises);
+  }
+
+  async trade(bot) {
+    const now = Date.now();
+    if (now - bot.lastTrade < bot.config.intervalMs) return;
+
+    bot.lastTrade = now;
+
+    try {
+      const { auToken, agToken, dex } = this;
+
+      // Get balances
+      const auBal = await auToken.balanceOf(bot.wallet.address);
+      const agBal = await agToken.balanceOf(bot.wallet.address);
+
+      if (auBal === 0n && agBal === 0n) return;
+
+      // Determine trade type
+      if (bot.config.oneSidedLP && auBal > 0n) {
+        // LP: provide one-sided liquidity with Au
+        await this.provideOneSidedLiquidity(bot, auToken, agToken, auBal);
+        return;
+      }
+
+      // Determine swap direction
+      let sellAu; // true = sell Au for Ag, false = sell Ag for Au
+      if (bot.config.swapDirection === 1.0) {
+        sellAu = false; // Always sell Ag
+      } else if (bot.config.swapDirection === 0.0) {
+        sellAu = true; // Always sell Au
+      } else {
+        // Random based on personality probability
+        sellAu = Math.random() > bot.config.swapDirection;
+      }
+
+      const tokenIn = sellAu ? auToken : agToken;
+      const tokenOut = sellAu ? agToken : auToken;
+      const balIn = sellAu ? auBal : agBal;
+
+      if (balIn === 0n) return;
+
+      const tradeAmount = (balIn * BigInt(Math.floor(bot.config.tradeSizePercent * 1000))) / 1000n;
+
+      if (tradeAmount === 0n) return;
+
+      // Check and set allowance
+      const allowance = await tokenIn.allowance(bot.wallet.address, this.config.dex);
+      if (allowance < tradeAmount) {
+        const maxApproval = ethers.MaxUint256;
+        const approveTx = await tokenIn.connect(bot.wallet).approve(this.config.dex, maxApproval);
+        await approveTx.wait();
+      }
+
+      // Execute swap
+      let tx;
+      if (sellAu) {
+        tx = await dex.connect(bot.wallet).swapBforA(tradeAmount, { gasLimit: bot.config.gasLimit });
+      } else {
+        tx = await dex.connect(bot.wallet).swapAforB(tradeAmount, { gasLimit: bot.config.gasLimit });
+      }
+
+      const receipt = await tx.wait();
+
+      // Update stats
+      this.stats.totalTrades++;
+      this.stats.successfulTrades++;
+      this.stats.totalVolume += tradeAmount;
+      this.stats.uniqueTraders.add(bot.wallet.address);
+      bot.tradeCount++;
+
+      const type = bot.personality;
+      this.stats.tradesByType[type] = (this.stats.tradesByType[type] || 0) + 1;
+
+    } catch (err) {
+      this.stats.totalTrades++;
+      this.stats.failedTrades++;
+      // Fail silently — bots don't retry within the same round
+    }
+  }
+
+  async provideOneSidedLiquidity(bot, auToken, agToken, auBal) {
+    try {
+      const amount = (auBal * 10n) / 100n; // 10% of Au balance
+      if (amount === 0n) return;
+
+      const allowance = await auToken.allowance(bot.wallet.address, this.config.dex);
+      if (allowance < amount) {
+        await auToken.connect(bot.wallet).approve(this.config.dex, ethers.MaxUint256);
+      }
+
+      const tx = await this.dex.connect(bot.wallet).addOneSidedLiquidity(
+        this.config.auToken,
+        amount,
+        { gasLimit: bot.config.gasLimit }
+      );
+      await tx.wait();
+
+      this.stats.totalTrades++;
+      this.stats.successfulTrades++;
+      this.stats.totalVolume += amount;
+      this.stats.uniqueTraders.add(bot.wallet.address);
+      bot.tradeCount++;
+
+      const type = `${bot.personality}_lp`;
+      this.stats.tradesByType[type] = (this.stats.tradesByType[type] || 0) + 1;
+    } catch {
+      this.stats.totalTrades++;
+      this.stats.failedTrades++;
+    }
+  }
+
+  async getPrice() {
+    try {
+      return await this.dex.getPrice(this.config.auToken, this.config.agToken);
+    } catch {
+      return 0n;
+    }
+  }
+
+  printFinalStats() {
+    const elapsed = (Date.now() - this.startTime) / 1000;
+
+    console.log('\n═══════════════════════════════════════════════════════════════');
+    console.log('  📊 FINAL STATISTICS');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log(`  Total Trades:      ${this.stats.totalTrades}`);
+    console.log(`  Successful:        ${this.stats.successfulTrades}`);
+    console.log(`  Failed:            ${this.stats.failedTrades}`);
+    console.log(`  Unique Traders:    ${this.stats.uniqueTraders.size}`);
+    console.log(`  Total Volume:      ${ethers.formatEther(this.stats.totalVolume)}`);
+    console.log(`  Avg Trades/Bot:    ${(this.stats.totalTrades / BOT_COUNT).toFixed(1)}`);
+    console.log(`  Runtime:           ${elapsed.toFixed(1)}s`);
+
+    console.log('\n  Trades by Type:');
+    for (const [type, count] of Object.entries(this.stats.tradesByType)) {
+      console.log(`    ${type.padEnd(20)} ${count}`);
+    }
+
+    console.log('═══════════════════════════════════════════════════════════════\n');
   }
 
   stop() {
     this.running = false;
   }
-}
 
-// ─── CLI ─────────────────────────────────────────────────────
-async function main() {
-  const engine = new BotEngine();
-  await engine.initialize();
-
-  // Check if contracts are deployed
-  if (!CONFIG.addresses.dex || !CONFIG.addresses.agUSD || !CONFIG.addresses.AVAX) {
-    console.log('❌ Contracts not deployed. Run: node sandbox/scripts/deploy-sandbox.js');
-    process.exit(1);
+  sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
-
-  // Get contracts
-  const mnemonic = 'test test test test test test test test test test test junk';
-  const ownerWallet = ethers.Wallet.fromMnemonic(mnemonic, "m/44'/60'/0'/0/0").connect(engine.provider);
-  const tokenA = new ethers.Contract(CONFIG.addresses.agUSD, ERC20_ABI, ownerWallet);
-  const tokenB = new ethers.Contract(CONFIG.addresses.AVAX, ERC20_ABI, ownerWallet);
-
-  // Fund bots
-  await engine.fundBots(tokenA, tokenB);
-
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\n🛑 Shutting down bot engine...');
-    engine.stop();
-    await engine.saveMetrics();
-    process.exit(0);
-  });
-
-  // Start trading
-  await engine.startTrading();
 }
 
-main().catch(err => {
-  console.error('💥 BotEngine error:', err);
-  process.exit(1);
-});
+// ── CLI ──────────────────────────────────────────────────────────
+if (require.main === module) {
+  const engine = new BotEngine();
+  engine.init()
+    .then(() => engine.start())
+    .catch((err) => {
+      console.error('❌ Bot engine failed:', err.message);
+      process.exit(1);
+    });
 
-module.exports = { BotEngine, Bot, CONFIG };
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\n⏹️  Stopping bot engine...');
+    engine.stop();
+    setTimeout(() => process.exit(0), 1000);
+  });
+}
+
+module.exports = BotEngine;

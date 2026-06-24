@@ -1,170 +1,230 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════════
- * Monitoring Dashboard — Real-time sandbox metrics
- * 
- * Polls the ganache network and displays:
- * - Live price feeds
- * - Bot activity rates
- * - Trade volume
- * - Reserve levels
- * - System health
+ * Dashboard — Dual-Token Monitoring (Au + Ag)
  * ═══════════════════════════════════════════════════════════════════
+ *
+ * Real-time monitoring for the dual-token sandbox:
+ * - Au/Ag price (DEX)
+ * - Au supply (with burn tracking)
+ * - Ag supply (with mint tracking)
+ * - DEX reserves
+ * - Bot activity heatmap
+ * - Trade volume breakdown
+ *
+ * Usage: node sandbox/monitoring/Dashboard.js
  */
 
 const { ethers } = require('ethers');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:8545';
-const POLL_INTERVAL = 3000; // 3 seconds
 
 const ERC20_ABI = [
   'function balanceOf(address) view returns (uint256)',
   'function totalSupply() view returns (uint256)',
 ];
 
+const DEX_ABI = [
+  'function getPrice(address tokenA, address tokenB) view returns (uint256)',
+  'function getReserves() view returns (uint256, uint256)',
+];
+
+const AU_FEE_BPS = 9;
+
 class Dashboard {
   constructor() {
-    this.provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    this.provider = null;
+    this.auToken = null;
+    this.agToken = null;
+    this.dex = null;
+    this.config = null;
     this.history = [];
-    this.startHeight = 0;
+    this.maxHistory = 60; // Keep 60 data points
+    this.running = false;
+    this.startTime = Date.now();
+    this.lastTradeCount = 0;
   }
 
-  async start() {
-    console.clear();
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('  📊 SANDBOX MONITORING DASHBOARD');
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log(`  RPC: ${RPC_URL}`);
-    console.log(`  Polling: ${POLL_INTERVAL}ms`);
-    console.log('═══════════════════════════════════════════════════════════════');
+  async init() {
+    this.provider = new ethers.JsonRpcProvider(RPC_URL);
 
-    // Load deployed addresses
     const configPath = path.join(__dirname, '..', 'config', 'deployed.json');
     if (!fs.existsSync(configPath)) {
-      console.log('❌ No deployed.json found. Run deploy-sandbox.js first.');
-      process.exit(1);
+      throw new Error('deployed.json not found. Run deploy-sandbox.js first.');
     }
-    this.addresses = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-    this.startHeight = await this.provider.getBlockNumber();
+    this.config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-    // Start polling
-    setInterval(() => this.tick(), POLL_INTERVAL);
-    await this.tick();
+    this.auToken = new ethers.Contract(this.config.auToken, ERC20_ABI, this.provider);
+    this.agToken = new ethers.Contract(this.config.agToken, ERC20_ABI, this.provider);
+    this.dex = new ethers.Contract(this.config.dex, DEX_ABI, this.provider);
   }
 
-  async tick() {
+  async start(intervalMs = 3000) {
+    this.running = true;
+    this.startTime = Date.now();
+
+    // Hide cursor
+    process.stdout.write('\x1B[?25l');
+
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('  📊 DUAL-TOKEN DASHBOARD — Au + Ag');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log(`  Au:       ${this.config.auToken}`);
+    console.log(`  Ag:       ${this.config.agToken}`);
+    console.log(`  DEX:      ${this.config.dex}`);
+    console.log(`  Interval: ${intervalMs}ms`);
+    console.log('───────────────────────────────────────────────────────────────');
+    console.log('  Press Ctrl+C to stop\n');
+
+    while (this.running) {
+      await this.render();
+      await this.sleep(intervalMs);
+    }
+  }
+
+  async render() {
     try {
-      const blockNumber = await this.provider.getBlockNumber();
-      const [priceA, reserves, totalLiq, botMetrics] = await Promise.all([
-        this.getPrice(),
-        this.getReserves(),
-        this.getLiquidity(),
-        this.readBotMetrics(),
+      const [price, reserves, auSupply, agSupply, block] = await Promise.all([
+        this.dex.getPrice(this.config.auToken, this.config.agToken),
+        this.dex.getReserves(),
+        this.auToken.totalSupply(),
+        this.agToken.totalSupply(),
+        this.provider.getBlockNumber(),
       ]);
 
-      const data = {
-        block: blockNumber,
-        timestamp: new Date().toISOString(),
-        priceA: priceA ? ethers.utils.formatEther(priceA) : 'N/A',
-        reserveA: reserves ? ethers.utils.formatEther(reserves[0]) : 'N/A',
-        reserveB: reserves ? ethers.utils.formatEther(reserves[1]) : 'N/A',
-        totalLiquidity: totalLiq ? ethers.utils.formatEther(totalLiq) : 'N/A',
-        ...botMetrics,
+      const dataPoint = {
+        timestamp: Date.now(),
+        price,
+        reserveA: reserves[0],
+        reserveB: reserves[1],
+        auSupply,
+        agSupply,
+        block,
       };
 
-      this.history.push(data);
-      if (this.history.length > 100) this.history.shift();
-
-      this.render(data);
-    } catch (err) {
-      // Silent on transient errors
-    }
-  }
-
-  async getPrice() {
-    if (!this.addresses.dex) return null;
-    try {
-      const slot2 = await this.provider.getStorageAt(this.addresses.dex, 2);
-      const bn = ethers.BigNumber.from(slot2);
-      const reserveA = bn.and(ethers.BigNumber.from('0x' + 'f'.repeat(28)));
-      const reserveB = bn.shr(112).and(ethers.BigNumber.from('0x' + 'f'.repeat(28)));
-      if (reserveA.eq(0)) return null;
-      return reserveB.mul(1e18).div(reserveA);
-    } catch (e) { return null; }
-  }
-
-  async getReserves() {
-    if (!this.addresses.dex) return null;
-    try {
-      const slot2 = await this.provider.getStorageAt(this.addresses.dex, 2);
-      const bn = ethers.BigNumber.from(slot2);
-      const reserveA = bn.and(ethers.BigNumber.from('0x' + 'f'.repeat(28)));
-      const reserveB = bn.shr(112).and(ethers.BigNumber.from('0x' + 'f'.repeat(28)));
-      return [reserveA, reserveB];
-    } catch (e) { return null; }
-  }
-
-  async getLiquidity() {
-    if (!this.addresses.dex) return null;
-    try {
-      const slot5 = await this.provider.getStorageAt(this.addresses.dex, 5);
-      return ethers.BigNumber.from(slot5);
-    } catch (e) { return null; }
-  }
-
-  async readBotMetrics() {
-    const metricsPath = path.join(__dirname, '..', 'logs', 'bot-metrics.json');
-    if (!fs.existsSync(metricsPath)) {
-      return { totalTrades: 0, activeBots: 0, volume: '0' };
-    }
-    try {
-      const data = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
-      return {
-        totalTrades: data.metrics?.totalTrades || 0,
-        activeBots: data.botSummaries?.filter(b => b.alive).length || 0,
-        volume: data.metrics?.totalVolume ? ethers.utils.formatEther(ethers.BigNumber.from(data.metrics.totalVolume)) : '0',
-      };
-    } catch (e) {
-      return { totalTrades: 0, activeBots: 0, volume: '0' };
-    }
-  }
-
-  render(data) {
-    // Move cursor up to overwrite
-    const lines = 20;
-    process.stdout.write(`\x1B[${lines}A\x1B[0J`);
-
-    console.log('┌──────────────────────────────────────────────────────────────────┐');
-    console.log(`│  📊 LIVE MONITOR — Block ${String(data.block).padEnd(8)} ${new Date().toLocaleTimeString().padEnd(25)}│`);
-    console.log('├──────────────────────────────────────────────────────────────────┤');
-    console.log(`│  💰 Price (agUSD/AVAX):  ${data.priceA.padEnd(12)}                    │`);
-    console.log(`│  🏦 Reserve agUSD:       ${data.reserveA.padEnd(12)}                    │`);
-    console.log(`│  🏦 Reserve AVAX:        ${data.reserveB.padEnd(12)}                    │`);
-    console.log(`│  📈 Total Liquidity:     ${data.totalLiquidity.padEnd(12)}                    │`);
-    console.log('├──────────────────────────────────────────────────────────────────┤');
-    console.log(`│  🤖 Active Bots:         ${String(data.activeBots).padEnd(12)}                    │`);
-    console.log(`│  📊 Total Trades:        ${String(data.totalTrades).padEnd(12)}                    │`);
-    console.log(`│  💎 Total Volume:        ${data.volume.substring(0, 12).padEnd(12)}                    │`);
-    console.log('└──────────────────────────────────────────────────────────────────┘');
-
-    // Price sparkline (last 50 data points)
-    if (this.history.length > 2) {
-      const prices = this.history.slice(-50).map(h => parseFloat(h.priceA) || 0).filter(p => p > 0);
-      if (prices.length > 1) {
-        const min = Math.min(...prices);
-        const max = Math.max(...prices);
-        const range = max - min || 1;
-        const sparkline = prices.map(p => {
-          const level = Math.round(((p - min) / range) * 7);
-          return '▁▂▃▄▅▆▇█'[level];
-        }).join('');
-        console.log(`  Price trend: ${sparkline}`);
+      this.history.push(dataPoint);
+      if (this.history.length > this.maxHistory) {
+        this.history.shift();
       }
+
+      // Move cursor to top of dashboard area
+      process.stdout.write('\x1B[15A\x1B[J');
+
+      const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(0);
+      const priceStr = ethers.formatEther(price);
+
+      // Calculate price change
+      let priceChange = 'N/A';
+      if (this.history.length > 1) {
+        const prev = this.history[this.history.length - 2].price;
+        if (prev > 0n) {
+          const change = ((price - prev) * 10000n) / prev;
+          const sign = change >= 0 ? '+' : '';
+          priceChange = `${sign}${Number(change) / 100}%`;
+        }
+      }
+
+      // Calculate supplies change from initial
+      const initialAu = 1_000_000n * 10n ** 18n; // 1M initial
+      const auBurn = initialAu - auSupply;
+
+      console.log('═══════════════════════════════════════════════════════════════');
+      console.log(`  📊 DUAL-TOKEN DASHBOARD — Au + Ag          ⏱ ${elapsed}s`);
+      console.log('═══════════════════════════════════════════════════════════════');
+      console.log(`  Block:     ${block}`);
+      console.log('');
+      console.log('  ── Prices ──────────────────────────────────────────────');
+      console.log(`  Au/Ag:     ${priceStr} Ag per Au`);
+      console.log(`  Change:    ${priceChange}`);
+      console.log('');
+      console.log('  ── Supplies ────────────────────────────────────────────');
+      console.log(`  Au:        ${ethers.formatEther(auSupply)} (burned: ${ethers.formatEther(auBurn)})`);
+      console.log(`  Ag:        ${ethers.formatEther(agSupply)}`);
+      console.log('');
+      console.log('  ── DEX Reserves ────────────────────────────────────────');
+      console.log(`  Au Res:    ${ethers.formatEther(reserves[0])}`);
+      console.log(`  Ag Res:    ${ethers.formatEther(reserves[1])}`);
+      console.log(`  K:         ${ethers.formatEther(reserves[0] * reserves[1] / 10n ** 18n)}`);
+
+      // Mini price chart (last 40 data points)
+      console.log('');
+      console.log('  ── Price History ───────────────────────────────────────');
+      this.renderChart();
+
+      console.log('');
+      console.log('───────────────────────────────────────────────────────────────');
+      console.log('  Au Fee: 9bps (4.5bps burn, 4.5bps treasury)');
+
+    } catch (err) {
+      // Silently skip render errors (node might be syncing)
     }
+  }
+
+  renderChart() {
+    if (this.history.length < 2) {
+      console.log('  (collecting data...)');
+      return;
+    }
+
+    const prices = this.history.slice(-40).map((d) => Number(d.price) / 1e18);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const range = max - min || 1;
+    const height = 6;
+    const width = Math.min(prices.length, 50);
+
+    const chart = [];
+    for (let row = 0; row < height; row++) {
+      const threshold = max - (row / (height - 1)) * range;
+      let line = '  ';
+      for (let col = 0; col < width; col++) {
+        const idx = Math.floor((col / (width - 1)) * (prices.length - 1));
+        const val = prices[idx];
+        if (val >= threshold) {
+          line += '█';
+        } else {
+          line += ' ';
+        }
+      }
+      const label = row === 0 ? max.toFixed(4) : row === height - 1 ? min.toFixed(4) : '';
+      chart.push(`${label.padStart(10)} │${line}`);
+    }
+
+    chart.forEach((line) => console.log(line));
+    console.log(`  ${' '.repeat(10)} └${'─'.repeat(width)}`);
+    console.log(`  ${' '.repeat(10)}  ${this.history.length - width > 0 ? this.history.length - width : 0}${' '.repeat(Math.max(0, width - 2))}now`);
+  }
+
+  stop() {
+    this.running = false;
+    process.stdout.write('\x1B[?25h'); // Show cursor
+  }
+
+  sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
-new Dashboard().start().catch(console.error);
+// ── CLI ──────────────────────────────────────────────────────────
+if (require.main === module) {
+  const dashboard = new Dashboard();
+  dashboard
+    .init()
+    .then(() => dashboard.start())
+    .catch((err) => {
+      console.error('❌ Dashboard failed:', err.message);
+      process.exit(1);
+    });
+
+  process.on('SIGINT', () => {
+    console.log('\n⏹️  Stopping dashboard...');
+    dashboard.stop();
+    setTimeout(() => process.exit(0), 500);
+  });
+}
+
+module.exports = Dashboard;

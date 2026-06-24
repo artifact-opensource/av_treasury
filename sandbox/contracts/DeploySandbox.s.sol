@@ -9,36 +9,37 @@ contract DeploySandbox is Script {
     function run() external {
         uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
         address deployer = vm.addr(deployerPrivateKey);
-        
+
         console.log("Deployer:", deployer);
-        console.log("Balance:", vm.getBalance(deployer));
-        
+
         vm.startBroadcast(deployerPrivateKey);
-        
-        MockAgUSD agUSD = new MockAgUSD();
-        console.log("agUSD:", address(agUSD));
-        
-        MockAVAX AVAX = new MockAVAX();
-        console.log("AVAX:", address(AVAX));
-        
-        MockUSDC USDC = new MockUSDC();
-        console.log("USDC:", address(USDC));
-        
-        DexSimulator dex = new DexSimulator(address(agUSD), address(AVAX));
+
+        // Deploy dual-token system
+        MockAgToken agToken = new MockAgToken();
+        console.log("AgToken:", address(agToken));
+
+        MockAuToken auToken = new MockAuToken(deployer);
+        console.log("AuToken:", address(auToken));
+
+        // Deploy Ag/Au DEX
+        DexSimulator dex = new DexSimulator(address(agToken), address(auToken));
         console.log("DexSimulator:", address(dex));
-        
+
+        // Mint initial supply
+        agToken.mint(deployer, 10_000_000 * 1e18);
+        auToken.mint(deployer, 10_000_000 * 1e18);
+
         // Seed liquidity
-        agUSD.approve(address(dex), 500_000 * 1e18);
-        AVAX.approve(address(dex), 250_000 * 1e18);
-        dex.addLiquidity(500_000 * 1e18, 250_000 * 1e18);
-        
+        agToken.approve(address(dex), 1_000_000 * 1e18);
+        auToken.approve(address(dex), 200_000 * 1e18);
+        dex.addLiquidity(1_000_000 * 1e18, 200_000 * 1e18);
+
         vm.stopBroadcast();
-        
+
         // Log addresses for the JS scripts
         console.log("=== DEPLOYED ===");
-        console.log("agUSD:", address(agUSD));
-        console.log("AVAX:", address(AVAX));
-        console.log("USDC:", address(USDC));
+        console.log("AgToken:", address(agToken));
+        console.log("AuToken:", address(auToken));
         console.log("dex:", address(dex));
     }
 }

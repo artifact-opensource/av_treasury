@@ -18,22 +18,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title MockAuToken
- * @notice Sandbox Au with 9bps fee (4.5bps burn, 4.5bps treasury)
- * @dev Simplified for sandbox — no anti-whitelist/blacklist to stay under 24KB
+ * @notice Sandbox Au with 9bps fee (4.5bps burn, 4.5bps treasury), max tx 1%, max wallet 1%
  */
 contract MockAuToken is ERC20, Ownable {
     uint256 public constant FEE_DENOMINATOR = 100_000;
     uint256 public constant FEE_BPS = 9;           // 0.09%
     uint256 public constant FEE_BURN_PORTION = 5000; // 50% of fee burned
+    uint256 public constant FEE_PORTION_DENOM = 10_000;
+    uint256 public constant MAX_TX_BPS = 100;        // 1% of supply
+    uint256 public constant MAX_WALLET_BPS = 100;    // 1% of supply
 
     address public treasury;
     uint256 public accumulatedFees;
     uint256 public totalBurned;
 
+    mapping(address => bool) public isBlocked;
+
     event TransferFee(address indexed from, address indexed to, uint256 fee, uint256 burned);
 
     constructor(address _treasury) ERC20("Artifact Utility", "Au") Ownable(msg.sender) {
         treasury = _treasury;
+        // Initial supply: 1M Au to deployer (governance)
         _mint(msg.sender, 1_000_000 * 1e18);
     }
 
@@ -42,20 +47,40 @@ contract MockAuToken is ERC20, Ownable {
     }
 
     function _update(address from, address to, uint256 value) internal override {
-        // Skip fee on mint/burn
-        if (from != address(0) && to != address(0)) {
+        // Skip fee on mint (from == address(0)) and burn (to == address(0))
+        if (from != address(0) && to != address(0) && !isBlocked[from]) {
             uint256 fee = (value * FEE_BPS) / FEE_DENOMINATOR;
-            uint256 burned = (fee * FEE_BURN_PORTION) / 10_000;
+            uint256 burned = (fee * FEE_BURN_PORTION) / FEE_PORTION_DENOM;
             uint256 toTreasury = fee - burned;
 
-            super._update(from, address(0), burned);
+            super._update(from, address(0), burned);  // burn
             totalBurned += burned;
             accumulatedFees += toTreasury;
+
+            // Transfer net amount after fee
             super._update(from, to, value - fee);
             emit TransferFee(from, to, fee, burned);
             return;
         }
         super._update(from, to, value);
+    }
+
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        require(!isBlocked[msg.sender], "Au: blocked");
+        return super.transfer(to, amount);
+    }
+
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
+        require(!isBlocked[from], "Au: blocked");
+        return super.transferFrom(from, to, amount);
+    }
+
+    function blockAddress(address addr) external onlyOwner {
+        isBlocked[addr] = true;
+    }
+
+    function unblockAddress(address addr) external onlyOwner {
+        isBlocked[addr] = false;
     }
 }
 

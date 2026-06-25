@@ -3,61 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AV LP Card — Superformula Prototype</title>
+<title>AV LP Card — Superformula Prototype v2</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: #0a0a0a;
+    background: #000;
     color: #e0e0e0;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    padding: 32px 16px;
+    overflow-x: hidden;
   }
 
   h1 {
-    font-size: 1.4rem;
-    font-weight: 600;
+    font-size: 1.2rem;
+    font-weight: 700;
     letter-spacing: -0.02em;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     color: #fff;
   }
 
   .subtitle {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 40px;
+    font-size: 0.7rem;
+    color: #444;
+    margin-bottom: 32px;
     font-family: 'JetBrains Mono', monospace;
   }
 
   /* ── The Card ── */
   .card-container {
     perspective: 1200px;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
   }
 
   .card {
-    width: 380px;
-    height: 520px;
-    background: #0d0d0d;
+    width: 360px;
+    height: 500px;
+    background: #080808;
     border-radius: 20px;
-    border: 1px solid #1a1a1a;
+    border: 1px solid #181818;
     position: relative;
     overflow: hidden;
     box-shadow:
-      0 0 0 1px rgba(255,215,0,0.03),
-      0 20px 60px rgba(0,0,0,0.6),
-      0 0 100px rgba(255,215,0,0.02);
-    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  }
-
-  .card:hover {
-    transform: rotateY(-3deg) rotateX(2deg) scale(1.01);
+      0 0 80px rgba(255,215,0,0.03),
+      0 20px 60px rgba(0,0,0,0.8);
   }
 
   .card-svg {
@@ -67,24 +62,32 @@
     height: 100%;
   }
 
-  .card-overlay {
+  .card-noise {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%);
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     pointer-events: none;
   }
 
   .card-border-accent {
     position: absolute;
-    inset: 0;
+    inset: -1px;
     border-radius: 20px;
-    border: 1px solid transparent;
-    background: linear-gradient(135deg, var(--accent-color, #ffd700) 0%, transparent 50%) border-box;
-    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.3;
     pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      var(--accent, #ffd700) 0%,
+      transparent 30%,
+      transparent 70%,
+      var(--accent, #ffd700) 100%
+    );
+    opacity: 0.15;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    padding: 1px;
   }
 
   .card-info {
@@ -92,20 +95,21 @@
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 24px;
+    padding: 20px 24px;
     z-index: 2;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
   }
 
   .card-info .label {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: #555;
-    margin-bottom: 4px;
+    color: #444;
+    margin-bottom: 2px;
   }
 
   .card-info .value {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: #fff;
     font-family: 'JetBrains Mono', monospace;
@@ -113,162 +117,147 @@
 
   .card-info .metrics {
     display: flex;
-    gap: 20px;
-    margin-top: 12px;
-  }
-
-  .card-info .metric {
-    flex: 1;
+    gap: 16px;
+    margin-top: 10px;
   }
 
   .card-info .metric .val {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--accent-color, #ffd700);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent, #ffd700);
     font-family: 'JetBrains Mono', monospace;
   }
 
   .card-info .metric .lbl {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #444;
+    letter-spacing: 0.08em;
+    color: #333;
   }
 
   /* ── Controls ── */
   .controls {
-    width: 380px;
+    width: 360px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
 
   .control-group {
-    background: #111;
-    border: 1px solid #1a1a1a;
+    background: #0c0c0c;
+    border: 1px solid #181818;
     border-radius: 12px;
-    padding: 16px 20px;
+    padding: 14px 18px;
   }
 
   .control-group h3 {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: #555;
-    margin-bottom: 12px;
+    color: #444;
+    margin-bottom: 10px;
   }
 
   .slider-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 8px;
   }
-
   .slider-row:last-child { margin-bottom: 0; }
 
   .slider-row label {
-    font-size: 0.7rem;
-    color: #888;
-    width: 90px;
+    font-size: 0.65rem;
+    color: #666;
+    width: 80px;
     flex-shrink: 0;
     font-family: 'JetBrains Mono', monospace;
   }
 
-  .slider-row input[type="range"] {
+  input[type="range"] {
     flex: 1;
     -webkit-appearance: none;
     appearance: none;
-    height: 3px;
-    background: #222;
-    border-radius: 2px;
+    height: 2px;
+    background: #1a1a1a;
+    border-radius: 1px;
     outline: none;
   }
 
-  .slider-row input[type="range"]::-webkit-slider-thumb {
+  input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
-    background: var(--accent-color, #ffd700);
+    width: 12px;
+    height: 12px;
+    background: var(--accent, #ffd700);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 8px rgba(255,215,0,0.3);
   }
 
   .slider-row .val {
-    font-size: 0.7rem;
-    color: #aaa;
-    width: 40px;
+    font-size: 0.65rem;
+    color: #888;
+    width: 36px;
     text-align: right;
     font-family: 'JetBrains Mono', monospace;
   }
 
-  /* ── Scenario Buttons ── */
+  /* ── Scenarios ── */
   .scenarios {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
-    margin-top: 8px;
   }
 
   .scenario-btn {
-    padding: 6px 14px;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 8px;
-    color: #888;
-    font-size: 0.7rem;
+    padding: 5px 12px;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 6px;
+    color: #666;
+    font-size: 0.65rem;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
   }
 
-  .scenario-btn:hover {
-    background: #222;
-    border-color: #444;
-    color: #ccc;
-  }
-
+  .scenario-btn:hover { background: #1a1a1a; color: #aaa; }
   .scenario-btn.active {
-    background: rgba(255,215,0,0.08);
-    border-color: rgba(255,215,0,0.3);
+    background: rgba(255,215,0,0.06);
+    border-color: rgba(255,215,0,0.25);
     color: #ffd700;
   }
 
-  /* ── Regenerate ── */
   .regen-btn {
     width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #1a1a0a 0%, #0d0d0d 100%);
-    border: 1px solid rgba(255,215,0,0.15);
-    border-radius: 12px;
-    color: #ffd700;
-    font-size: 0.75rem;
+    padding: 12px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 10px;
+    color: #555;
+    font-size: 0.7rem;
     font-weight: 500;
-    letter-spacing: 0.05em;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
     font-family: 'Inter', sans-serif;
   }
 
   .regen-btn:hover {
-    background: linear-gradient(135deg, #2a2a0a 0%, #1a1a0a 100%);
-    border-color: rgba(255,215,0,0.3);
-    box-shadow: 0 0 30px rgba(255,215,0,0.05);
+    border-color: #333;
+    color: #888;
   }
 </style>
 </head>
 <body>
 
 <h1>AV LP Card</h1>
-<p class="subtitle">superformula · softmax · argmax · mock data</p>
+<p class="subtitle">superformula · softmax · argmax · v2</p>
 
 <div class="card-container">
   <div class="card" id="card">
-    <svg class="card-svg" id="cardSvg" viewBox="0 0 380 520"></svg>
+    <svg class="card-svg" id="cardSvg" viewBox="0 0 360 500"></svg>
+    <div class="card-noise"></div>
     <div class="card-border-accent" id="cardBorder"></div>
-    <div class="card-overlay"></div>
     <div class="card-info">
       <div class="label">LP Position #0001</div>
       <div class="value" id="positionId">AG 12,450 · AU 2,490</div>
@@ -314,12 +303,12 @@
       <span class="val" id="volatilityVal">28</span>
     </div>
     <div class="slider-row">
-      <label>Liquidity Depth</label>
+      <label>Liquidity</label>
       <input type="range" id="liquidity" min="0" max="100" value="72">
       <span class="val" id="liquidityVal">72</span>
     </div>
     <div class="slider-row">
-      <label>Time Held (d)</label>
+      <label>Time Held</label>
       <input type="range" id="timeHeld" min="1" max="365" value="90">
       <span class="val" id="timeHeldVal">90d</span>
     </div>
@@ -328,33 +317,33 @@
   <div class="control-group">
     <h3>Scenarios</h3>
     <div class="scenarios">
-      <button class="scenario-btn active" data-scenario="normal">Normal Day</button>
-      <button class="scenario-btn" data-scenario="vol">Volatility Spike</button>
+      <button class="scenario-btn active" data-scenario="normal">Normal</button>
+      <button class="scenario-btn" data-scenario="vol">Vol Spike</button>
       <button class="scenario-btn" data-scenario="whale">Whale Dump</button>
-      <button class="scenario-btn" data-scenario="deep">Deep Liquidity</button>
-      <button class="scenario-btn" data-scenario="fresh">Fresh Position</button>
+      <button class="scenario-btn" data-scenario="deep">Deep Liq</button>
+      <button class="scenario-btn" data-scenario="fresh">Fresh</button>
       <button class="scenario-btn" data-scenario="dormant">Dormant</button>
     </div>
   </div>
 
-  <button class="regen-btn" id="regenBtn">� REGENERATE PATTERN</button>
+  <button class="regen-btn" id="regenBtn">↻ REGENERATE</button>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// Superformula (Gielis) Implementation
+// Superformula (Gielis)
 // ═══════════════════════════════════════════════════════════════
 
 function superformula(theta, m, n1, n2, n3, a, b) {
-  const t1 = Math.abs(Math.cos(m * theta / 4) / a);
-  const t2 = Math.abs(Math.sin(m * theta / 4) / b);
-  const t = Math.pow(t1, n2) + Math.pow(t2, n3);
-  if (t === 0) return 0;
+  const t1 = Math.pow(Math.abs(Math.cos(m * theta / 4) / a), n2);
+  const t2 = Math.pow(Math.abs(Math.sin(m * theta / 4) / b), n3);
+  const t = t1 + t2;
+  if (t <= 0 || !isFinite(t)) return 0;
   return Math.pow(t, -1 / n1);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Softmax — weighted distribution over visual themes
+// Softmax + Argmax
 // ═══════════════════════════════════════════════════════════════
 
 function softmax(values) {
@@ -364,180 +353,201 @@ function softmax(values) {
   return exps.map(e => e / sum);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Argmax — dominant characteristic
-// ═══════════════════════════════════════════════════════════════
-
 function argmax(values) {
-  return values.indexOf(Math.max(...values));
+  let idx = 0;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] > values[idx]) idx = i;
+  }
+  return idx;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Data → Visual Parameter Mapping
+// Data → Visual Parameters
 // ═══════════════════════════════════════════════════════════════
 
-function mapDataToVisual(params) {
-  const { agReserve, auReserve, volume, volatility, liquidity, timeHeld } = params;
+function mapDataToVisual(p) {
+  const tvl = p.agReserve + p.auReserve * 20;
+  const ratio = p.auReserve / Math.max(p.agReserve, 1);
+  const activity = p.volume / 100;
+  const stability = 1 - p.volatility / 100;
+  const depth = p.liquidity / 100;
+  const maturity = Math.min(p.timeHeld / 180, 1);
 
-  // Raw metrics
-  const tvl = agReserve + auReserve * 20; // approximate USD
-  const ratio = auReserve / agReserve;   // price proxy
-  const activity = volume / 100;
-  const stability = 1 - volatility / 100;
-  const depth = liquidity / 100;
-  const maturity = Math.min(timeHeld / 180, 1);
-
-  // Theme weights via softmax
+  // Theme scores → softmax
   const themes = [
-    activity * 2 + volume / 50,           // energetic
-    stability * 2 + liquidity / 50,       // calm
-    depth * 2 + tvl / 50000,              // rich
-    volatility / 30 + (1 - stability),     // wild
-    maturity * 1.5 + timeHeld / 200       // ancient
+    activity * 3 + p.volume / 40,
+    stability * 3 + p.liquidity / 40,
+    depth * 2.5 + tvl / 40000,
+    p.volatility / 25 + (1 - stability) * 1.5,
+    maturity * 2.5 + p.timeHeld / 150
   ];
-  const themeWeights = softmax(themes);
-  const dominantTheme = argmax(themeWeights);
+  const weights = softmax(themes);
+  const dominant = argmax(weights);
 
-  // Superformula parameters
-  const symmetry = [
-    Math.round(2 + activity * 4),         // energetic: more lobes
-    Math.round(2 + stability * 3),        // calm: simple, 2-5
-    Math.round(3 + depth * 4),           // rich: complex
-    Math.round(2 + volatility / 15),     // wild: spiky
-    Math.round(4 + maturity * 4)          // ancient: many folds
+  // Symmetry per theme
+  const symmetries = [
+    Math.round(3 + activity * 5),
+    Math.round(2 + stability * 3),
+    Math.round(4 + depth * 5),
+    Math.round(2 + p.volatility / 12),
+    Math.round(5 + maturity * 5)
   ];
-  const m = symmetry.reduce((sum, s, i) => sum + s * themeWeights[i], 0);
-  const mFinal = Math.max(2, Math.round(m));
+  const m = Math.max(2, Math.round(symmetries.reduce((s, sym, i) => s + sym * weights[i], 0)));
 
-  const n1_base = 0.5 + stability * 1.5 + depth * 0.5;
-  const n2_base = 1 + depth * 2 + maturity;
-  const n3_base = 1 + volatility / 50 + activity;
+  // Shape params
+  const n1 = 0.3 + stability * 1.2 + depth * 0.6 + (dominant === 3 ? -0.2 : 0);
+  const n2 = 0.8 + depth * 2.5 + maturity * 0.5 + (dominant === 2 ? 1.2 : 0);
+  const n3 = 0.8 + p.volatility / 40 + activity * 0.8 + (dominant === 0 ? 0.6 : 0);
+  const a = 1 + (1 - depth) * 0.25;
+  const b = 1 + (1 - stability) * 0.15;
 
-  const n1 = n1_base + (dominantTheme === 3 ? -0.3 : 0);
-  const n2 = n2_base + (dominantTheme === 2 ? 1 : 0);
-  const n3 = n3_base + (dominantTheme === 0 ? 0.5 : 0);
+  // Color
+  const health = stability * 0.4 + depth * 0.4 + maturity * 0.2;
+  const hue = 30 + ratio * 25 + p.volatility * 0.08;
+  const sat = 55 + activity * 35;
+  const lit = 40 + health * 25;
 
-  const a = 1 + (1 - depth) * 0.3;
-  const b = 1 + (1 - stability) * 0.2;
+  // Scale based on TVL
+  const scale = 80 + Math.min(tvl / 2000, 100);
 
-  // Color palette — gold/silver/copper based on ratio and health
-  const health = (stability * 0.4 + depth * 0.4 + maturity * 0.2);
-  const hue = 35 + ratio * 20 + volatility * 0.1; // 35=gold, 55=yellow
-  const saturation = 60 + activity * 30;
-  const lightness = 45 + health * 20;
+  // Rotation offset based on position hash
+  const rotation = (p.agReserve * 7 + p.auReserve * 13) % 360;
 
-  return {
-    m, n1, n2, n3, a, b,
-    hue, saturation, lightness,
-    theme: dominantTheme,
-    themeWeights,
-    accentColor: `hsl(${hue}, ${saturation}%, ${lightness}%)`
-  };
+  return { m, n1, n2, n3, a, b, hue, sat, lit, scale, rotation, dominant, weights,
+           accent: `hsl(${hue}, ${sat}%, ${lit}%)` };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SVG Pattern Renderer
+// SVG Renderer v2 — bold, layered, particle-filled
 // ═══════════════════════════════════════════════════════════════
 
-function renderCard(visual) {
-  const svg = document.getElementById('cardSvg');
-  const { m, n1, n2, n3, a, b, hue, saturation, lightness } = visual;
-
-  const cx = 190, cy = 230;
-  const scale = 120;
-  const points = 720;
-
-  // Generate superformula path
-  let pathOuter = '';
-  let pathInner = [];
+function generatePath(cx, cy, scale, m, n1, n2, n3, a, b, rotation) {
+  const points = 600;
+  const rotRad = rotation * Math.PI / 180;
+  let path = '';
   for (let i = 0; i <= points; i++) {
     const theta = (i / points) * Math.PI * 2;
-    const r = superformula(theta, m, n1, n2, n3, a, b);
+    const r = superformula(theta + rotRad * 0.01, m, n1, n2, n3, a, b);
+    if (!isFinite(r) || r <= 0) continue;
     const x = cx + r * scale * Math.cos(theta);
-    const y = cy + r * r * scale * 0.003 * Math.sin(theta); // subtle warp
-    pathOuter += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
-
-    // Inner echo at different params
-    const rInner = superformula(theta + 0.1, m + 1, n1 * 0.8, n2 * 1.2, n3 * 0.9, a * 0.7, b * 0.7);
-    pathInner.push({ x: cx + rInner * scale * 0.6 * Math.cos(theta), y: cy + rInner * scale * 0.6 * Math.sin(theta) });
+    const y = cy + r * scale * Math.sin(theta);
+    path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
   }
-  pathOuter += 'Z';
+  return path + 'Z';
+}
 
-  // Inner path
-  let pathInnerStr = '';
-  pathInner.forEach((p, i) => {
-    pathInnerStr += (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ' ';
-  });
-  pathInnerStr += 'Z';
+function renderCard(vis) {
+  const svg = document.getElementById('cardSvg');
+  const cx = 180, cy = 220;
+  const { m, n1, n2, n3, a, b, hue, sat, lit, scale, rotation } = vis;
 
-  // Concentric echoes
+  const base = `hsl(${hue}, ${sat}%, ${lit}%)`;
+  const light = `hsl(${hue}, ${sat + 5}%, ${lit + 20}%)`;
+  const dark = `hsl(${hue}, ${sat}%, ${lit - 20}%)`;
+  const glow = `hsla(${hue}, ${sat}%, ${lit + 10}%, 0.08)`;
+
+  // Main shape
+  const mainPath = generatePath(cx, cy, scale, m, n1, n2, n3, a, b, rotation);
+
+  // Inner variant (shifted params)
+  const innerPath = generatePath(cx, cy, scale * 0.55, m + 2, n1 * 0.7, n2 * 1.3, n3 * 0.8, a * 0.8, b * 0.8, rotation + 30);
+
+  // Micro variant (center detail)
+  const microPath = generatePath(cx, cy, scale * 0.25, m + 4, n1 * 0.5, n2 * 0.5, n3 * 2, a * 0.6, b * 0.6, rotation + 60);
+
+  // Echo rings (same shape, larger, fading)
   let echoes = '';
-  for (let ring = 1; ring <= 3; ring++) {
-    const ringScale = 1 + ring * 0.25;
-    const ringOpacity = 0.15 - ring * 0.03;
-    let echoPath = '';
-    for (let i = 0; i <= points; i += 3) {
-      const theta = (i / points) * Math.PI * 2;
-      const r = superformula(theta + ring * 0.5, m, n1, n2, n3, a, b);
-      const x = cx + r * scale * ringScale * Math.cos(theta);
-      const y = cy + r * scale * ringScale * Math.sin(theta);
-      echoPath += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
-    }
-    echoPath += 'Z';
-    echoes += `<path d="${echoPath}" fill="none" stroke="hsla(${hue}, ${saturation}%, ${lightness + 10}%, ${ringOpacity})" stroke-width="0.8"/>`;
+  for (let i = 1; i <= 4; i++) {
+    const echoScale = scale * (1 + i * 0.2);
+    const echoPath = generatePath(cx, cy, echoScale, m, n1 * (1 + i * 0.1), n2, n3, a, b, rotation + i * 5);
+    const op = 0.12 - i * 0.025;
+    echoes += `<path d="${echoPath}" fill="none" stroke="${base}" stroke-width="${1.2 - i * 0.2}" opacity="${Math.max(op, 0.02)}"/>`;
   }
 
-  // Accent dots at symmetry points
-  let dots = '';
-  for (let i = 0; i < mFinal; i++) {
-    const angle = (i / mFinal) * Math.PI * 2 - Math.PI / 2;
+  // Particle scatter inside the shape
+  let particles = [];
+  const seed = (m * 1000 + Math.round(n1 * 100) + Math.round(scale)) % 997;
+  for (let i = 0; i < 60; i++) {
+    const angle = ((i * 137.5 + seed) % 360) * Math.PI / 180;
+    const dist = ((i * 73 + seed * 7) % 100) / 100;
+    const r = superformula(angle + rotation * 0.01, m, n1, n2, n3, a, b);
+    if (!isFinite(r) || r <= 0) continue;
+    const px = cx + r * scale * dist * 0.85 * Math.cos(angle);
+    const py = cy + r * scale * dist * 0.85 * Math.sin(angle);
+    const size = 0.5 + ((i * 31) % 10) / 10 * 1.5;
+    const pOp = 0.15 + ((i * 47) % 10) / 10 * 0.35;
+    particles.push({ x: px.toFixed(1), y: py.toFixed(1), r: size.toFixed(1), op: pOp.toFixed(2) });
+  }
+
+  let particleStr = '';
+  particles.forEach(p => {
+    particleStr += `<circle cx="${p.x}" cy="${p.y}" r="${p.r}" fill="${light}" opacity="${p.op}"/>`;
+  });
+
+  // Symmetry spikes (radiating lines from center through symmetry points)
+  let spikes = '';
+  for (let i = 0; i < m; i++) {
+    const angle = (i / m) * Math.PI * 2 - Math.PI / 2 + rotation * 0.01;
     const r = superformula(angle, m, n1, n2, n3, a, b);
-    const dx = cx + r * scale * 1.15 * Math.cos(angle);
-    const dy = cy + r * scale * 1.15 * Math.sin(angle);
-    dots += `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="2.5" fill="hsla(${hue}, ${saturation + 10}%, ${lightness + 15}%, 0.6)"><animate attributeName="r" values="2;3.5;2" dur="${2 + i * 0.3}s" repeatCount="indefinite"/></circle>`;
+    if (!isFinite(r) || r <= 0) continue;
+    const x2 = cx + r * scale * 1.1 * Math.cos(angle);
+    const y2 = cy + r * scale * 1.1 * Math.sin(angle);
+    spikes += `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${base}" stroke-width="0.5" opacity="0.15"/>`;
   }
 
-  const baseColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-  const lightColor = `hsl(${hue}, ${saturation}%, ${lightness + 20}%)`;
-  const darkColor = `hsl(${hue}, ${saturation}%, ${lightness - 15}%)`;
+  // Outer glow
+  const glowPath = generatePath(cx, cy, scale * 1.3, m, n1, n2, n3, a, b, rotation);
 
   svg.innerHTML = `
     <defs>
-      <radialGradient id="glow" cx="50%" cy="45%" r="50%">
-        <stop offset="0%" stop-color="${baseColor}" stop-opacity="0.12"/>
-        <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
-      </radialGradient>
-      <filter id="softGlow">
-        <feGaussianBlur stdDeviation="2" result="blur"/>
-        <feMerge>
-          <feMergeNode in="blur"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
+      <filter id="softGlow">
+        <feGaussianBlur stdDeviation="1.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <radialGradient id="centerGlow" cx="50%" cy="45%" r="40%">
+        <stop offset="0%" stop-color="${glow}"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </radialGradient>
     </defs>
 
-    <rect width="380" height="520" fill="url(#glow)"/>
+    <rect width="360" height="500" fill="url(#centerGlow)"/>
 
+    <!-- Outer glow outline -->
+    <path d="${glowPath}" fill="none" stroke="${base}" stroke-width="20" opacity="0.03" filter="url(#glow)"/>
+
+    <!-- Echo rings -->
     ${echoes}
 
-    <path d="${pathOuter}" fill="none" stroke="${baseColor}" stroke-width="1.5" opacity="0.9" filter="url(#softGlow)">
-      <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite"/>
-    </path>
+    <!-- Spikes -->
+    ${spikes}
 
-    <path d="${pathOuter}" fill="${darkColor}" opacity="0.08"/>
+    <!-- Main shape fill (very subtle) -->
+    <path d="${mainPath}" fill="${dark}" opacity="0.06"/>
 
-    <path d="${pathInnerStr}" fill="none" stroke="${lightColor}" stroke-width="0.8" opacity="0.4"/>
+    <!-- Main shape outline (bold) -->
+    <path d="${mainPath}" fill="none" stroke="${base}" stroke-width="2.5" filter="url(#softGlow)" opacity="0.95"/>
 
-    ${dots}
+    <!-- Inner shape -->
+    <path d="${innerPath}" fill="none" stroke="${light}" stroke-width="1.2" opacity="0.5"/>
+
+    <!-- Micro center detail -->
+    <path d="${microPath}" fill="${base}" opacity="0.15"/>
+
+    <!-- Particles -->
+    ${particleStr}
   `;
 
-  // Update card accent
-  document.getElementById('cardBorder').style.setProperty('--accent-color', visual.accentColor);
-  document.getElementById('card').style.setProperty('--accent-color', visual.accentCard || visual.accentColor);
+  // Update accent
+  document.getElementById('cardBorder').style.setProperty('--accent', vis.accent);
+  document.getElementById('card').style.setProperty('--accent', vis.accent);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Mock Data Scenarios
+// Scenarios
 // ═══════════════════════════════════════════════════════════════
 
 const scenarios = {
@@ -561,7 +571,7 @@ function applyScenario(name) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Update Loop
+// Update
 // ═══════════════════════════════════════════════════════════════
 
 function updateAll() {
@@ -572,7 +582,6 @@ function updateAll() {
   const liq = parseInt(document.getElementById('liquidity').value);
   const time = parseInt(document.getElementById('timeHeld').value);
 
-  // Update display values
   document.getElementById('agReserveVal').textContent = ag > 1000 ? (ag/1000).toFixed(1) + 'K' : ag;
   document.getElementById('auReserveVal').textContent = au > 1000 ? (au/1000).toFixed(1) + 'K' : au;
   document.getElementById('volumeVal').textContent = vol;
@@ -580,23 +589,20 @@ function updateAll() {
   document.getElementById('liquidityVal').textContent = liq;
   document.getElementById('timeHeldVal').textContent = time + 'd';
 
-  // Update info card
   document.getElementById('positionId').textContent = `AG ${ag.toLocaleString()} · AU ${au.toLocaleString()}`;
   document.getElementById('volValue').textContent = `+${(vol * 0.07).toFixed(1)}%`;
   document.getElementById('tvlValue').textContent = `$${((ag + au * 20) / 1000).toFixed(1)}K`;
   document.getElementById('kValue').textContent = `k = ${((ag * au) / 1000000).toFixed(1)}M`;
 
-  const visual = mapDataToVisual({ agReserve: ag, auReserve: au, volume: vol, volatility: vlt, liquidity: liq, timeHeld: time });
-  renderCard(visual);
+  const vis = mapDataToVisual({ agReserve: ag, auReserve: au, volume: vol, volatility: vlt, liquidity: liq, timeHeld: time });
+  renderCard(vis);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Event Listeners
+// Events
 // ═══════════════════════════════════════════════════════════════
 
-document.querySelectorAll('.slider-row input[type="range"]').forEach(input => {
-  input.addEventListener('input', updateAll);
-});
+document.querySelectorAll('input[type="range"]').forEach(el => el.addEventListener('input', updateAll));
 
 document.querySelectorAll('.scenario-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -607,16 +613,14 @@ document.querySelectorAll('.scenario-btn').forEach(btn => {
 });
 
 document.getElementById('regenBtn').addEventListener('click', () => {
-  // Slight random perturbation to create variation
-  const jitter = (val, pct) => Math.max(1, Math.round(val * (1 + (Math.random() - 0.5) * pct)));
-  document.getElementById('agReserve').value = jitter(parseInt(document.getElementById('agReserve').value), 0.05);
-  document.getElementById('auReserve').value = jitter(parseInt(document.getElementById('auReserve').value), 0.05);
+  const jitter = (v, p) => Math.max(1, Math.round(v * (1 + (Math.random() - 0.5) * p)));
+  document.getElementById('agReserve').value = jitter(parseInt(document.getElementById('agReserve').value), 0.08);
+  document.getElementById('auReserve').value = jitter(parseInt(document.getElementById('auReserve').value), 0.08);
   updateAll();
 });
 
 // Init
 updateAll();
 </script>
-
 </body>
 </html>

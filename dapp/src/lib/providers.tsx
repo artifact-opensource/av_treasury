@@ -1,9 +1,7 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { OnchainKitProvider } from '@coinbase/onchainkit'
 import { WagmiProvider } from 'wagmi'
-import { base } from 'wagmi/chains'
 import { wagmiConfig } from '@/lib/wagmi'
 import { useState, type ReactNode } from 'react'
 
@@ -20,16 +18,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <OnchainKitProvider
-          chain={base}
-          config={{
-            wallet: {
-              display: 'modal',
-            },
-          }}
-        >
-          {children}
-        </OnchainKitProvider>
+        {children}
       </QueryClientProvider>
     </WagmiProvider>
   )

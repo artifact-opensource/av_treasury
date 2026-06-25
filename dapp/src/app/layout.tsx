@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/providers"
-import { Navbar } from "@/components/navbar"
+import WalletShell from "@/components/wallet-shell"
 import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <div className="min-h-screen bg-background">
-            <Navbar />
+            <WalletShell />
             <main className="container mx-auto px-4 py-6 max-w-7xl">
               {children}
             </main>

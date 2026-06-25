@@ -21,7 +21,7 @@ const BOT_FUNDING = ethers.utils.parseEther('1000');
 const DEPLOYER_FUNDING = ethers.utils.parseEther('10000');
 
 // Contract artifacts (compiled with forge build)
-const ARTIFACTS_DIR = path.join(__dirname, '..', '..', 'artifacts', 'sandbox');
+const ARTIFACTS_DIR = path.join(__dirname, '..', '..', 'out');
 
 async function getSigner(provider, index) {
   return ethers.Wallet.fromMnemonic(MNEMONIC, `m/44'/60'/0'/0/${index}`).connect(provider);
@@ -104,12 +104,12 @@ async function main() {
 
   // ─── Step 5: PID Controller ───
   console.log('\n📝 Step 5: Deploying PID Controller...');
-  const kp = ethers.utils.parseEther('0.5');
-  const ki = ethers.utils.parseEther('0.01');
-  const kd = ethers.utils.parseEther('0.1');
-  const targetTvl = ethers.utils.parseEther('1000000'); // 1M TVL target
-  const maxDailyEmission = ethers.utils.parseEther('100000');
-  const maxSingleEmission = ethers.utils.parseEther('10000');
+  const kp = ethers.utils.parseEther('0.001');   // 0.1% proportional gain
+  const ki = ethers.utils.parseEther('0.0001');  // 0.01% integral gain
+  const kd = ethers.utils.parseEther('0.01');    // 1% derivative gain
+  const targetTvl = ethers.utils.parseEther('1500'); // 1500 TVL target (actual LP TVL ~1.3e21, target slightly above to allow modest emissions)
+  const maxDailyEmission = ethers.utils.parseEther('1000');   // 1000 Ag/day max
+  const maxSingleEmission = ethers.utils.parseEther('100');    // 100 Ag/tick max
   const pid = await deployContract(
     'MockPIDController',
     deployer,
@@ -170,11 +170,23 @@ async function main() {
   await auToken.connect(deployer).mint(staking.address, stakingFunding);
   console.log(`  💰 Staking funded with ${ethers.utils.formatEther(stakingFunding)} Au`);
 
-  // ─── Step 9: Add initial liquidity ───
-  // NOTE: Skipped — AuToken 9bps fee causes transferFrom revert in LP mint.
-  // The monitoring system does not require DEX liquidity to function.
-  console.log('\n📝 Step 9: Adding Initial Liquidity...');
-  console.log('  ⏭️  Skipped (AuToken fee incompatible with SandboxLPToken.mint)');
+  // ─── Step 9: Seed DEX with initial liquidity ───
+  // Direct mint to DEX bypasses the AuToken transfer fee
+  console.log('\n📝 Step 9: Seeding DEX with Initial Liquidity...');
+  const initAg = ethers.utils.parseEther('500000');  // 500K Ag
+  const initAu = ethers.utils.parseEther('100000');  // 100K Au (5:1 ratio)
+  // Add proper liquidity via DEX.addLiquidity (mints LP tokens + initializes reserves)
+  const liqAg = ethers.utils.parseEther('500000');  // 500K Ag
+  const liqAu = ethers.utils.parseEther('100000');  // 100K Au (5:1 ratio ≈ 0.2 Au/Ag)
+  // Grant deployer MINTER_ROLE so it can mint Ag for liquidity
+  await agToken.connect(deployer).grantRole(MINTER_ROLE, deployer.address);
+  // Mint deployer the tokens needed for liquidity provision
+  await agToken.connect(deployer).mint(deployer.address, liqAg);
+  await auToken.connect(deployer).mint(deployer.address, liqAu);
+  await agToken.connect(deployer).approve(dex.address, liqAg);
+  await auToken.connect(deployer).approve(dex.address, liqAu);
+  const lpMinted = await dex.connect(deployer).addLiquidity(liqAg, liqAu);
+  console.log(`  ✅ DEX seeded: ${ethers.utils.formatEther(liqAg)} Ag + ${ethers.utils.formatEther(liqAu)} Au (proper liquidity added)`);
 
   // ─── Step 10: Fund bots ───
   console.log('\n📝 Step 10: Funding 100 Bot Accounts...');
@@ -201,7 +213,60 @@ async function main() {
     }
   }
 
-  // ─── Step 11: Save deployment ───
+  // ─── Step 10b: Fund bots with ETH for gas ───
+  console.log('\n⛽ Step 10b: Funding bots with ETH for gas...');
+  for (let i = 1; i <= NUM_BOTS; i++) {
+    const bot = ethers.Wallet.fromMnemonic(MNEMONIC, `m/44'/60'/0'/0/${i}`).connect(provider);
+    const tx = await deployer.sendTransaction({
+      to: bot.address,
+      value: ethers.utils.parseEther('10'),  // 10 ETH per bot
+      gasLimit: 21000,
+    });
+    await tx.wait();
+    if (i % 25 === 0) {
+      console.log(`  ⛽ Funded bots ${i - 24}..${i} with ETH`);
+    }
+  }
+
+  // ─── Step 11: Deploy Flash Loan + TreasuryFlashBuy ───
+  console.log('\n📝 Step 11: Deploying Flash Loan Infrastructure...');
+
+  const flashLoan = await deployContract(
+    'FlashLoan',
+    deployer,
+    dex.address,
+    treasuryAMO.address,  // TreasuryAMO acts as Treasury
+    agToken.address,
+    auToken.address
+  );
+  console.log(`  � FlashLoan deployed at ${flashLoan.address}`);
+
+  const flashBuy = await deployContract(
+    'TreasuryFlashBuy',
+    deployer,
+    dex.address,
+    treasuryAMO.address,
+    agToken.address,
+    auToken.address
+  );
+  console.log(`  � TreasuryFlashBuy deployed at ${flashBuy.address}`);
+
+  // Fund TreasuryFlashBuy with Ag for buybacks
+  const flashBuyFunding = ethers.utils.parseEther('50000'); // 50,000 Ag
+  await agToken.connect(deployer).mint(flashBuy.address, flashBuyFunding);
+  console.log(`  💰 TreasuryFlashBuy funded with ${ethers.utils.formatEther(flashBuyFunding)} Ag`);
+
+  // Fund FlashLoan with initial liquidity from deployer's Ag
+  const flashLoanFunding = ethers.utils.parseEther('50000'); // 50,000 Ag
+  await agToken.connect(deployer).mint(flashLoan.address, flashLoanFunding);
+  console.log(`  💰 FlashLoan funded with ${ethers.utils.formatEther(flashLoanFunding)} Ag`);
+
+  // Fund FlashLoan with some Au too (for双向 flash loans)
+  const flashLoanAuFunding = ethers.utils.parseEther('10000'); // 10,000 Au
+  await auToken.connect(deployer).mint(flashLoan.address, flashLoanAuFunding);
+  console.log(`  💰 FlashLoan funded with ${ethers.utils.formatEther(flashLoanAuFunding)} Au`);
+
+  // ─── Step 12: Save deployment ───
   console.log('\n📝 Step 11: Saving Deployment...');
   const deployed = {
     network: 'anvil',
@@ -217,6 +282,8 @@ async function main() {
       PIDController: pid.address,
       TreasuryAMO: treasuryAMO.address,
       Governor: governor.address,
+      FlashLoan: flashLoan.address,
+      TreasuryFlashBuy: flashBuy.address,
     },
     initialLiquidity: {
       ag: '0',

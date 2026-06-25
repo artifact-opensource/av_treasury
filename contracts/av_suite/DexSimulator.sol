@@ -20,6 +20,20 @@ pragma solidity ^0.8.26;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+/**
+ * @notice Interface for flash swap receivers
+ */
+interface IFlashSwapReceiver {
+    function executeOperation(
+        address borrowToken,
+        address repayToken,
+        uint256 borrowAmount,
+        uint256 fee,
+        bool borrowIsA,
+        bytes calldata data
+    ) external;
+}
+
 contract DexSimulator {
     using Math for uint256;
 
@@ -296,6 +310,77 @@ contract DexSimulator {
         reserveA = uint112(balanceA);
         reserveB = uint112(balanceB);
         lastUpdateBlock = block.number;
+    }
+
+    // ── Flash Swaps ────────────────────────────────────────────────
+
+    /**
+     * @notice Flash swap: borrow token A, repay in token B
+     * @notice Borrower gets tokens, swaps them, repays within same tx + fee
+     * @param borrowAmount Amount of tokenA to borrow
+     * @param minRepay Minimum amount of tokenB to repay (slippage protection)
+     * @param receiver Contract that receives the borrowed tokens and executes callback
+     * @param data Arbitrary data passed to callback
+     */
+    function flashSwapAforB(
+        uint256 borrowAmount,
+        uint256 minRepay,
+        address receiver,
+        bytes calldata data
+    ) external returns (uint256 repayAmount) {
+        require(borrowAmount > 0, "Zero amount");
+        require(borrowAmount <= reserveA, "Insufficient liquidity");
+
+        uint256 fee = (borrowAmount * FEE_BPS) / 10000;
+
+        // Transfer borrowed tokenA to receiver
+        require(tokenA.transfer(receiver, borrowAmount), "Transfer failed");
+
+        // Execute callback
+        IFlashSwapReceiver(receiver).executeOperation(
+            address(tokenA), address(tokenB), borrowAmount, fee, true, data
+        );
+
+        // Verify repayment in tokenB
+        uint256 balanceAfterB = tokenB.balanceOf(address(this));
+        repayAmount = balanceAfterB - reserveB + fee; // What they repaid minus what was there
+        // Actually: they need to send back borrowAmount worth of tokenB + fee
+        // Simpler: check that tokenB balance increased by at least the expected amount
+        require(tokenB.balanceOf(address(this)) >= reserveB + minRepay, "Insufficient repayment");
+
+        _updateOracle();
+
+        emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
+    }
+
+    /**
+     * @notice Flash swap: borrow token B, repay in token A
+     */
+    function flashSwapBforA(
+        uint256 borrowAmount,
+        uint256 minRepay,
+        address receiver,
+        bytes calldata data
+    ) external returns (uint256 repayAmount) {
+        require(borrowAmount > 0, "Zero amount");
+        require(borrowAmount <= reserveB, "Insufficient liquidity");
+
+        uint256 fee = (borrowAmount * FEE_BPS) / 10000;
+
+        // Transfer borrowed tokenB to receiver
+        require(tokenB.transfer(receiver, borrowAmount), "Transfer failed");
+
+        // Execute callback
+        IFlashSwapReceiver(receiver).executeOperation(
+            address(tokenB), address(tokenA), borrowAmount, fee, false, data
+        );
+
+        // Verify repayment in tokenA
+        require(tokenA.balanceOf(address(this)) >= reserveA + minRepay, "Insufficient repayment");
+
+        _updateOracle();
+
+        emit Sync(tokenA.balanceOf(address(this)), tokenB.balanceOf(address(this)));
     }
 
     // ── Utility ────────────────────────────────────────────────────

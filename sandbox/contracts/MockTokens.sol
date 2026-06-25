@@ -23,7 +23,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract MockAuToken is ERC20, Ownable {
     uint256 public constant FEE_DENOMINATOR = 100_000;
-    uint256 public constant FEE_BPS = 9;           // 0.09%
+    uint256 public constant FEE_BPS = 0;           // 0% (sandbox)
     uint256 public constant FEE_BURN_PORTION = 5000; // 50% of fee burned
 
     address public treasury;

@@ -42,6 +42,14 @@ contract MockPIDController {
     uint256 public emissionCooldown;  // blocks between emissions
     uint256 public dailyEmitted;      // tracks 24h emission
     uint256 public lastDailyReset;
+    uint256 public totalEmitted;      // hard cap tracker
+
+    // Integral windup protection
+    int256 public maxIntegral;        // max integral value before clamping
+    uint256 public integralDecayBps;  // decay per step (e.g., 9900 = 99%)
+
+    // Circuit breaker
+    uint256 public haltThresholdBps; // halt if TVL > this% of target (e.g., 15000 = 150%)
 
     // Deadband: don't emit if error is within ±this%
     uint256 public deadbandBps;  // e.g., 500 = 5%
@@ -88,6 +96,13 @@ contract MockPIDController {
         emissionCooldown = _emissionCooldown;
         deadbandBps = _deadbandBps;
         lastDailyReset = block.number;
+
+        // Integral windup protection
+        maxIntegral = _targetTvl > 0 ? int256(uint256(_targetTvl) / 10) : int256(0);
+        integralDecayBps = 9900;  // 99% decay per step
+
+        // Circuit breaker: halt if TVL exceeds 150% of target
+        haltThresholdBps = 15000;
     }
 
     // ============ Core PID Logic ============
@@ -122,8 +137,25 @@ contract MockPIDController {
             return 0; // within deadband, no action
         }
 
-        // PID calculation
+        // Circuit breaker: halt if TVL exceeds haltThresholdBps% of target
+        if (targetTvl > 0 && currentTvl > uint256(targetTvl) * haltThresholdBps / 10_000) {
+            return 0;
+        }
+
+        // PID calculation with integral windup protection
+        // 1. Apply integral decay (leaky integrator)
+        integral = (integral * int256(integralDecayBps)) / 10_000;
+        // 2. Accumulate error
         integral = integral + error;
+        // 3. Clamp integral to prevent windup
+        if (maxIntegral > 0) {
+            if (integral > maxIntegral) {
+                integral = maxIntegral;
+            } else if (integral < -maxIntegral) {
+                integral = -maxIntegral;
+            }
+        }
+
         int256 derivative = error - prevError;
         prevError = error;
 
@@ -148,8 +180,18 @@ contract MockPIDController {
 
         if (amount == 0) return 0;
 
+        // Hard cap: total emissions never exceed 2x targetTVL
+        if (targetTvl > 0) {
+            uint256 cap = uint256(targetTvl) * 2;
+            if (totalEmitted + amount > cap) {
+                if (totalEmitted >= cap) return 0;
+                amount = cap - totalEmitted;
+            }
+        }
+
         // Update state
         dailyEmitted += amount;
+        totalEmitted += amount;
         lastEmissionBlock = block.number;
 
         // Mint Ag to this contract (caller distributes)

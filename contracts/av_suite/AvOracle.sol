@@ -410,10 +410,22 @@ contract AvOracle is AccessControl, ReentrancyGuard {
         }
         
         // Exponential decay: TWATVL = TWATVL * decay^time + currentTVL * (1 - decay^time)
-        // Simplified for Solidity: linear approximation over short periods
-        uint256 decay = TWATVL_DECAY ** timeElapsed;
+        // Compute decay = TWATVL_DECAY^timeElapsed using iterative multiplication
+        // Avoids overflow from large exponents by capping iterations
+        // For timeElapsed > 1000s, decay ≈ 0 and twatvl fully converges to currentTvl
+        uint256 decay = PRICE_PRECISION;
+        uint256 iterations = timeElapsed;
+        if (iterations > 1000) {
+            // After 1000 steps at 0.99^1000 ≈ 0.000043, decay is negligible
+            // Set decay to 0 to fully adopt currentTvl
+            decay = 0;
+        } else {
+            for (uint256 i = 0; i < iterations; i++) {
+                decay = (decay * TWATVL_DECAY) / PRICE_PRECISION;
+            }
+        }
         uint256 newTwatvl = (twatvl * decay + currentTvl * (PRICE_PRECISION - decay)) / PRICE_PRECISION;
-        
+
         return newTwatvl;
     }
 

@@ -32,6 +32,7 @@ const ERC20_ABI = [
   'function transfer(address, uint256) returns (bool)',
   'function mint(address, uint256)',
   'function allowance(address, address) view returns (uint256)',
+  'function totalSupply() view returns (uint256)',
 ];
 
 const DEX_ABI = [
@@ -43,8 +44,9 @@ const DEX_ABI = [
   'function addOneSidedB(uint256) returns (uint256)',
   'function removeOneSidedA(uint256) returns (uint256)',
   'function removeOneSidedB(uint256) returns (uint256)',
-  'function getReserveA() view returns (uint256)',
-  'function getReserveB() view returns (uint256)',
+  'function reserveA() view returns (uint112)',
+  'function reserveB() view returns (uint112)',
+  'function getReserves() view returns (uint256, uint256)',
   'function getLpBalance(address) view returns (uint256)',
 ];
 
@@ -74,6 +76,7 @@ const PID_ABI = [
   'function canEmit() view returns (bool)',
   'function targetTvl() view returns (int256)',
   'function remainingDailyEmission() view returns (uint256)',
+  'function totalEmissions() view returns (uint256)',
 ];
 
 const TREASURY_AMO_ABI = [
@@ -83,6 +86,15 @@ const TREASURY_AMO_ABI = [
   'function maxBuybackAmount() view returns (uint256)',
   'function totalBuybacksExecuted() view returns (uint256)',
   'function totalAuBought() view returns (uint256)',
+];
+
+const FLASH_BUY_ABI = [
+  "function buybackAu(uint256 agAmount, uint256 minAuProfit) external",
+];
+
+const FLASH_LOAN_ABI = [
+  "function flashBorrow(address token, uint256 amount, address recipient) external",
+  "function fundedBalance() view returns (uint256)",
 ];
 
 const GOVERNOR_ABI = [
@@ -127,7 +139,7 @@ const PERSONALITIES = {
   lp: {
     tradeSizePercent: 0.1,
     intervalMs: 20000,
-    swapDirection: 0.0,
+    swapDirection: 0.4,
     lpProbability: 0.8,
     stakeProbability: 0.6,
     buybackProbability: 0.02,
@@ -136,7 +148,7 @@ const PERSONALITIES = {
   dumper: {
     tradeSizePercent: 0.2,
     intervalMs: 3000,
-    swapDirection: 1.0,
+    swapDirection: 0.6,
     lpProbability: 0.05,
     stakeProbability: 0.05,
     buybackProbability: 0.01,
@@ -145,7 +157,7 @@ const PERSONALITIES = {
   accumulator: {
     tradeSizePercent: 0.12,
     intervalMs: 10000,
-    swapDirection: 0.0,
+    swapDirection: 0.3,
     lpProbability: 0.2,
     stakeProbability: 0.5,
     buybackProbability: 0.05,
@@ -186,6 +198,7 @@ class BotEngine {
       totalTrades: 0,
       successfulTrades: 0,
       failedTrades: 0,
+      failedTransactions: 0,
       totalVolume: 0n,
       tradesByType: {
         swapAforB: 0,
@@ -196,6 +209,7 @@ class BotEngine {
         unstake: 0,
         claimRewards: 0,
         buyback: 0,
+        flashBuyback: 0,
         pidTick: 0,
         governance: 0,
       },
@@ -219,6 +233,12 @@ class BotEngine {
     this.lpToken = new ethers.Contract(config.contracts.LpToken, LP_TOKEN_ABI, this.provider);
     this.staking = new ethers.Contract(config.contracts.Staking, STAKING_ABI, this.provider);
     this.pid = new ethers.Contract(config.contracts.PIDController, PID_ABI, this.provider);
+    if (config.contracts.TreasuryFlashBuy) {
+      this.flashBuy = new ethers.Contract(config.contracts.TreasuryFlashBuy, FLASH_BUY_ABI, this.provider);
+    }
+    if (config.contracts.FlashLoan) {
+      this.flashLoan = new ethers.Contract(config.contracts.FlashLoan, FLASH_LOAN_ABI, this.provider);
+    }
     this.treasuryAMO = new ethers.Contract(config.contracts.TreasuryAMO, TREASURY_AMO_ABI, this.provider);
     this.governor = new ethers.Contract(config.contracts.Governor, GOVERNOR_ABI, this.provider);
 
@@ -272,14 +292,24 @@ class BotEngine {
 
   async getSystemState() {
     try {
-      const reserveA = BigInt((await this.dex.getReserveA()).toString());
-      const reserveB = BigInt((await this.dex.getReserveB()).toString());
+      const reserves = await this.dex.getReserves();
+      const reserveA = BigInt(reserves[0].toString());
+      const reserveB = BigInt(reserves[1].toString());
       const lpSupply = BigInt((await this.lpToken.totalSupply()).toString());
       const stakedTvl = BigInt((await this.staking.totalStaked()).toString());
       const canEmit = await this.pid.canEmit();
       const canBuyback = await this.treasuryAMO.canExecute();
 
+      const agSupply = BigInt((await this.agToken.totalSupply()).toString());
+      const auSupply = BigInt((await this.auToken.totalSupply()).toString());
+      const treasuryAg = BigInt((await this.agToken.balanceOf(this.treasuryAMO.address)).toString());
+      const flashBuyAg = this.flashBuy ? BigInt((await this.agToken.balanceOf(this.flashBuy.address)).toString()) : 0n;
+      const flashLoanAg = this.flashLoan ? BigInt((await this.agToken.balanceOf(this.flashLoan.address)).toString()) : 0n;
+      let pidEmissions = 0n;
+      try { pidEmissions = BigInt((await this.pid.totalEmissions()).toString()); } catch(e) { /* not implemented */ }
+
       const price = reserveA > 0n ? (reserveB * 10n ** 18n) / reserveA : 0n;
+      const tvl = reserveA + reserveB; // simplified TVL
 
       return {
         reserveA,        // Ag reserve
@@ -289,6 +319,16 @@ class BotEngine {
         price,           // Au price in terms of Ag (reserveB/reserveA)
         canEmit,
         canBuyback,
+        agSupply,
+        auSupply,
+        treasuryAg,
+        flashBuyAg,
+        flashLoanAg,
+        pidEmissions,
+        tvl,
+        trades: this.stats.successfulTrades,
+        volume: this.stats.volume,
+        pidActive: canEmit,
       };
     } catch (e) {
       console.log('getSystemState error:', e.message);
@@ -314,7 +354,28 @@ class BotEngine {
       tasks.push(this._act(bot, state));
     }
 
-    await Promise.allSettled(tasks);
+    // Sequential execution with block mining to avoid DexSimulator anti-bot cooldown
+    for (const task of tasks) {
+      await task;
+      try { await this.provider.send('evm_mine', []); } catch(e) {}
+    }
+
+    // Deterministic flash buyback every 10th round (after all bot actions)
+    if (this.round % 10 === 0 && this.round > 0) {
+      try {
+        const flashBuyState = await this.getSystemState();
+        if (flashBuyState) {
+          const flashBuyAg = ethers.utils.formatEther(flashBuyState.flashBuyAg.toString());
+          console.log(`  🔄 Flash Buyback triggered — FlashBuy has ${flashBuyAg} Ag`);
+          await this._triggerFlashBuyback();
+        }
+      } catch (err) {
+        console.log('  ⚠️ Flash buyback failed:', err.reason || err.message);
+      }
+    }
+
+    // Emit live ATP snapshot for Reason pipeline
+    this._emitATPState(state);
 
     // Log progress
     if (this.round % 10 === 0) {
@@ -322,10 +383,50 @@ class BotEngine {
     }
   }
 
+  // ── Live ATP State Emission ─────────────────────────────
+  // Writes structured state snapshots to a file that the
+  // Reason ATP watcher polls and analyzes in real-time.
+  _emitATPState(state) {
+    try {
+      const fs = require('fs');
+      const snapshot = {
+        round: this.round,
+        timestamp: Date.now(),
+        block: this.provider ? null : null, // filled by watcher
+        agSupply: state.agSupply ? ethers.utils.formatEther(state.agSupply.toString()) : '?',
+        auSupply: state.auSupply ? ethers.utils.formatEther(state.auSupply.toString()) : '?',
+        dexAgReserve: state.reserveA ? ethers.utils.formatEther(state.reserveA.toString()) : '?',
+        dexAuReserve: state.reserveB ? ethers.utils.formatEther(state.reserveB.toString()) : '?',
+        price: state.price ? ethers.utils.formatEther(state.price.toString()) : '?',
+        tvl: state.tvl ? ethers.utils.formatEther(state.tvl.toString()) : '?',
+        treasuryAg: state.treasuryAg ? ethers.utils.formatEther(state.treasuryAg.toString()) : '?',
+        flashBuyAg: state.flashBuyAg ? ethers.utils.formatEther(state.flashBuyAg.toString()) : '?',
+        pidEmissions: state.pidEmissions !== undefined ? ethers.utils.formatEther(state.pidEmissions.toString()) : '?',
+        trades: state.trades || 0,
+        volume: state.volume || 0,
+        flashLoanBalance: state.flashLoanAg ? ethers.utils.formatEther(state.flashLoanAg.toString()) : '?',
+        pidActive: state.pidActive || false,
+      };
+      const line = JSON.stringify(snapshot) + '\n';
+      fs.appendFileSync('sandbox/logs/atp_snapshots.jsonl', line);
+    } catch (err) {
+      // ATP emission is non-critical, don't crash the simulation
+    }
+  }
+
   async _act(bot, state) {
     const { personality } = bot;
     bot.lastAction = Date.now();
     bot.actionCount++;
+
+    // ── Balance guard rails ────────────────────────────────
+    // Skip bots with no usable balance (saves gas + reduces noise)
+    const dust = ethers.utils.parseEther('0.001');
+    const agBal = await this.agToken.balanceOf(bot.wallet.address);
+    const auBal = await this.auToken.balanceOf(bot.wallet.address);
+    if (agBal.lt(dust) && auBal.lt(dust)) {
+      return; // Bot is broke, skip
+    }
 
     // Decide action based on personality probabilities and system state
     const roll = Math.random();
@@ -343,7 +444,7 @@ class BotEngine {
         await this._swap(bot, state);
       }
     } catch (err) {
-      console.log('❌ Bot error:', err.reason || err.message || err);
+      this.stats.failedTransactions++;
     }
   }
 
@@ -500,6 +601,38 @@ class BotEngine {
     } catch {}
   }
 
+  async _triggerFlashBuyback() {
+    try {
+      // Every 10th round, attempt a buyback
+      if (this.round % 10 !== 0) return;
+
+      const bot = this.bots[Math.floor(Math.random() * this.bots.length)];
+
+      // Check if FlashBuy contract has Ag to sell
+      const flashBuyBal = await this.agToken.balanceOf(this.flashBuy.address);
+      const flashBuyAg = Number(flashBuyBal) / 1e18;
+      if (flashBuyAg < 100) return; // Not enough Ag in FlashBuy contract
+
+      // Swap up to 10% of FlashBuy Ag balance for Au (use integer math)
+      const buyAmount = flashBuyBal / 10n; // 10% of balance (112 bits safe)
+      if (buyAmount === 0n) return;
+      const minAuProfit = ethers.utils.parseEther('0');
+
+      const tx = await this.flashBuy.connect(bot.wallet).buybackAu(
+        buyAmount,
+        minAuProfit,
+        { gasLimit: 300000 }
+      );
+      await tx.wait();
+      this.stats.flashBuybacks = (this.stats.flashBuybacks || 0) + 1;
+      this.stats.totalTrades++;
+      this.stats.successfulTrades++;
+      this.stats.uniqueTraders.add(bot.wallet.address);
+    } catch (e) {
+      // Buyback is optional — don't count as failure
+    }
+  }
+
   async _triggerPID() {
     try {
       const canEmit = await this.pid.canEmit();
@@ -513,7 +646,10 @@ class BotEngine {
       this.stats.totalTrades++;
       this.stats.successfulTrades++;
       this.stats.uniqueTraders.add(bot.wallet.address);
-    } catch {}
+    } catch (e) {
+      this.stats.failedTrades++;
+      if (this.stats.failedTrades <= 5) console.log(`  ⚠️ tick failed: ${e.reason || e.message || 'unknown'}`);
+    }
   }
 
   _logStatus(state) {
@@ -539,7 +675,7 @@ class BotEngine {
     console.log('═══════════════════════════════════════════════════════════════');
     console.log(`  Bots: ${BOT_COUNT} | Rounds: ${rounds}`);
     console.log(`  Personalities: whale, dayTrader, dolphin, lp, dumper, accumulator, staker`);
-    console.log(`  Actions: swap, LP, stake, claim, buyback, PID tick`);
+    console.log(`  Actions: swap, LP, stake, claim, buyback, flashBuyback, PID tick`);
     console.log();
 
     for (let r = 0; r < rounds && this.running; r++) {

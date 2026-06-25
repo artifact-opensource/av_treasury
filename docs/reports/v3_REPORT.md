@@ -1,7 +1,7 @@
 # AV TREASURY — COMPREHENSIVE ANALYST REPORT
 
 **Date:** 2026-06-24  
-**Author:** OWL (ZOO Company)  
+**Author:** Ali A. Shakil
 **Scope:** All 14 contracts — Production (9) + Sandbox (5)  
 **Contract Language:** Solidity 0.8.26  
 **Framework:** Hardhat + Foundry (dual)  

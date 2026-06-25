@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AV LP Card — Superformula Prototype</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 40px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── The Card ── */
+  .card-container {
+    perspective: 1200px;
+    margin-bottom: 48px;
+  }
+
+  .card {
+    width: 380px;
+    height: 520px;
+    background: #0d0d0d;
+    border-radius: 20px;
+    border: 1px solid #1a1a1a;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,215,0,0.03),
+      0 20px 60px rgba(0,0,0,0.6),
+      0 0 100px rgba(255,215,0,0.02);
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .card:hover {
+    transform: rotateY(-3deg) rotateX(2deg) scale(1.01);
+  }
+
+  .card-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+  }
+
+  .card-border-accent {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, var(--accent-color, #ffd700) 0%, transparent 50%) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px;
+    z-index: 2;
+  }
+
+  .card-info .label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  .card-info .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-info .metrics {
+    display: flex;
+    gap: 20px;
+    margin-top: 12px;
+  }
+
+  .card-info .metric {
+    flex: 1;
+  }
+
+  .card-info .metric .val {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--accent-color, #ffd700);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-info .metric .lbl {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #444;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .control-group {
+    background: #111;
+    border: 1px solid #1a1a1a;
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+
+  .control-group h3 {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .slider-row:last-child { margin-bottom: 0; }
+
+  .slider-row label {
+    font-size: 0.7rem;
+    color: #888;
+    width: 90px;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .slider-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 3px;
+    background: #222;
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent-color, #ffd700);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(255,215,0,0.3);
+  }
+
+  .slider-row .val {
+    font-size: 0.7rem;
+    color: #aaa;
+    width: 40px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Scenario Buttons ── */
+  .scenarios {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .scenario-btn {
+    padding: 6px 14px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: #888;
+    font-size: 0.7rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .scenario-btn:hover {
+    background: #222;
+    border-color: #444;
+    color: #ccc;
+  }
+
+  .scenario-btn.active {
+    background: rgba(255,215,0,0.08);
+    border-color: rgba(255,215,0,0.3);
+    color: #ffd700;
+  }
+
+  /* ── Regenerate ── */
+  .regen-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1a1a0a 0%, #0d0d0d 100%);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 12px;
+    color: #ffd700;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .regen-btn:hover {
+    background: linear-gradient(135deg, #2a2a0a 0%, #1a1a0a 100%);
+    border-color: rgba(255,215,0,0.3);
+    box-shadow: 0 0 30px rgba(255,215,0,0.05);
+  }
+</style>
+</head>
+<body>
+
+<h1>AV LP Card</h1>
+<p class="subtitle">superformula · softmax · argmax · mock data</p>
+
+<div class="card-container">
+  <div class="card" id="card">
+    <svg class="card-svg" id="cardSvg" viewBox="0 0 380 520"></svg>
+    <div class="card-border-accent" id="cardBorder"></div>
+    <div class="card-overlay"></div>
+    <div class="card-info">
+      <div class="label">LP Position #0001</div>
+      <div class="value" id="positionId">AG 12,450 · AU 2,490</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="val" id="volValue">+2.4%</div>
+          <div class="lbl">Volume 24h</div>
+        </div>
+        <div class="metric">
+          <div class="val" id="tvlValue">$8,240</div>
+          <div class="lbl">TVL Share</div>
+        </div>
+        <div class="metric">
+          <div class="val" id="kValue">k = 31.0M</div>
+          <div class="lbl">Constant</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="control-group">
+    <h3>Position Data</h3>
+    <div class="slider-row">
+      <label>Ag Reserve</label>
+      <input type="range" id="agReserve" min="100" max="100000" value="12450">
+      <span class="val" id="agReserveVal">12.4K</span>
+    </div>
+    <div class="slider-row">
+      <label>Au Reserve</label>
+      <input type="range" id="auReserve" min="100" max="50000" value="2490">
+      <span class="val" id="auReserveVal">2.49K</span>
+    </div>
+    <div class="slider-row">
+      <label>Volume 24h</label>
+      <input type="range" id="volume" min="0" max="100" value="34">
+      <span class="val" id="volumeVal">34</span>
+    </div>
+    <div class="slider-row">
+      <label>Volatility</label>
+      <input type="range" id="volatility" min="0" max="100" value="28">
+      <span class="val" id="volatilityVal">28</span>
+    </div>
+    <div class="slider-row">
+      <label>Liquidity Depth</label>
+      <input type="range" id="liquidity" min="0" max="100" value="72">
+      <span class="val" id="liquidityVal">72</span>
+    </div>
+    <div class="slider-row">
+      <label>Time Held (d)</label>
+      <input type="range" id="timeHeld" min="1" max="365" value="90">
+      <span class="val" id="timeHeldVal">90d</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <h3>Scenarios</h3>
+    <div class="scenarios">
+      <button class="scenario-btn active" data-scenario="normal">Normal Day</button>
+      <button class="scenario-btn" data-scenario="vol">Volatility Spike</button>
+      <button class="scenario-btn" data-scenario="whale">Whale Dump</button>
+      <button class="scenario-btn" data-scenario="deep">Deep Liquidity</button>
+      <button class="scenario-btn" data-scenario="fresh">Fresh Position</button>
+      <button class="scenario-btn" data-scenario="dormant">Dormant</button>
+    </div>
+  </div>
+
+  <button class="regen-btn" id="regenBtn">� REGENERATE PATTERN</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// Superformula (Gielis) Implementation
+// ═══════════════════════════════════════════════════════════════
+
+function superformula(theta, m, n1, n2, n3, a, b) {
+  const t1 = Math.abs(Math.cos(m * theta / 4) / a);
+  const t2 = Math.abs(Math.sin(m * theta / 4) / b);
+  const t = Math.pow(t1, n2) + Math.pow(t2, n3);
+  if (t === 0) return 0;
+  return Math.pow(t, -1 / n1);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Softmax — weighted distribution over visual themes
+// ═══════════════════════════════════════════════════════════════
+
+function softmax(values) {
+  const max = Math.max(...values);
+  const exps = values.map(v => Math.exp(v - max));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / sum);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Argmax — dominant characteristic
+// ═══════════════════════════════════════════════════════════════
+
+function argmax(values) {
+  return values.indexOf(Math.max(...values));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Data → Visual Parameter Mapping
+// ═══════════════════════════════════════════════════════════════
+
+function mapDataToVisual(params) {
+  const { agReserve, auReserve, volume, volatility, liquidity, timeHeld } = params;
+
+  // Raw metrics
+  const tvl = agReserve + auReserve * 20; // approximate USD
+  const ratio = auReserve / agReserve;   // price proxy
+  const activity = volume / 100;
+  const stability = 1 - volatility / 100;
+  const depth = liquidity / 100;
+  const maturity = Math.min(timeHeld / 180, 1);
+
+  // Theme weights via softmax
+  const themes = [
+    activity * 2 + volume / 50,           // energetic
+    stability * 2 + liquidity / 50,       // calm
+    depth * 2 + tvl / 50000,              // rich
+    volatility / 30 + (1 - stability),     // wild
+    maturity * 1.5 + timeHeld / 200       // ancient
+  ];
+  const themeWeights = softmax(themes);
+  const dominantTheme = argmax(themeWeights);
+
+  // Superformula parameters
+  const symmetry = [
+    Math.round(2 + activity * 4),         // energetic: more lobes
+    Math.round(2 + stability * 3),        // calm: simple, 2-5
+    Math.round(3 + depth * 4),           // rich: complex
+    Math.round(2 + volatility / 15),     // wild: spiky
+    Math.round(4 + maturity * 4)          // ancient: many folds
+  ];
+  const m = symmetry.reduce((sum, s, i) => sum + s * themeWeights[i], 0);
+  const mFinal = Math.max(2, Math.round(m));
+
+  const n1_base = 0.5 + stability * 1.5 + depth * 0.5;
+  const n2_base = 1 + depth * 2 + maturity;
+  const n3_base = 1 + volatility / 50 + activity;
+
+  const n1 = n1_base + (dominantTheme === 3 ? -0.3 : 0);
+  const n2 = n2_base + (dominantTheme === 2 ? 1 : 0);
+  const n3 = n3_base + (dominantTheme === 0 ? 0.5 : 0);
+
+  const a = 1 + (1 - depth) * 0.3;
+  const b = 1 + (1 - stability) * 0.2;
+
+  // Color palette — gold/silver/copper based on ratio and health
+  const health = (stability * 0.4 + depth * 0.4 + maturity * 0.2);
+  const hue = 35 + ratio * 20 + volatility * 0.1; // 35=gold, 55=yellow
+  const saturation = 60 + activity * 30;
+  const lightness = 45 + health * 20;
+
+  return {
+    m, n1, n2, n3, a, b,
+    hue, saturation, lightness,
+    theme: dominantTheme,
+    themeWeights,
+    accentColor: `hsl(${hue}, ${saturation}%, ${lightness}%)`
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SVG Pattern Renderer
+// ═══════════════════════════════════════════════════════════════
+
+function renderCard(visual) {
+  const svg = document.getElementById('cardSvg');
+  const { m, n1, n2, n3, a, b, hue, saturation, lightness } = visual;
+
+  const cx = 190, cy = 230;
+  const scale = 120;
+  const points = 720;
+
+  // Generate superformula path
+  let pathOuter = '';
+  let pathInner = [];
+  for (let i = 0; i <= points; i++) {
+    const theta = (i / points) * Math.PI * 2;
+    const r = superformula(theta, m, n1, n2, n3, a, b);
+    const x = cx + r * scale * Math.cos(theta);
+    const y = cy + r * r * scale * 0.003 * Math.sin(theta); // subtle warp
+    pathOuter += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+
+    // Inner echo at different params
+    const rInner = superformula(theta + 0.1, m + 1, n1 * 0.8, n2 * 1.2, n3 * 0.9, a * 0.7, b * 0.7);
+    pathInner.push({ x: cx + rInner * scale * 0.6 * Math.cos(theta), y: cy + rInner * scale * 0.6 * Math.sin(theta) });
+  }
+  pathOuter += 'Z';
+
+  // Inner path
+  let pathInnerStr = '';
+  pathInner.forEach((p, i) => {
+    pathInnerStr += (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ' ';
+  });
+  pathInnerStr += 'Z';
+
+  // Concentric echoes
+  let echoes = '';
+  for (let ring = 1; ring <= 3; ring++) {
+    const ringScale = 1 + ring * 0.25;
+    const ringOpacity = 0.15 - ring * 0.03;
+    let echoPath = '';
+    for (let i = 0; i <= points; i += 3) {
+      const theta = (i / points) * Math.PI * 2;
+      const r = superformula(theta + ring * 0.5, m, n1, n2, n3, a, b);
+      const x = cx + r * scale * ringScale * Math.cos(theta);
+      const y = cy + r * scale * ringScale * Math.sin(theta);
+      echoPath += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+    }
+    echoPath += 'Z';
+    echoes += `<path d="${echoPath}" fill="none" stroke="hsla(${hue}, ${saturation}%, ${lightness + 10}%, ${ringOpacity})" stroke-width="0.8"/>`;
+  }
+
+  // Accent dots at symmetry points
+  let dots = '';
+  for (let i = 0; i < mFinal; i++) {
+    const angle = (i / mFinal) * Math.PI * 2 - Math.PI / 2;
+    const r = superformula(angle, m, n1, n2, n3, a, b);
+    const dx = cx + r * scale * 1.15 * Math.cos(angle);
+    const dy = cy + r * scale * 1.15 * Math.sin(angle);
+    dots += `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="2.5" fill="hsla(${hue}, ${saturation + 10}%, ${lightness + 15}%, 0.6)"><animate attributeName="r" values="2;3.5;2" dur="${2 + i * 0.3}s" repeatCount="indefinite"/></circle>`;
+  }
+
+  const baseColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  const lightColor = `hsl(${hue}, ${saturation}%, ${lightness + 20}%)`;
+  const darkColor = `hsl(${hue}, ${saturation}%, ${lightness - 15}%)`;
+
+  svg.innerHTML = `
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="45%" r="50%">
+        <stop offset="0%" stop-color="${baseColor}" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="softGlow">
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+
+    <rect width="380" height="520" fill="url(#glow)"/>
+
+    ${echoes}
+
+    <path d="${pathOuter}" fill="none" stroke="${baseColor}" stroke-width="1.5" opacity="0.9" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="${pathOuter}" fill="${darkColor}" opacity="0.08"/>
+
+    <path d="${pathInnerStr}" fill="none" stroke="${lightColor}" stroke-width="0.8" opacity="0.4"/>
+
+    ${dots}
+  `;
+
+  // Update card accent
+  document.getElementById('cardBorder').style.setProperty('--accent-color', visual.accentColor);
+  document.getElementById('card').style.setProperty('--accent-color', visual.accentCard || visual.accentColor);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Mock Data Scenarios
+// ═══════════════════════════════════════════════════════════════
+
+const scenarios = {
+  normal:    { ag: 12450, au: 2490, vol: 34, vlt: 28, liq: 72, time: 90 },
+  vol:       { ag: 12450, au: 2490, vol: 82, vlt: 89, liq: 55, time: 90 },
+  whale:     { ag: 3200,  au: 640,  vol: 95, vlt: 78, liq: 30, time: 90 },
+  deep:      { ag: 85000, au: 17000, vol: 18, vlt: 12, liq: 95, time: 200 },
+  fresh:     { ag: 1200,  au: 240,  vol: 5,  vlt: 15, liq: 40, time: 1 },
+  dormant:   { ag: 12450, au: 2490, vol: 1,  vlt: 3,  liq: 72, time: 300 }
+};
+
+function applyScenario(name) {
+  const s = scenarios[name];
+  document.getElementById('agReserve').value = s.ag;
+  document.getElementById('auReserve').value = s.au;
+  document.getElementById('volume').value = s.vol;
+  document.getElementById('volatility').value = s.vlt;
+  document.getElementById('liquidity').value = s.liq;
+  document.getElementById('timeHeld').value = s.time;
+  updateAll();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Update Loop
+// ═══════════════════════════════════════════════════════════════
+
+function updateAll() {
+  const ag = parseInt(document.getElementById('agReserve').value);
+  const au = parseInt(document.getElementById('auReserve').value);
+  const vol = parseInt(document.getElementById('volume').value);
+  const vlt = parseInt(document.getElementById('volatility').value);
+  const liq = parseInt(document.getElementById('liquidity').value);
+  const time = parseInt(document.getElementById('timeHeld').value);
+
+  // Update display values
+  document.getElementById('agReserveVal').textContent = ag > 1000 ? (ag/1000).toFixed(1) + 'K' : ag;
+  document.getElementById('auReserveVal').textContent = au > 1000 ? (au/1000).toFixed(1) + 'K' : au;
+  document.getElementById('volumeVal').textContent = vol;
+  document.getElementById('volatilityVal').textContent = vlt;
+  document.getElementById('liquidityVal').textContent = liq;
+  document.getElementById('timeHeldVal').textContent = time + 'd';
+
+  // Update info card
+  document.getElementById('positionId').textContent = `AG ${ag.toLocaleString()} · AU ${au.toLocaleString()}`;
+  document.getElementById('volValue').textContent = `+${(vol * 0.07).toFixed(1)}%`;
+  document.getElementById('tvlValue').textContent = `$${((ag + au * 20) / 1000).toFixed(1)}K`;
+  document.getElementById('kValue').textContent = `k = ${((ag * au) / 1000000).toFixed(1)}M`;
+
+  const visual = mapDataToVisual({ agReserve: ag, auReserve: au, volume: vol, volatility: vlt, liquidity: liq, timeHeld: time });
+  renderCard(visual);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Event Listeners
+// ═══════════════════════════════════════════════════════════════
+
+document.querySelectorAll('.slider-row input[type="range"]').forEach(input => {
+  input.addEventListener('input', updateAll);
+});
+
+document.querySelectorAll('.scenario-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyScenario(btn.dataset.scenario);
+  });
+});
+
+document.getElementById('regenBtn').addEventListener('click', () => {
+  // Slight random perturbation to create variation
+  const jitter = (val, pct) => Math.max(1, Math.round(val * (1 + (Math.random() - 0.5) * pct)));
+  document.getElementById('agReserve').value = jitter(parseInt(document.getElementById('agReserve').value), 0.05);
+  document.getElementById('auReserve').value = jitter(parseInt(document.getElementById('auReserve').value), 0.05);
+  updateAll();
+});
+
+// Init
+updateAll();
+</script>
+
+</body>
+</html>

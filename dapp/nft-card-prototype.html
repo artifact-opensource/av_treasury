@@ -31,7 +31,7 @@
   .card-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .card-vignette {
     position: absolute; inset: 0; pointer-events: none; z-index: 1;
-    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
   }
   .card-border {
     position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; z-index: 3;
@@ -95,17 +95,12 @@
   }
   @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
 
-  .mint-counter {
-    text-align: center; font-size: 0.52rem; color: #1a1a1a;
-    font-family: 'JetBrains Mono', monospace; margin-top: 2px;
-  }
+  .mint-counter { text-align: center; font-size: 0.52rem; color: #1a1a1a; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
 
   .gallery-section { width: 340px; margin-top: 16px; }
   .gallery-label { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.12em; color: #1a1a1a; margin-bottom: 8px; }
   .gallery-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
   .gallery-strip::-webkit-scrollbar { height: 2px; }
-  .gallery-strip::-webkit-scrollbar-track { background: #0a0a0a; }
-  .gallery-strip::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 1px; }
   .gallery-item {
     width: 52px; height: 72px; flex-shrink: 0;
     background: #050505; border: 1px solid #111; border-radius: 6px;
@@ -123,7 +118,7 @@
 <body>
 
 <h1>AV LP Card</h1>
-<p class="subtitle">quasi-crystalline · softmax · argmax · on-chain metrics</p>
+<p class="subtitle">quasi-crystalline · fibonacci-optimized · full-bleed</p>
 
 <div class="card" id="card">
   <svg class="card-svg" id="cardSvg" viewBox="0 0 340 480"></svg>
@@ -178,8 +173,46 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════════
+// Fibonacci Constants & Pythagorean Optimization
+// ═══════════════════════════════════════════════════════════════
+
+const FIB = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987];
+const PHI = 1.6180339887498948482; // Golden ratio
+
+// Pythagorean distance — used for boundary checks instead of naive AABB
+function pythag(x, y) { return Math.sqrt(x * x + y * y); }
+
+// Fibonacci-guided symmetry selection
+// Maps a continuous value to the nearest Fibonacci number in a valid range
+function fibSymmetry(val, min, max) {
+  // Filter Fibonacci numbers in range
+  const valid = FIB.filter(f => f >= min && f <= max);
+  if (valid.length === 0) return min;
+  // Find closest to val
+  let best = valid[0];
+  for (const f of valid) {
+    if (Math.abs(f - val) < Math.abs(best - val)) best = f;
+  }
+  return best;
+}
+
+// Fibonacci-guided line count — ensures harmonious density
+function fibLines(val, min, max) {
+  const valid = FIB.filter(f => f >= min && f <= max);
+  if (valid.length === 0) return min;
+  let best = valid[0];
+  for (const f of valid) {
+    if (Math.abs(f - val) < Math.abs(best - val)) best = f;
+  }
+  return best;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Quasi-Crystalline Pattern Generator
-// Faithful port of quasi.js by Robin Darobin
+// Optimized with:
+// - Pythagorean boundary checks (circular, not box)
+// - Fibonacci-guided symmetry/line selection (no even symmetries = no div0)
+// - Full-bleed scaling (pattern extends beyond card edges)
 // ═══════════════════════════════════════════════════════════════
 
 function quasiCrystal(symmetry, lines, seed) {
@@ -220,14 +253,20 @@ function quasiCrystal(symmetry, lines, seed) {
         for (let t = 0; t < symmetry - 1; t++) {
           for (let r = t + 1; r < symmetry; r++) {
             const denom = mm[r] - mm[t];
-            if (Math.abs(denom) < 1e-10) continue;
+            // Pythagorean guard: skip near-parallel axes (prevents div0 glitches)
+            if (Math.abs(denom) < 1e-6) continue;
+
             const x0 = (b[t][n] - b[r][m]) / denom;
             const y0 = mm[t] * x0 + b[t][n];
 
-            // Boundary clipping
-            const dx0 = x0 / win, dy0 = y0 / win;
-            if (dx0 < -0.3 || dx0 > 1.3 || dy0 < -0.3 || dy0 > 1.3) continue;
+            // Pythagorean boundary check — circular, not box
+            // Uses distance from center of normalized space (0.5, 0.5)
+            const ndx = x0 / win - 0.5;
+            const ndy = y0 / win - 0.5;
+            const dist = pythag(ndx, ndy);
+            if (dist > 0.85) continue; // circular boundary, more generous than box
 
+            // Validate all symmetry axes
             let flag = false;
             const index = [];
             for (let i = 0; i < symmetry; i++) {
@@ -253,16 +292,13 @@ function quasiCrystal(symmetry, lines, seed) {
             colorVal += Math.abs(vx[t] * vx[r] + vy[t] * vy[r]);
             if (colorVal > 1) colorVal -= 1;
 
-            // Track bounds on RAW coordinates (before any offset/scale)
+            minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+            minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+
             const x1 = px, y1 = py;
             const x2 = px + vx[t], y2 = py + vy[t];
             const x3 = px + vx[t] + vx[r], y3 = py + vy[t] + vy[r];
             const x4 = px + vx[r], y4 = py + vy[r];
-
-            minX = Math.min(minX, x1, x2, x3, x4);
-            maxX = Math.max(maxX, x1, x2, x3, x4);
-            minY = Math.min(minY, y1, y2, y3, y4);
-            maxY = Math.max(maxY, y1, y2, y3, y4);
 
             polygons.push({ raw: [x1, y1, x2, y2, x3, y3, x4, y4], color: colorVal });
 
@@ -287,15 +323,20 @@ function quasiCrystal(symmetry, lines, seed) {
     }
   }
 
-  // ── Center and scale the RAW coordinates ──
-  // The raw coords are centered around origin (from the symmetry vectors)
-  // We compute their bounds, center them, scale to fit, then shift to card center
+  // ── Full-bleed scaling ──
+  // Scale so the pattern extends BEYOND the card edges
+  // This ensures the background is completely filled with no empty space
   const rawCX = (minX + maxX) / 2;
   const rawCY = (minY + maxY) / 2;
   const patW = maxX - minX || 1;
   const patH = maxY - minY || 1;
-  const targetSize = 200; // target diameter in SVG units
-  const scaleFit = targetSize / Math.max(patW, patH);
+
+  // Target: pattern should cover 130% of the card (bleeds past edges)
+  const cardW = 340, cardH = 480;
+  const bleedFactor = 1.35;
+  const targetW = cardW * bleedFactor;
+  const targetH = cardH * bleedFactor;
+  const scaleFit = Math.max(targetW / patW, targetH / patH); // max = fill completely
 
   // Transform: center → scale → shift to card center
   const tx = (x) => (x - rawCX) * scaleFit + cx;
@@ -338,6 +379,7 @@ function argmax(v) {
 
 // ═══════════════════════════════════════════════════════════════
 // Data → Visual Parameters
+// Uses Fibonacci-guided symmetry/line selection
 // ═══════════════════════════════════════════════════════════════
 
 function toVis(p) {
@@ -357,13 +399,36 @@ function toVis(p) {
   ]);
   const dom = argmax(w);
 
+  // ── Fibonacci-guided symmetry ──
+  // Only odd Fibonacci numbers (3, 5, 8→skip, 13, 21...)
+  // Even symmetries cause div0 glitches (parallel axes at 180°)
+  // We use Fibonacci sequence to pick harmonious symmetry values
   const balance = Math.max(0, 1 - Math.abs(ratio - 0.2) / 0.3);
-  const symmetry = Math.max(3, Math.round(3 + balance * 4 + act * 2));
-  const lines = Math.max(10, Math.round(10 + Math.min(tvl / 25000, 12)));
+  const rawSymmetry = 3 + balance * 5 + act * 3; // range ~3 to 11
+  // Map to nearest odd Fibonacci: 3, 5, 13 (skip 8 — even)
+  const oddFib = [3, 5, 13, 21];
+  let symmetry = oddFib[0];
+  for (const f of oddFib) {
+    if (Math.abs(f - rawSymmetry) < Math.abs(symmetry - rawSymmetry)) symmetry = f;
+  }
+  // Clamp for performance (higher symmetry = exponentially more polygons)
+  symmetry = Math.min(symmetry, 13);
+
+  // ── Fibonacci-guided line count ──
+  const rawLines = 8 + Math.min(tvl / 20000, 14); // range ~8 to 22
+  // Map to nearest Fibonacci: 8, 13, 21
+  const lineFib = [8, 13, 21];
+  let lines = lineFib[0];
+  for (const f of lineFib) {
+    if (Math.abs(f - rawLines) < Math.abs(lines - rawLines)) lines = f;
+  }
+
+  // Seed: unique per position
   const seed = ((p.ag * 7919 + p.au * 104729) % 2147483646) + 1;
 
   const health = stab * 0.4 + depth * 0.4 + age * 0.2;
 
+  // 5 high-contrast palettes
   const palettes = [
     { base: [255, 180, 40],  mid: [255, 100, 20],  light: [255, 230, 120], glow: [255, 60, 0]   },
     { base: [40, 200, 255],  mid: [20, 130, 220],  light: [120, 240, 255], glow: [0, 80, 200]   },
@@ -430,9 +495,9 @@ function render(vis) {
   polygons.forEach(p => {
     const d = 'M' + p.points.map(pt => `${pt[0].toFixed(1)},${pt[1].toFixed(1)}`).join('L') + 'Z';
     const [r, g, b] = colorFromVal(p.color, baseC, midC, lightC, glowC);
-    const fillOp = 0.25 + p.color * 0.4;
-    const strokeOp = 0.5 + p.color * 0.5;
-    const strokeW = 0.6 + p.color * 1.0;
+    const fillOp = 0.2 + p.color * 0.45;
+    const strokeOp = 0.4 + p.color * 0.55;
+    const strokeW = 0.5 + p.color * 1.2;
     paths += `<path d="${d}" fill="rgb(${r},${g},${b})" fill-opacity="${fillOp.toFixed(2)}" stroke="rgb(${r},${g},${b})" stroke-width="${strokeW.toFixed(1)}" stroke-opacity="${strokeOp.toFixed(2)}"/>`;
   });
 
@@ -440,16 +505,16 @@ function render(vis) {
   diagonals.forEach(d => {
     const [d1x1, d1y1, d1x2, d1y2] = d.dist1 <= d.dist2 ? d.d1 : d.d2;
     const [r, g, b] = d.color < 0.5 ? lightC : glowC;
-    const op = 0.15 + d.color * 0.25;
-    diags += `<line x1="${d1x1.toFixed(1)}" y1="${d1y1.toFixed(1)}" x2="${d1x2.toFixed(1)}" y2="${d1y2.toFixed(1)}" stroke="rgb(${r},${g},${b})" stroke-width="0.5" stroke-opacity="${op.toFixed(2)}"/>`;
+    const op = 0.1 + d.color * 0.3;
+    diags += `<line x1="${d1x1.toFixed(1)}" y1="${d1y1.toFixed(1)}" x2="${d1x2.toFixed(1)}" y2="${d1y2.toFixed(1)}" stroke="rgb(${r},${g},${b})" stroke-width="0.4" stroke-opacity="${op.toFixed(2)}"/>`;
   });
 
-  // Outer ring echo
-  const ringData = quasiCrystal(symmetry, Math.max(5, Math.floor(lines * 0.5)), seed + 12345);
+  // Outer ring echo (also full-bleed)
+  const ringData = quasiCrystal(symmetry, Math.max(5, Math.floor(lines * PHI / 3)), seed + 12345);
   let ring = '';
   ringData.polygons.forEach(p => {
-    const d = 'M' + p.points.map(pt => `${(pt[0] * 1.035).toFixed(1)},${(pt[1] * 1.035).toFixed(1)}`).join('L') + 'Z';
-    ring += `<path d="${d}" fill="none" stroke="rgb(${baseC[0]},${baseC[1]},${baseC[2]})" stroke-width="0.4" stroke-opacity="0.12"/>`;
+    const d = 'M' + p.points.map(pt => `${(pt[0] * 1.02).toFixed(1)},${(pt[1] * 1.02).toFixed(1)}`).join('L') + 'Z';
+    ring += `<path d="${d}" fill="none" stroke="rgb(${baseC[0]},${baseC[1]},${baseC[2]})" stroke-width="0.3" stroke-opacity="0.08"/>`;
   });
 
   svg.innerHTML = ring + paths + diags;
@@ -481,9 +546,9 @@ function renderThumb(vis, canvas) {
     ctx.lineTo(p.points[2][0] * sx, p.points[2][1] * sy);
     ctx.lineTo(p.points[3][0] * sx, p.points[3][1] * sy);
     ctx.closePath();
-    ctx.fillStyle = `rgba(${r},${g},${b},${(0.25 + p.color * 0.4).toFixed(2)})`;
+    ctx.fillStyle = `rgba(${r},${g},${b},${(0.2 + p.color * 0.45).toFixed(2)})`;
     ctx.fill();
-    ctx.strokeStyle = `rgba(${r},${g},${b},${(0.5 + p.color * 0.5).toFixed(2)})`;
+    ctx.strokeStyle = `rgba(${r},${g},${b},${(0.4 + p.color * 0.55).toFixed(2)})`;
     ctx.lineWidth = 0.3;
     ctx.stroke();
   });
@@ -518,7 +583,6 @@ function addToGallery(vis, id, positionData) {
     renderThumb(card.vis, canvas);
 
     item.addEventListener('click', () => loadCard(card));
-
     strip.appendChild(item);
   });
 }
@@ -560,8 +624,6 @@ function updateUI(p) {
 function mintNewCard() {
   mintCount++;
 
-  // Fully randomize position data — simulates a brand new LPNFT mint
-  // Use exponential distribution for realistic reserve distributions
   const randExp = (min, max) => {
     const u = Math.random();
     return Math.round(min * Math.pow(max / min, u));
@@ -576,17 +638,11 @@ function mintNewCard() {
 
   const vis = toVis({ ag, au, vol, vlt, liq, time });
 
-  // Update main card
   updateUI({ ag, au, vol, vlt, liq, time });
   render(vis);
-
-  // Add to gallery
   addToGallery(vis, mintCount, { ag, au, vol, vlt, liq, time });
 
-  // Update counter
   document.getElementById('mintCounter').textContent = `minted: ${mintCount}`;
-
-  // Scroll to card
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

@@ -3,12 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AV LP Card — Superformula Prototype v2</title>
+<title>AV LP Card — v3</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
-
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     background: #000;
     color: #e0e0e0;
@@ -17,264 +15,94 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px 16px;
-    overflow-x: hidden;
+    padding: 28px 16px;
   }
-
-  h1 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
-    color: #fff;
-  }
-
-  .subtitle {
-    font-size: 0.7rem;
-    color: #444;
-    margin-bottom: 32px;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* ── The Card ── */
-  .card-container {
-    perspective: 1200px;
-    margin-bottom: 40px;
-  }
+  h1 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  .subtitle { font-size: 0.65rem; color: #444; margin-bottom: 24px; font-family: 'JetBrains Mono', monospace; }
 
   .card {
-    width: 360px;
-    height: 500px;
+    width: 340px; height: 480px;
     background: #080808;
-    border-radius: 20px;
-    border: 1px solid #181818;
-    position: relative;
-    overflow: hidden;
-    box-shadow:
-      0 0 80px rgba(255,215,0,0.03),
-      0 20px 60px rgba(0,0,0,0.8);
+    border-radius: 18px;
+    border: 1px solid #161616;
+    position: relative; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
   }
-
-  .card-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
+  .card-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .card-noise {
-    position: absolute;
-    inset: 0;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    position: absolute; inset: 0; opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     pointer-events: none;
   }
-
   .card-border-accent {
-    position: absolute;
-    inset: -1px;
-    border-radius: 20px;
-    pointer-events: none;
-    background: linear-gradient(
-      135deg,
-      var(--accent, #ffd700) 0%,
-      transparent 30%,
-      transparent 70%,
-      var(--accent, #ffd700) 100%
-    );
-    opacity: 0.15;
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
+    position: absolute; inset: -1px; border-radius: 18px; pointer-events: none;
+    background: linear-gradient(135deg, var(--accent, #ffd700) 0%, transparent 40%, transparent 60%, var(--accent, #ffd700) 100%);
+    opacity: 0.12;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
+    mask-composite: exclude;
     padding: 1px;
   }
-
   .card-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 20px 24px;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 18px 20px;
     z-index: 2;
-    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
   }
+  .card-info .label { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.15em; color: #333; margin-bottom: 2px; }
+  .card-info .value { font-size: 0.85rem; font-weight: 600; color: #fff; font-family: 'JetBrains Mono', monospace; }
+  .card-info .metrics { display: flex; gap: 14px; margin-top: 8px; }
+  .card-info .metric .val { font-size: 0.72rem; font-weight: 600; color: var(--accent, #ffd700); font-family: 'JetBrains Mono', monospace; }
+  .card-info .metric .lbl { font-size: 0.45rem; text-transform: uppercase; letter-spacing: 0.08em; color: #333; }
 
-  .card-info .label {
-    font-size: 0.55rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: #444;
-    margin-bottom: 2px;
-  }
-
-  .card-info .value {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .card-info .metrics {
-    display: flex;
-    gap: 16px;
-    margin-top: 10px;
-  }
-
-  .card-info .metric .val {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--accent, #ffd700);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .card-info .metric .lbl {
-    font-size: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #333;
-  }
-
-  /* ── Controls ── */
-  .controls {
-    width: 360px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .control-group {
-    background: #0c0c0c;
-    border: 1px solid #181818;
-    border-radius: 12px;
-    padding: 14px 18px;
-  }
-
-  .control-group h3 {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #444;
-    margin-bottom: 10px;
-  }
-
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
+  .controls { width: 340px; display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+  .control-group { background: #0c0c0c; border: 1px solid #161616; border-radius: 10px; padding: 12px 16px; }
+  .control-group h3 { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.12em; color: #333; margin-bottom: 8px; }
+  .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .slider-row:last-child { margin-bottom: 0; }
-
-  .slider-row label {
-    font-size: 0.65rem;
-    color: #666;
-    width: 80px;
-    flex-shrink: 0;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
+  .slider-row label { font-size: 0.6rem; color: #555; width: 72px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
   input[type="range"] {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 2px;
-    background: #1a1a1a;
-    border-radius: 1px;
-    outline: none;
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 2px; background: #1a1a1a; border-radius: 1px; outline: none;
   }
-
   input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    background: var(--accent, #ffd700);
-    border-radius: 50%;
-    cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    width: 10px; height: 10px; background: var(--accent, #ffd700); border-radius: 50%; cursor: pointer;
   }
+  .slider-row .val { font-size: 0.6rem; color: #777; width: 32px; text-align: right; font-family: 'JetBrains Mono', monospace; }
 
-  .slider-row .val {
-    font-size: 0.65rem;
-    color: #888;
-    width: 36px;
-    text-align: right;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* ── Scenarios ── */
-  .scenarios {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
+  .scenarios { display: flex; gap: 5px; flex-wrap: wrap; }
   .scenario-btn {
-    padding: 5px 12px;
-    background: #141414;
-    border: 1px solid #222;
-    border-radius: 6px;
-    color: #666;
-    font-size: 0.65rem;
-    font-family: 'Inter', sans-serif;
-    cursor: pointer;
-    transition: all 0.15s;
+    padding: 4px 10px; background: #131313; border: 1px solid #1e1e1e;
+    border-radius: 5px; color: #555; font-size: 0.6rem; cursor: pointer; transition: all 0.12s;
   }
-
-  .scenario-btn:hover { background: #1a1a1a; color: #aaa; }
-  .scenario-btn.active {
-    background: rgba(255,215,0,0.06);
-    border-color: rgba(255,215,0,0.25);
-    color: #ffd700;
-  }
+  .scenario-btn:hover { background: #1a1a1a; }
+  .scenario-btn.active { background: rgba(255,215,0,0.06); border-color: rgba(255,215,0,0.2); color: #ffd700; }
 
   .regen-btn {
-    width: 100%;
-    padding: 12px;
-    background: #0a0a0a;
-    border: 1px solid #1a1a1a;
-    border-radius: 10px;
-    color: #555;
-    font-size: 0.7rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
+    width: 100%; padding: 10px; background: #0a0a0a;
+    border: 1px solid #181818; border-radius: 8px;
+    color: #444; font-size: 0.65rem; cursor: pointer; transition: all 0.12s;
   }
-
-  .regen-btn:hover {
-    border-color: #333;
-    color: #888;
-  }
+  .regen-btn:hover { border-color: #282828; color: #666; }
 </style>
 </head>
 <body>
 
 <h1>AV LP Card</h1>
-<p class="subtitle">superformula · softmax · argmax · v2</p>
+<p class="subtitle">superformula · softmax · argmax · v3</p>
 
-<div class="card-container">
-  <div class="card" id="card">
-    <svg class="card-svg" id="cardSvg" viewBox="0 0 360 500"></svg>
-    <div class="card-noise"></div>
-    <div class="card-border-accent" id="cardBorder"></div>
-    <div class="card-info">
-      <div class="label">LP Position #0001</div>
-      <div class="value" id="positionId">AG 12,450 · AU 2,490</div>
-      <div class="metrics">
-        <div class="metric">
-          <div class="val" id="volValue">+2.4%</div>
-          <div class="lbl">Volume 24h</div>
-        </div>
-        <div class="metric">
-          <div class="val" id="tvlValue">$8,240</div>
-          <div class="lbl">TVL Share</div>
-        </div>
-        <div class="metric">
-          <div class="val" id="kValue">k = 31.0M</div>
-          <div class="lbl">Constant</div>
-        </div>
-      </div>
+<div class="card" id="card">
+  <svg class="card-svg" id="cardSvg" viewBox="0 0 340 480"></svg>
+  <div class="card-noise"></div>
+  <div class="card-border-accent" id="cardBorder"></div>
+  <div class="card-info">
+    <div class="label">LP Position #0001</div>
+    <div class="value" id="positionId">AG 12,450 · AU 2,490</div>
+    <div class="metrics">
+      <div class="metric"><div class="val" id="volValue">+2.4%</div><div class="lbl">Vol 24h</div></div>
+      <div class="metric"><div class="val" id="tvlValue">$8,240</div><div class="lbl">TVL</div></div>
+      <div class="metric"><div class="val" id="kValue">k = 31.0M</div><div class="lbl">Constant</div></div>
     </div>
   </div>
 </div>
@@ -282,345 +110,207 @@
 <div class="controls">
   <div class="control-group">
     <h3>Position Data</h3>
-    <div class="slider-row">
-      <label>Ag Reserve</label>
-      <input type="range" id="agReserve" min="100" max="100000" value="12450">
-      <span class="val" id="agReserveVal">12.4K</span>
-    </div>
-    <div class="slider-row">
-      <label>Au Reserve</label>
-      <input type="range" id="auReserve" min="100" max="50000" value="2490">
-      <span class="val" id="auReserveVal">2.49K</span>
-    </div>
-    <div class="slider-row">
-      <label>Volume 24h</label>
-      <input type="range" id="volume" min="0" max="100" value="34">
-      <span class="val" id="volumeVal">34</span>
-    </div>
-    <div class="slider-row">
-      <label>Volatility</label>
-      <input type="range" id="volatility" min="0" max="100" value="28">
-      <span class="val" id="volatilityVal">28</span>
-    </div>
-    <div class="slider-row">
-      <label>Liquidity</label>
-      <input type="range" id="liquidity" min="0" max="100" value="72">
-      <span class="val" id="liquidityVal">72</span>
-    </div>
-    <div class="slider-row">
-      <label>Time Held</label>
-      <input type="range" id="timeHeld" min="1" max="365" value="90">
-      <span class="val" id="timeHeldVal">90d</span>
-    </div>
+    <div class="slider-row"><label>Ag</label><input type="range" id="agReserve" min="100" max="100000" value="12450"><span class="val" id="agReserveVal">12K</span></div>
+    <div class="slider-row"><label>Au</label><input type="range" id="auReserve" min="100" max="50000" value="2490"><span class="val" id="auReserveVal">2.5K</span></div>
+    <div class="slider-row"><label>Volume</label><input type="range" id="volume" min="0" max="100" value="34"><span class="val" id="volumeVal">34</span></div>
+    <div class="slider-row"><label>Volatility</label><input type="range" id="volatility" min="0" max="100" value="28"><span class="val" id="volatilityVal">28</span></div>
+    <div class="slider-row"><label>Liquidity</label><input type="range" id="liquidity" min="0" max="100" value="72"><span class="val" id="liquidityVal">72</span></div>
+    <div class="slider-row"><label>Age</label><input type="range" id="timeHeld" min="1" max="365" value="90"><span class="val" id="timeHeldVal">90d</span></div>
   </div>
-
   <div class="control-group">
     <h3>Scenarios</h3>
     <div class="scenarios">
       <button class="scenario-btn active" data-scenario="normal">Normal</button>
       <button class="scenario-btn" data-scenario="vol">Vol Spike</button>
-      <button class="scenario-btn" data-scenario="whale">Whale Dump</button>
-      <button class="scenario-btn" data-scenario="deep">Deep Liq</button>
+      <button class="scenario-btn" data-scenario="whale">Whale</button>
+      <button class="scenario-btn" data-scenario="deep">Deep</button>
       <button class="scenario-btn" data-scenario="fresh">Fresh</button>
       <button class="scenario-btn" data-scenario="dormant">Dormant</button>
     </div>
   </div>
-
   <button class="regen-btn" id="regenBtn">↻ REGENERATE</button>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// Superformula (Gielis)
-// ═══════════════════════════════════════════════════════════════
-
-function superformula(theta, m, n1, n2, n3, a, b) {
+// ── Superformula ──
+function sf(theta, m, n1, n2, n3, a, b) {
   const t1 = Math.pow(Math.abs(Math.cos(m * theta / 4) / a), n2);
   const t2 = Math.pow(Math.abs(Math.sin(m * theta / 4) / b), n3);
   const t = t1 + t2;
-  if (t <= 0 || !isFinite(t)) return 0;
-  return Math.pow(t, -1 / n1);
+  return (t <= 0 || !isFinite(t)) ? 0 : Math.pow(t, -1 / n1);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Softmax + Argmax
-// ═══════════════════════════════════════════════════════════════
-
-function softmax(values) {
-  const max = Math.max(...values);
-  const exps = values.map(v => Math.exp(v - max));
-  const sum = exps.reduce((a, b) => a + b, 0);
-  return exps.map(e => e / sum);
+// ── Softmax / Argmax ──
+function softmax(v) {
+  const mx = Math.max(...v);
+  const e = v.map(x => Math.exp(x - mx));
+  const s = e.reduce((a, b) => a + b, 0);
+  return e.map(x => x / s);
+}
+function argmax(v) {
+  let i = 0;
+  for (let j = 1; j < v.length; j++) if (v[j] > v[i]) i = j;
+  return i;
 }
 
-function argmax(values) {
-  let idx = 0;
-  for (let i = 1; i < values.length; i++) {
-    if (values[i] > values[idx]) idx = i;
-  }
-  return idx;
-}
+// ── Data → Visual ──
+function toVis(p) {
+  const tvl = p.ag + p.au * 20;
+  const ratio = p.au / Math.max(p.ag, 1);
+  const act = p.vol / 100;
+  const stab = 1 - p.vlt / 100;
+  const depth = p.liq / 100;
+  const age = Math.min(p.time / 180, 1);
 
-// ═══════════════════════════════════════════════════════════════
-// Data → Visual Parameters
-// ═══════════════════════════════════════════════════════════════
-
-function mapDataToVisual(p) {
-  const tvl = p.agReserve + p.auReserve * 20;
-  const ratio = p.auReserve / Math.max(p.agReserve, 1);
-  const activity = p.volume / 100;
-  const stability = 1 - p.volatility / 100;
-  const depth = p.liquidity / 100;
-  const maturity = Math.min(p.timeHeld / 180, 1);
-
-  // Theme scores → softmax
-  const themes = [
-    activity * 3 + p.volume / 40,
-    stability * 3 + p.liquidity / 40,
+  const w = softmax([
+    act * 3 + p.vol / 40,
+    stab * 3 + p.liq / 40,
     depth * 2.5 + tvl / 40000,
-    p.volatility / 25 + (1 - stability) * 1.5,
-    maturity * 2.5 + p.timeHeld / 150
-  ];
-  const weights = softmax(themes);
-  const dominant = argmax(weights);
+    p.vlt / 25 + (1 - stab) * 1.5,
+    age * 2.5 + p.time / 150
+  ]);
+  const dom = argmax(w);
 
-  // Symmetry per theme
-  const symmetries = [
-    Math.round(3 + activity * 5),
-    Math.round(2 + stability * 3),
-    Math.round(4 + depth * 5),
-    Math.round(2 + p.volatility / 12),
-    Math.round(5 + maturity * 5)
-  ];
-  const m = Math.max(2, Math.round(symmetries.reduce((s, sym, i) => s + sym * weights[i], 0)));
+  const sym = [3+act*5, 2+stab*3, 4+depth*5, 2+p.vlt/12, 5+age*5];
+  const m = Math.max(2, Math.round(sym.reduce((s, i, k) => s + i * w[k], 0)));
 
-  // Shape params
-  const n1 = 0.3 + stability * 1.2 + depth * 0.6 + (dominant === 3 ? -0.2 : 0);
-  const n2 = 0.8 + depth * 2.5 + maturity * 0.5 + (dominant === 2 ? 1.2 : 0);
-  const n3 = 0.8 + p.volatility / 40 + activity * 0.8 + (dominant === 0 ? 0.6 : 0);
+  const n1 = 0.3 + stab * 1.2 + depth * 0.6 - (dom === 3 ? 0.2 : 0);
+  const n2 = 0.8 + depth * 2.5 + age * 0.5 + (dom === 2 ? 1.2 : 0);
+  const n3 = 0.8 + p.vlt / 40 + act * 0.8 + (dom === 0 ? 0.6 : 0);
   const a = 1 + (1 - depth) * 0.25;
-  const b = 1 + (1 - stability) * 0.15;
+  const b = 1 + (1 - stab) * 0.15;
 
-  // Color
-  const health = stability * 0.4 + depth * 0.4 + maturity * 0.2;
-  const hue = 30 + ratio * 25 + p.volatility * 0.08;
-  const sat = 55 + activity * 35;
+  const health = stab * 0.4 + depth * 0.4 + age * 0.2;
+  const hue = 30 + ratio * 25 + p.vlt * 0.08;
+  const sat = 55 + act * 35;
   const lit = 40 + health * 25;
+  const scale = 70 + Math.min(tvl / 2500, 90);
+  const rot = (p.ag * 7 + p.au * 13) % 360;
 
-  // Scale based on TVL
-  const scale = 80 + Math.min(tvl / 2000, 100);
-
-  // Rotation offset based on position hash
-  const rotation = (p.agReserve * 7 + p.auReserve * 13) % 360;
-
-  return { m, n1, n2, n3, a, b, hue, sat, lit, scale, rotation, dominant, weights,
+  return { m, n1, n2, n3, a, b, hue, sat, lit, scale, rot,
            accent: `hsl(${hue}, ${sat}%, ${lit}%)` };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SVG Renderer v2 — bold, layered, particle-filled
-// ═══════════════════════════════════════════════════════════════
-
-function generatePath(cx, cy, scale, m, n1, n2, n3, a, b, rotation) {
-  const points = 600;
-  const rotRad = rotation * Math.PI / 180;
-  let path = '';
-  for (let i = 0; i <= points; i++) {
-    const theta = (i / points) * Math.PI * 2;
-    const r = superformula(theta + rotRad * 0.01, m, n1, n2, n3, a, b);
-    if (!isFinite(r) || r <= 0) continue;
-    const x = cx + r * scale * Math.cos(theta);
-    const y = cy + r * scale * Math.sin(theta);
-    path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+// ── Path generator ──
+function mkPath(cx, cy, sc, m, n1, n2, n3, a, b, rot, steps) {
+  const r = rot * Math.PI / 180;
+  let d = '';
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * Math.PI * 2;
+    const v = sf(t + r * 0.01, m, n1, n2, n3, a, b);
+    if (v <= 0 || !isFinite(v)) continue;
+    const x = cx + v * sc * Math.cos(t);
+    const y = cy + v * sc * Math.sin(t);
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
   }
-  return path + 'Z';
+  return d + 'Z';
 }
 
-function renderCard(vis) {
+// ── Render ──
+function render(vis) {
   const svg = document.getElementById('cardSvg');
-  const cx = 180, cy = 220;
-  const { m, n1, n2, n3, a, b, hue, sat, lit, scale, rotation } = vis;
+  const cx = 170, cy = 210;
+  const { m, n1, n2, n3, a, b, hue, sat, lit, scale, rot } = vis;
 
-  const base = `hsl(${hue}, ${sat}%, ${lit}%)`;
-  const light = `hsl(${hue}, ${sat + 5}%, ${lit + 20}%)`;
-  const dark = `hsl(${hue}, ${sat}%, ${lit - 20}%)`;
-  const glow = `hsla(${hue}, ${sat}%, ${lit + 10}%, 0.08)`;
+  const base = `hsl(${hue},${sat}%,${lit}%)`;
+  const light = `hsl(${hue},${sat+5}%,${lit+18}%)`;
+  const dark = `hsl(${hue},${sat}%,${lit-18}%)`;
 
-  // Main shape
-  const mainPath = generatePath(cx, cy, scale, m, n1, n2, n3, a, b, rotation);
-
-  // Inner variant (shifted params)
-  const innerPath = generatePath(cx, cy, scale * 0.55, m + 2, n1 * 0.7, n2 * 1.3, n3 * 0.8, a * 0.8, b * 0.8, rotation + 30);
-
-  // Micro variant (center detail)
-  const microPath = generatePath(cx, cy, scale * 0.25, m + 4, n1 * 0.5, n2 * 0.5, n3 * 2, a * 0.6, b * 0.6, rotation + 60);
-
-  // Echo rings (same shape, larger, fading)
+  // Main shape (200 steps — fast)
+  const main = mkPath(cx, cy, scale, m, n1, n2, n3, a, b, rot, 200);
+  // Inner (120 steps)
+  const inner = mkPath(cx, cy, scale * 0.5, m+2, n1*0.7, n2*1.3, n3*0.8, a*0.8, b*0.8, rot+25, 120);
+  // Echo rings (80 steps each)
   let echoes = '';
-  for (let i = 1; i <= 4; i++) {
-    const echoScale = scale * (1 + i * 0.2);
-    const echoPath = generatePath(cx, cy, echoScale, m, n1 * (1 + i * 0.1), n2, n3, a, b, rotation + i * 5);
-    const op = 0.12 - i * 0.025;
-    echoes += `<path d="${echoPath}" fill="none" stroke="${base}" stroke-width="${1.2 - i * 0.2}" opacity="${Math.max(op, 0.02)}"/>`;
+  for (let i = 1; i <= 3; i++) {
+    const ep = mkPath(cx, cy, scale * (1 + i * 0.22), m, n1, n2, n3, a, b, rot + i * 8, 80);
+    echoes += `<path d="${ep}" fill="none" stroke="${base}" stroke-width="${1 - i * 0.2}" opacity="${0.1 - i * 0.02}"/>`;
   }
-
-  // Particle scatter inside the shape
-  let particles = [];
-  const seed = (m * 1000 + Math.round(n1 * 100) + Math.round(scale)) % 997;
-  for (let i = 0; i < 60; i++) {
-    const angle = ((i * 137.5 + seed) % 360) * Math.PI / 180;
-    const dist = ((i * 73 + seed * 7) % 100) / 100;
-    const r = superformula(angle + rotation * 0.01, m, n1, n2, n3, a, b);
-    if (!isFinite(r) || r <= 0) continue;
-    const px = cx + r * scale * dist * 0.85 * Math.cos(angle);
-    const py = cy + r * scale * dist * 0.85 * Math.sin(angle);
-    const size = 0.5 + ((i * 31) % 10) / 10 * 1.5;
-    const pOp = 0.15 + ((i * 47) % 10) / 10 * 0.35;
-    particles.push({ x: px.toFixed(1), y: py.toFixed(1), r: size.toFixed(1), op: pOp.toFixed(2) });
+  // Particles (deterministic, no DOM loop per frame)
+  let pts = '';
+  const seed = (m * 100 + Math.round(n1 * 50)) % 97;
+  for (let i = 0; i < 30; i++) {
+    const ang = ((i * 137.5 + seed) % 360) * Math.PI / 180;
+    const d = ((i * 73 + seed * 7) % 100) / 100;
+    const v = sf(ang + rot * 0.01, m, n1, n2, n3, a, b);
+    if (v <= 0 || !isFinite(v)) continue;
+    const px = cx + v * scale * d * 0.8 * Math.cos(ang);
+    const py = cy + v * scale * d * 0.8 * Math.sin(ang);
+    const r = (0.6 + (i % 5) * 0.3).toFixed(1);
+    const op = (0.2 + (i % 4) * 0.1).toFixed(2);
+    pts += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" fill="${light}" opacity="${op}"/>`;
   }
-
-  let particleStr = '';
-  particles.forEach(p => {
-    particleStr += `<circle cx="${p.x}" cy="${p.y}" r="${p.r}" fill="${light}" opacity="${p.op}"/>`;
-  });
-
-  // Symmetry spikes (radiating lines from center through symmetry points)
-  let spikes = '';
-  for (let i = 0; i < m; i++) {
-    const angle = (i / m) * Math.PI * 2 - Math.PI / 2 + rotation * 0.01;
-    const r = superformula(angle, m, n1, n2, n3, a, b);
-    if (!isFinite(r) || r <= 0) continue;
-    const x2 = cx + r * scale * 1.1 * Math.cos(angle);
-    const y2 = cy + r * scale * 1.1 * Math.sin(angle);
-    spikes += `<line x1="${cx}" y1="${cy}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${base}" stroke-width="0.5" opacity="0.15"/>`;
-  }
-
-  // Outer glow
-  const glowPath = generatePath(cx, cy, scale * 1.3, m, n1, n2, n3, a, b, rotation);
 
   svg.innerHTML = `
-    <defs>
-      <filter id="glow">
-        <feGaussianBlur stdDeviation="4" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="softGlow">
-        <feGaussianBlur stdDeviation="1.5" result="blur"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <radialGradient id="centerGlow" cx="50%" cy="45%" r="40%">
-        <stop offset="0%" stop-color="${glow}"/>
-        <stop offset="100%" stop-color="transparent"/>
-      </radialGradient>
-    </defs>
-
-    <rect width="360" height="500" fill="url(#centerGlow)"/>
-
-    <!-- Outer glow outline -->
-    <path d="${glowPath}" fill="none" stroke="${base}" stroke-width="20" opacity="0.03" filter="url(#glow)"/>
-
-    <!-- Echo rings -->
+    <path d="${main}" fill="${dark}" opacity="0.05"/>
+    <path d="${main}" fill="none" stroke="${base}" stroke-width="2.2" opacity="0.95"/>
     ${echoes}
-
-    <!-- Spikes -->
-    ${spikes}
-
-    <!-- Main shape fill (very subtle) -->
-    <path d="${mainPath}" fill="${dark}" opacity="0.06"/>
-
-    <!-- Main shape outline (bold) -->
-    <path d="${mainPath}" fill="none" stroke="${base}" stroke-width="2.5" filter="url(#softGlow)" opacity="0.95"/>
-
-    <!-- Inner shape -->
-    <path d="${innerPath}" fill="none" stroke="${light}" stroke-width="1.2" opacity="0.5"/>
-
-    <!-- Micro center detail -->
-    <path d="${microPath}" fill="${base}" opacity="0.15"/>
-
-    <!-- Particles -->
-    ${particleStr}
+    <path d="${inner}" fill="none" stroke="${light}" stroke-width="1" opacity="0.4"/>
+    ${pts}
   `;
 
-  // Update accent
   document.getElementById('cardBorder').style.setProperty('--accent', vis.accent);
   document.getElementById('card').style.setProperty('--accent', vis.accent);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Scenarios
-// ═══════════════════════════════════════════════════════════════
-
-const scenarios = {
-  normal:    { ag: 12450, au: 2490, vol: 34, vlt: 28, liq: 72, time: 90 },
-  vol:       { ag: 12450, au: 2490, vol: 82, vlt: 89, liq: 55, time: 90 },
-  whale:     { ag: 3200,  au: 640,  vol: 95, vlt: 78, liq: 30, time: 90 },
-  deep:      { ag: 85000, au: 17000, vol: 18, vlt: 12, liq: 95, time: 200 },
-  fresh:     { ag: 1200,  au: 240,  vol: 5,  vlt: 15, liq: 40, time: 1 },
-  dormant:   { ag: 12450, au: 2490, vol: 1,  vlt: 3,  liq: 72, time: 300 }
+// ── Scenarios ──
+const S = {
+  normal:  { ag: 12450, au: 2490, vol: 34, vlt: 28, liq: 72, time: 90 },
+  vol:     { ag: 12450, au: 2490, vol: 82, vlt: 89, liq: 55, time: 90 },
+  whale:   { ag: 3200,  au: 640,  vol: 95, vlt: 78, liq: 30, time: 90 },
+  deep:    { ag: 85000, au: 17000, vol: 18, vlt: 12, liq: 95, time: 200 },
+  fresh:   { ag: 1200,  au: 240,  vol: 5,  vlt: 15, liq: 40, time: 1 },
+  dormant: { ag: 12450, au: 2490, vol: 1,  vlt: 3,  liq: 72, time: 300 }
 };
 
-function applyScenario(name) {
-  const s = scenarios[name];
-  document.getElementById('agReserve').value = s.ag;
-  document.getElementById('auReserve').value = s.au;
-  document.getElementById('volume').value = s.vol;
-  document.getElementById('volatility').value = s.vlt;
-  document.getElementById('liquidity').value = s.liq;
-  document.getElementById('timeHeld').value = s.time;
-  updateAll();
+function apply(k) {
+  const s = S[k];
+  ['agReserve','auReserve','volume','volatility','liquidity','timeHeld'].forEach((id, i) => {
+    document.getElementById(id).value = s[id === 'agReserve' ? 'ag' : id === 'auReserve' ? 'au' : id === 'timeHeld' ? 'time' : id];
+  });
+  update();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Update
-// ═══════════════════════════════════════════════════════════════
+function update() {
+  const ag = +document.getElementById('agReserve').value;
+  const au = +document.getElementById('auReserve').value;
+  const vol = +document.getElementById('volume').value;
+  const vlt = +document.getElementById('volatility').value;
+  const liq = +document.getElementById('liquidity').value;
+  const time = +document.getElementById('timeHeld').value;
 
-function updateAll() {
-  const ag = parseInt(document.getElementById('agReserve').value);
-  const au = parseInt(document.getElementById('auReserve').value);
-  const vol = parseInt(document.getElementById('volume').value);
-  const vlt = parseInt(document.getElementById('volatility').value);
-  const liq = parseInt(document.getElementById('liquidity').value);
-  const time = parseInt(document.getElementById('timeHeld').value);
-
-  document.getElementById('agReserveVal').textContent = ag > 1000 ? (ag/1000).toFixed(1) + 'K' : ag;
-  document.getElementById('auReserveVal').textContent = au > 1000 ? (au/1000).toFixed(1) + 'K' : au;
+  document.getElementById('agReserveVal').textContent = ag > 1000 ? (ag/1000).toFixed(1)+'K' : ag;
+  document.getElementById('auReserveVal').textContent = au > 1000 ? (au/1000).toFixed(1)+'K' : au;
   document.getElementById('volumeVal').textContent = vol;
   document.getElementById('volatilityVal').textContent = vlt;
   document.getElementById('liquidityVal').textContent = liq;
-  document.getElementById('timeHeldVal').textContent = time + 'd';
+  document.getElementById('timeHeldVal').textContent = time+'d';
 
   document.getElementById('positionId').textContent = `AG ${ag.toLocaleString()} · AU ${au.toLocaleString()}`;
-  document.getElementById('volValue').textContent = `+${(vol * 0.07).toFixed(1)}%`;
-  document.getElementById('tvlValue').textContent = `$${((ag + au * 20) / 1000).toFixed(1)}K`;
-  document.getElementById('kValue').textContent = `k = ${((ag * au) / 1000000).toFixed(1)}M`;
+  document.getElementById('volValue').textContent = `+${(vol*0.07).toFixed(1)}%`;
+  document.getElementById('tvlValue').textContent = `$${((ag+au*20)/1000).toFixed(1)}K`;
+  document.getElementById('kValue').textContent = `k=${((ag*au)/1e6).toFixed(1)}M`;
 
-  const vis = mapDataToVisual({ agReserve: ag, auReserve: au, volume: vol, volatility: vlt, liquidity: liq, timeHeld: time });
-  renderCard(vis);
+  render(toVis({ag, au, vol, vlt, liq, time}));
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Events
-// ═══════════════════════════════════════════════════════════════
-
-document.querySelectorAll('input[type="range"]').forEach(el => el.addEventListener('input', updateAll));
-
+// ── Events ──
+document.querySelectorAll('input[type="range"]').forEach(el => el.addEventListener('input', update));
 document.querySelectorAll('.scenario-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    applyScenario(btn.dataset.scenario);
+    apply(btn.dataset.scenario);
   });
 });
-
 document.getElementById('regenBtn').addEventListener('click', () => {
-  const jitter = (v, p) => Math.max(1, Math.round(v * (1 + (Math.random() - 0.5) * p)));
-  document.getElementById('agReserve').value = jitter(parseInt(document.getElementById('agReserve').value), 0.08);
-  document.getElementById('auReserve').value = jitter(parseInt(document.getElementById('auReserve').value), 0.08);
-  updateAll();
+  const j = (v, p) => Math.max(1, Math.round(v * (1 + (Math.random()-0.5)*p)));
+  document.getElementById('agReserve').value = j(+document.getElementById('agReserve').value, 0.08);
+  document.getElementById('auReserve').value = j(+document.getElementById('auReserve').value, 0.08);
+  update();
 });
 
-// Init
-updateAll();
+update();
 </script>
 </body>
 </html>

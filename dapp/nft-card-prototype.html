@@ -100,14 +100,12 @@
     font-family: 'JetBrains Mono', monospace; margin-top: 2px;
   }
 
-  /* Gallery */
   .gallery-section { width: 340px; margin-top: 16px; }
   .gallery-label { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.12em; color: #1a1a1a; margin-bottom: 8px; }
   .gallery-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
   .gallery-strip::-webkit-scrollbar { height: 2px; }
   .gallery-strip::-webkit-scrollbar-track { background: #0a0a0a; }
   .gallery-strip::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 1px; }
-
   .gallery-item {
     width: 52px; height: 72px; flex-shrink: 0;
     background: #050505; border: 1px solid #111; border-radius: 6px;
@@ -185,13 +183,11 @@
 // ═══════════════════════════════════════════════════════════════
 
 function quasiCrystal(symmetry, lines, seed) {
-  let s = seed;
   const cx = 170, cy = 240;
-  const scale = 14;
-  const offsetX = 2, offsetY = 2;
   const win = 20;
   const halfMax = lines / 2;
 
+  // Build symmetry vectors
   const vx = [], vy = [], mm = [], b = [];
   for (let t = 0; t < symmetry; t++) {
     const phi = (t * 2) / symmetry * Math.PI;
@@ -227,6 +223,8 @@ function quasiCrystal(symmetry, lines, seed) {
             if (Math.abs(denom) < 1e-10) continue;
             const x0 = (b[t][n] - b[r][m]) / denom;
             const y0 = mm[t] * x0 + b[t][n];
+
+            // Boundary clipping
             const dx0 = x0 / win, dy0 = y0 / win;
             if (dx0 < -0.3 || dx0 > 1.3 || dy0 < -0.3 || dy0 > 1.3) continue;
 
@@ -247,6 +245,7 @@ function quasiCrystal(symmetry, lines, seed) {
             let px = 0, py = 0;
             for (let i = 0; i < symmetry; i++) { px += vx[i] * index[i]; py += vy[i] * index[i]; }
 
+            // Color value (original quasi.js formula)
             let colorVal = 0;
             for (let i = 0; i < symmetry; i++) colorVal += index[i];
             while (colorVal > (symmetry - 1) / 2) colorVal -= (symmetry - 1) / 2;
@@ -254,24 +253,20 @@ function quasiCrystal(symmetry, lines, seed) {
             colorVal += Math.abs(vx[t] * vx[r] + vy[t] * vy[r]);
             if (colorVal > 1) colorVal -= 1;
 
-            minX = Math.min(minX, px); maxX = Math.max(maxX, px);
-            minY = Math.min(minY, py); maxY = Math.max(maxY, py);
-
+            // Track bounds on RAW coordinates (before any offset/scale)
             const x1 = px, y1 = py;
             const x2 = px + vx[t], y2 = py + vy[t];
             const x3 = px + vx[t] + vx[r], y3 = py + vy[t] + vy[r];
             const x4 = px + vx[r], y4 = py + vy[r];
 
-            polygons.push({
-              rawPts: [
-                [offsetX + (0.5 * (x1 / win + 1)) * scale, offsetY + (0.5 * (y1 / win + 1)) * scale],
-                [offsetX + (0.5 * (x2 / win + 1)) * scale, offsetY + (0.5 * (y2 / win + 1)) * scale],
-                [offsetX + (0.5 * (x3 / win + 1)) * scale, offsetY + (0.5 * (y3 / win + 1)) * scale],
-                [offsetX + (0.5 * (x4 / win + 1)) * scale, offsetY + (0.5 * (y4 / win + 1)) * scale]
-              ],
-              color: colorVal
-            });
+            minX = Math.min(minX, x1, x2, x3, x4);
+            maxX = Math.max(maxX, x1, x2, x3, x4);
+            minY = Math.min(minY, y1, y2, y3, y4);
+            maxY = Math.max(maxY, y1, y2, y3, y4);
 
+            polygons.push({ raw: [x1, y1, x2, y2, x3, y3, x4, y4], color: colorVal });
+
+            // Diagonal midpoints
             const mx1 = x1 + vx[t] * 0.5, my1 = y1 + vy[t] * 0.5;
             const mx2 = x2 + vx[r] * 0.5, my2 = y2 + vy[r] * 0.5;
             const mx3 = x4 + vx[t] * 0.5, my3 = y4 + vy[t] * 0.5;
@@ -282,8 +277,8 @@ function quasiCrystal(symmetry, lines, seed) {
             diagonals.push({
               d1: [mx1, my1, mx3, my3],
               d2: [mx2, my2, mx4, my4],
-              dist1: ddx1*ddx1 + ddy1*ddy1,
-              dist2: ddx2*ddx2 + ddy2*ddy2,
+              dist1: ddx1 * ddx1 + ddy1 * ddy1,
+              dist2: ddx2 * ddx2 + ddy2 * ddy2,
               color: colorVal
             });
           }
@@ -292,19 +287,33 @@ function quasiCrystal(symmetry, lines, seed) {
     }
   }
 
-  const patW = maxX - minX || 1, patH = maxY - minY || 1;
-  const targetW = 240, targetH = 320;
-  const scaleFit = Math.min(targetW / patW, targetH / patH) * 0.78;
-  const shiftX = cx - (minX + patW / 2) * scaleFit;
-  const shiftY = cy - (minY + patH / 2) * scaleFit;
+  // ── Center and scale the RAW coordinates ──
+  // The raw coords are centered around origin (from the symmetry vectors)
+  // We compute their bounds, center them, scale to fit, then shift to card center
+  const rawCX = (minX + maxX) / 2;
+  const rawCY = (minY + maxY) / 2;
+  const patW = maxX - minX || 1;
+  const patH = maxY - minY || 1;
+  const targetSize = 200; // target diameter in SVG units
+  const scaleFit = targetSize / Math.max(patW, patH);
 
-  const tx = pt => [pt[0] * scaleFit + shiftX, pt[1] * scaleFit + shiftY];
+  // Transform: center → scale → shift to card center
+  const tx = (x) => (x - rawCX) * scaleFit + cx;
+  const ty = (y) => (y - rawCY) * scaleFit + cy;
 
   return {
-    polygons: polygons.map(p => ({ points: p.rawPts.map(tx), color: p.color })),
+    polygons: polygons.map(p => ({
+      points: [
+        [tx(p.raw[0]), ty(p.raw[1])],
+        [tx(p.raw[2]), ty(p.raw[3])],
+        [tx(p.raw[4]), ty(p.raw[5])],
+        [tx(p.raw[6]), ty(p.raw[7])]
+      ],
+      color: p.color
+    })),
     diagonals: diagonals.map(d => ({
-      d1: [tx([d.d1[0], d.d1[1]]), tx([d.d1[2], d.d1[3]])],
-      d2: [tx([d.d2[0], d.d2[1]]), tx([d.d2[2], d.d2[3]])],
+      d1: [tx(d.d1[0]), ty(d.d1[1]), tx(d.d1[2]), ty(d.d1[3])],
+      d2: [tx(d.d2[0]), ty(d.d2[1]), tx(d.d2[2]), ty(d.d2[3])],
       dist1: d.dist1, dist2: d.dist2,
       color: d.color
     }))
@@ -383,7 +392,7 @@ function toVis(p) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Render SVG (main card)
+// Color from val
 // ═══════════════════════════════════════════════════════════════
 
 function colorFromVal(c, baseC, midC, lightC, glowC) {
@@ -406,6 +415,10 @@ function colorFromVal(c, baseC, midC, lightC, glowC) {
   }
   return [r, g, b];
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Render SVG (main card)
+// ═══════════════════════════════════════════════════════════════
 
 function render(vis) {
   const svg = document.getElementById('cardSvg');
@@ -431,6 +444,7 @@ function render(vis) {
     diags += `<line x1="${d1x1.toFixed(1)}" y1="${d1y1.toFixed(1)}" x2="${d1x2.toFixed(1)}" y2="${d1y2.toFixed(1)}" stroke="rgb(${r},${g},${b})" stroke-width="0.5" stroke-opacity="${op.toFixed(2)}"/>`;
   });
 
+  // Outer ring echo
   const ringData = quasiCrystal(symmetry, Math.max(5, Math.floor(lines * 0.5)), seed + 12345);
   let ring = '';
   ringData.polygons.forEach(p => {
@@ -457,8 +471,6 @@ function renderThumb(vis, canvas) {
   ctx.fillRect(0, 0, w, h);
 
   const data = quasiCrystal(symmetry, lines, seed);
-
-  // Scale down for thumbnail
   const sx = w / 340, sy = h / 480;
 
   data.polygons.forEach(p => {
@@ -484,14 +496,14 @@ function renderThumb(vis, canvas) {
 let mintedCards = [];
 let mintCount = 0;
 
-function addToGallery(vis, id) {
-  mintedCards.unshift({ vis, id, timestamp: Date.now() });
+function addToGallery(vis, id, positionData) {
+  mintedCards.unshift({ vis, id, positionData, timestamp: Date.now() });
   if (mintedCards.length > 20) mintedCards.pop();
 
   const strip = document.getElementById('galleryStrip');
   strip.innerHTML = '';
 
-  mintedCards.slice(0, 12).forEach((card, i) => {
+  mintedCards.slice(0, 12).forEach((card) => {
     const item = document.createElement('div');
     item.className = 'gallery-item';
     item.title = `Card #${card.id}`;
@@ -505,18 +517,14 @@ function addToGallery(vis, id) {
 
     renderThumb(card.vis, canvas);
 
-    item.addEventListener('click', () => {
-      loadCard(card);
-    });
+    item.addEventListener('click', () => loadCard(card));
 
     strip.appendChild(item);
   });
 }
 
 function loadCard(card) {
-  const v = card.vis;
-  // Reconstruct position data from the vis
-  const p = v._positionData;
+  const p = card.positionData;
   if (!p) return;
 
   document.getElementById('agReserve').value = p.ag;
@@ -527,7 +535,7 @@ function loadCard(card) {
   document.getElementById('timeHeld').value = p.time;
 
   updateUI(p);
-  render(v);
+  render(card.vis);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -567,14 +575,13 @@ function mintNewCard() {
   const time = Math.round(1 + Math.random() * 364);
 
   const vis = toVis({ ag, au, vol, vlt, liq, time });
-  vis._positionData = { ag, au, vol, vlt, liq, time };
 
   // Update main card
   updateUI({ ag, au, vol, vlt, liq, time });
   render(vis);
 
   // Add to gallery
-  addToGallery(vis, mintCount);
+  addToGallery(vis, mintCount, { ag, au, vol, vlt, liq, time });
 
   // Update counter
   document.getElementById('mintCounter').textContent = `minted: ${mintCount}`;

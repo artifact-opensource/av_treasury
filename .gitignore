@@ -26,6 +26,9 @@ sandbox/logs/
 *.pid
 sandbox/deployed_*.json
 
+# Index directory
+/index/
+
 # OS
 .DS_Store
 *.swp

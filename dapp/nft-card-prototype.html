@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AV LP Card — v3</title>
+<title>AV LP Card — Quasi Crystal</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #000;
@@ -15,87 +15,84 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 28px 16px;
+    padding: 24px 16px;
   }
   h1 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
-  .subtitle { font-size: 0.65rem; color: #444; margin-bottom: 24px; font-family: 'JetBrains Mono', monospace; }
+  .subtitle { font-size: 0.62rem; color: #3a3a3a; margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; }
 
   .card {
     width: 340px; height: 480px;
-    background: #080808;
+    background: #060606;
     border-radius: 18px;
-    border: 1px solid #161616;
+    border: 1px solid #141414;
     position: relative; overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   }
   .card-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .card-noise {
-    position: absolute; inset: 0; opacity: 0.025;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    pointer-events: none;
+  .card-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
   }
-  .card-border-accent {
+  .card-border {
     position: absolute; inset: -1px; border-radius: 18px; pointer-events: none;
-    background: linear-gradient(135deg, var(--accent, #ffd700) 0%, transparent 40%, transparent 60%, var(--accent, #ffd700) 100%);
-    opacity: 0.12;
+    background: linear-gradient(135deg, var(--accent, #ffd700) 0%, transparent 35%, transparent 65%, var(--accent, #ffd700) 100%);
+    opacity: 0.1;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    -webkit-mask-composite: xor; mask-composite: exclude;
     padding: 1px;
   }
   .card-info {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 18px 20px;
-    z-index: 2;
-    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    padding: 16px 20px; z-index: 2;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
   }
-  .card-info .label { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.15em; color: #333; margin-bottom: 2px; }
-  .card-info .value { font-size: 0.85rem; font-weight: 600; color: #fff; font-family: 'JetBrains Mono', monospace; }
+  .card-info .label { font-size: 0.48rem; text-transform: uppercase; letter-spacing: 0.15em; color: #2a2a2a; margin-bottom: 2px; }
+  .card-info .value { font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'JetBrains Mono', monospace; }
   .card-info .metrics { display: flex; gap: 14px; margin-top: 8px; }
-  .card-info .metric .val { font-size: 0.72rem; font-weight: 600; color: var(--accent, #ffd700); font-family: 'JetBrains Mono', monospace; }
-  .card-info .metric .lbl { font-size: 0.45rem; text-transform: uppercase; letter-spacing: 0.08em; color: #333; }
+  .card-info .metric .val { font-size: 0.68rem; font-weight: 600; color: var(--accent, #ffd700); font-family: 'JetBrains Mono', monospace; }
+  .card-info .metric .lbl { font-size: 0.42rem; text-transform: uppercase; letter-spacing: 0.06em; color: #2a2a2a; }
 
-  .controls { width: 340px; display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
-  .control-group { background: #0c0c0c; border: 1px solid #161616; border-radius: 10px; padding: 12px 16px; }
-  .control-group h3 { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.12em; color: #333; margin-bottom: 8px; }
-  .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .controls { width: 340px; display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .control-group { background: #0a0a0a; border: 1px solid #141414; border-radius: 10px; padding: 12px 14px; }
+  .control-group h3 { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.12em; color: #2a2a2a; margin-bottom: 8px; }
+  .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
   .slider-row:last-child { margin-bottom: 0; }
-  .slider-row label { font-size: 0.6rem; color: #555; width: 72px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+  .slider-row label { font-size: 0.58rem; color: #4a4a4a; width: 68px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
   input[type="range"] {
     flex: 1; -webkit-appearance: none; appearance: none;
-    height: 2px; background: #1a1a1a; border-radius: 1px; outline: none;
+    height: 2px; background: #161616; border-radius: 1px; outline: none;
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
     width: 10px; height: 10px; background: var(--accent, #ffd700); border-radius: 50%; cursor: pointer;
   }
-  .slider-row .val { font-size: 0.6rem; color: #777; width: 32px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .slider-row .val { font-size: 0.58rem; color: #666; width: 28px; text-align: right; font-family: 'JetBrains Mono', monospace; }
 
-  .scenarios { display: flex; gap: 5px; flex-wrap: wrap; }
+  .scenarios { display: flex; gap: 4px; flex-wrap: wrap; }
   .scenario-btn {
-    padding: 4px 10px; background: #131313; border: 1px solid #1e1e1e;
-    border-radius: 5px; color: #555; font-size: 0.6rem; cursor: pointer; transition: all 0.12s;
+    padding: 4px 10px; background: #111; border: 1px solid #1c1c1c;
+    border-radius: 5px; color: #4a4a4a; font-size: 0.58rem; cursor: pointer; transition: all 0.12s;
   }
-  .scenario-btn:hover { background: #1a1a1a; }
-  .scenario-btn.active { background: rgba(255,215,0,0.06); border-color: rgba(255,215,0,0.2); color: #ffd700; }
+  .scenario-btn:hover { background: #181818; }
+  .scenario-btn.active { background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2); color: #ffd700; }
 
   .regen-btn {
-    width: 100%; padding: 10px; background: #0a0a0a;
-    border: 1px solid #181818; border-radius: 8px;
-    color: #444; font-size: 0.65rem; cursor: pointer; transition: all 0.12s;
+    width: 100%; padding: 10px; background: #080808;
+    border: 1px solid #161616; border-radius: 8px;
+    color: #3a3a3a; font-size: 0.62rem; cursor: pointer; transition: all 0.12s;
   }
-  .regen-btn:hover { border-color: #282828; color: #666; }
+  .regen-btn:hover { border-color: #2a2a2a; color: #666; }
 </style>
 </head>
 <body>
 
 <h1>AV LP Card</h1>
-<p class="subtitle">superformula · softmax · argmax · v3</p>
+<p class="subtitle">quasi-crystalline · softmax · argmax · on-chain metrics</p>
 
 <div class="card" id="card">
   <svg class="card-svg" id="cardSvg" viewBox="0 0 340 480"></svg>
-  <div class="card-noise"></div>
-  <div class="card-border-accent" id="cardBorder"></div>
+  <div class="card-vignette"></div>
+  <div class="card-border" id="cardBorder"></div>
   <div class="card-info">
     <div class="label">LP Position #0001</div>
     <div class="value" id="positionId">AG 12,450 · AU 2,490</div>
@@ -123,24 +120,139 @@
       <button class="scenario-btn active" data-scenario="normal">Normal</button>
       <button class="scenario-btn" data-scenario="vol">Vol Spike</button>
       <button class="scenario-btn" data-scenario="whale">Whale</button>
-      <button class="scenario-btn" data-scenario="deep">Deep</button>
+      <button class="scenario-btn" data-scenario="deep">Deep Liq</button>
       <button class="scenario-btn" data-scenario="fresh">Fresh</button>
       <button class="scenario-btn" data-scenario="dormant">Dormant</button>
     </div>
   </div>
-  <button class="regen-btn" id="regenBtn">↻ REGENERATE</button>
+  <button class="regen-btn" id="regenBtn">↻ NEW SEED</button>
 </div>
 
 <script>
-// ── Superformula ──
-function sf(theta, m, n1, n2, n3, a, b) {
-  const t1 = Math.pow(Math.abs(Math.cos(m * theta / 4) / a), n2);
-  const t2 = Math.pow(Math.abs(Math.sin(m * theta / 4) / b), n3);
-  const t = t1 + t2;
-  return (t <= 0 || !isFinite(t)) ? 0 : Math.pow(t, -1 / n1);
+// ═══════════════════════════════════════════════════════════════
+// Quasi-Crystalline Pattern Generator
+// Based on quasi.js by Robin Darobin
+// ═══════════════════════════════════════════════════════════════
+
+function quasiCrystal(symmetry, lines, seed) {
+  // Seed-based pseudo-random for unique but deterministic patterns
+  let s = seed;
+  const rand = () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; };
+
+  const cx = 170, cy = 240;
+  const scale = 14;
+  const offsetX = 2, offsetY = 2;
+  const win = 20;
+  const halfMax = lines / 2;
+
+  // Build symmetry vectors
+  const vx = [], vy = [], mm = [], b = [];
+  for (let t = 0; t < symmetry; t++) {
+    const phi = (t * 2) / symmetry * Math.PI;
+    vx[t] = Math.cos(phi);
+    vy[t] = Math.sin(phi);
+    mm[t] = vy[t] / vx[t];
+    b[t] = [];
+    for (let r = 0; r < lines; r++) {
+      const y1 = vy[t] * (t * 0.1132 + rand() * 0.02) - vx[t] * (r - halfMax);
+      const x1 = vx[t] * (t * 0.2137 + rand() * 0.02) + vy[t] * (r - halfMax);
+      b[t][r] = y1 - mm[t] * x1;
+    }
+  }
+
+  const polygons = [];
+  const maxMax = lines - 1;
+  const theMax = lines - 1;
+  const theMin = Math.floor(theMax / 2);
+
+  for (let minMin = 0; minMin <= theMax; minMin += 0.4) {
+    const rad1 = minMin * minMin;
+    const rad2 = (minMin + 0.4) * (minMin + 0.4);
+
+    for (let n = 1; n < theMax; n++) {
+      for (let m = 1; m < theMax; m++) {
+        const rad = (n - theMin) * (n - theMin) + (m - theMin) * (m - theMin);
+        if (rad < rad1 || rad >= rad2) continue;
+
+        for (let t = 0; t < symmetry - 1; t++) {
+          for (let r = t + 1; r < symmetry; r++) {
+            const x0 = ((b[t][n] || 0) - (b[r][m] || 0)) / ((mm[r] || 0) - (mm[t] || 0));
+            const y0 = (mm[t] || 0) * x0 + (b[t][n] || 0);
+
+            let flag = false;
+            const index = [];
+            for (let i = 0; i < symmetry; i++) {
+              if (i !== t && i !== r) {
+                const dx = -x0 * (vy[i] || 0) + (y0 - (b[i][0] || 0)) * (vx[i] || 0);
+                index[i] = Math.floor(-dx);
+                if (index[i] > maxMax - 3 || index[i] < 1) flag = true;
+              }
+            }
+            if (flag) continue;
+
+            index[t] = n - 1;
+            index[r] = m - 1;
+
+            let px = 0, py = 0;
+            for (let i = 0; i < symmetry; i++) {
+              px += (vx[i] || 0) * (index[i] || 0);
+              py += (vy[i] || 0) * (index[i] || 0);
+            }
+
+            // Color based on position in structure
+            let colorVal = 0;
+            for (let i = 0; i < symmetry; i++) colorVal += (index[i] || 0);
+            while (colorVal > (symmetry - 1) / 2) colorVal -= (symmetry - 1) / 2;
+            colorVal = colorVal / ((symmetry - 1) / 2);
+
+            const x1 = px, y1 = py;
+            const x2 = px + vx[t], y1y = py + vy[t];
+            const x3 = px + vx[t] + vx[r], y3 = py + vy[t] + vy[r];
+            const x4 = px + vx[r], y4 = py + vy[r];
+
+            polygons.push({
+              points: [
+                [offsetX + (0.5 * (x1 / win + 1)) * scale, offsetY + (0.5 * (y1 / win + 1)) * scale],
+                [offsetX + (0.5 * (x2 / win + 1)) * scale, offsetY + (0.5 * (y1y / win + 1)) * scale],
+                [offsetX + (0.5 * (x3 / win + 1)) * scale, offsetY + (0.5 * (y3 / win + 1)) * scale],
+                [offsetX + (0.5 * (x4 / win + 1)) * scale, offsetY + (0.5 * (y4 / win + 1)) * scale]
+              ],
+              color: colorVal
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Center the pattern
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  polygons.forEach(p => {
+    p.points.forEach(pt => {
+      minX = Math.min(minX, pt[0]); maxX = Math.max(maxX, pt[0]);
+      minY = Math.min(minY, pt[1]); maxY = Math.max(maxY, pt[1]);
+    });
+  });
+
+  const patW = maxX - minX, patH = maxY - minY;
+  const targetW = 280, targetH = 360;
+  const scaleFit = Math.min(targetW / patW, targetH / patH) * 0.85;
+  const shiftX = cx - (minX + patW / 2) * scaleFit;
+  const shiftY = cy - (minY + patH / 2) * scaleFit;
+
+  return polygons.map(p => ({
+    points: p.points.map(pt => [
+      pt[0] * scaleFit + shiftX,
+      pt[1] * scaleFit + shiftY
+    ]),
+    color: p.color
+  }));
 }
 
-// ── Softmax / Argmax ──
+// ═══════════════════════════════════════════════════════════════
+// Softmax + Argmax
+// ═══════════════════════════════════════════════════════════════
+
 function softmax(v) {
   const mx = Math.max(...v);
   const e = v.map(x => Math.exp(x - mx));
@@ -153,7 +265,10 @@ function argmax(v) {
   return i;
 }
 
-// ── Data → Visual ──
+// ═══════════════════════════════════════════════════════════════
+// Data → Visual Parameters
+// ═══════════════════════════════════════════════════════════════
+
 function toVis(p) {
   const tvl = p.ag + p.au * 20;
   const ratio = p.au / Math.max(p.ag, 1);
@@ -162,6 +277,7 @@ function toVis(p) {
   const depth = p.liq / 100;
   const age = Math.min(p.time / 180, 1);
 
+  // Theme weights
   const w = softmax([
     act * 3 + p.vol / 40,
     stab * 3 + p.liq / 40,
@@ -171,89 +287,85 @@ function toVis(p) {
   ]);
   const dom = argmax(w);
 
-  const sym = [3+act*5, 2+stab*3, 4+depth*5, 2+p.vlt/12, 5+age*5];
-  const m = Math.max(2, Math.round(sym.reduce((s, i, k) => s + i * w[k], 0)));
+  // ── Quasi pattern uniqueness ──
+  // Symmetry: derived from position ratio (unique per LP)
+  // More balanced pools → higher symmetry (harmonious)
+  // Imbalanced pools → lower symmetry (chaotic)
+  const balance = 1 - Math.abs(ratio - 0.2) / 0.2; // peaks at ratio=0.2 (our init price)
+  const symmetry = Math.max(3, Math.round(3 + balance * 5 + act * 2));
 
-  const n1 = 0.3 + stab * 1.2 + depth * 0.6 - (dom === 3 ? 0.2 : 0);
-  const n2 = 0.8 + depth * 2.5 + age * 0.5 + (dom === 2 ? 1.2 : 0);
-  const n3 = 0.8 + p.vlt / 40 + act * 0.8 + (dom === 0 ? 0.6 : 0);
-  const a = 1 + (1 - depth) * 0.25;
-  const b = 1 + (1 - stab) * 0.15;
+  // Lines (density): derived from TVL, capped for performance
+  // Bigger positions → more complex patterns (max 18 to keep <5000 polygons)
+  const lines = Math.max(8, Math.round(8 + Math.min(tvl / 20000, 10)));
 
+  // Seed: unique per position (deterministic from reserves)
+  const seed = ((p.ag * 7919 + p.au * 104729) % 2147483647) + 1;
+
+  // ── Color from metrics ──
   const health = stab * 0.4 + depth * 0.4 + age * 0.2;
-  const hue = 30 + ratio * 25 + p.vlt * 0.08;
-  const sat = 55 + act * 35;
-  const lit = 40 + health * 25;
-  const scale = 70 + Math.min(tvl / 2500, 90);
-  const rot = (p.ag * 7 + p.au * 13) % 360;
+  const hue = 30 + ratio * 30 + p.vlt * 0.1 + dom * 15;
+  const sat = 50 + act * 40;
+  const lit = 35 + health * 30;
 
-  return { m, n1, n2, n3, a, b, hue, sat, lit, scale, rot,
-           accent: `hsl(${hue}, ${sat}%, ${lit}%)` };
+  // Pattern complexity modifier from volatility
+  const complexityBoost = 1 + (p.vlt / 100) * 0.3;
+
+  return {
+    symmetry, lines, seed, hue, sat, lit, dom,
+    accent: `hsl(${hue}, ${sat}%, ${lit}%)`,
+    complexityBoost,
+    // Secondary color for gradient
+    hue2: hue + 20 + p.vlt * 0.2
+  };
 }
 
-// ── Path generator ──
-function mkPath(cx, cy, sc, m, n1, n2, n3, a, b, rot, steps) {
-  const r = rot * Math.PI / 180;
-  let d = '';
-  for (let i = 0; i <= steps; i++) {
-    const t = (i / steps) * Math.PI * 2;
-    const v = sf(t + r * 0.01, m, n1, n2, n3, a, b);
-    if (v <= 0 || !isFinite(v)) continue;
-    const x = cx + v * sc * Math.cos(t);
-    const y = cy + v * sc * Math.sin(t);
-    d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
-  }
-  return d + 'Z';
-}
+// ═══════════════════════════════════════════════════════════════
+// Render
+// ═══════════════════════════════════════════════════════════════
 
-// ── Render ──
 function render(vis) {
   const svg = document.getElementById('cardSvg');
-  const cx = 170, cy = 210;
-  const { m, n1, n2, n3, a, b, hue, sat, lit, scale, rot } = vis;
+  const { symmetry, lines, seed, hue, sat, lit, hue2 } = vis;
 
   const base = `hsl(${hue},${sat}%,${lit}%)`;
-  const light = `hsl(${hue},${sat+5}%,${lit+18}%)`;
-  const dark = `hsl(${hue},${sat}%,${lit-18}%)`;
+  const mid = `hsl(${hue},${sat}%,${lit + 15}%)`;
+  const light = `hsl(${hue2},${sat}%,${lit + 25}%)`;
+  const dark = `hsl(${hue},${sat}%,${lit - 15}%)`;
 
-  // Main shape (200 steps — fast)
-  const main = mkPath(cx, cy, scale, m, n1, n2, n3, a, b, rot, 200);
-  // Inner (120 steps)
-  const inner = mkPath(cx, cy, scale * 0.5, m+2, n1*0.7, n2*1.3, n3*0.8, a*0.8, b*0.8, rot+25, 120);
-  // Echo rings (80 steps each)
-  let echoes = '';
-  for (let i = 1; i <= 3; i++) {
-    const ep = mkPath(cx, cy, scale * (1 + i * 0.22), m, n1, n2, n3, a, b, rot + i * 8, 80);
-    echoes += `<path d="${ep}" fill="none" stroke="${base}" stroke-width="${1 - i * 0.2}" opacity="${0.1 - i * 0.02}"/>`;
-  }
-  // Particles (deterministic, no DOM loop per frame)
-  let pts = '';
-  const seed = (m * 100 + Math.round(n1 * 50)) % 97;
-  for (let i = 0; i < 30; i++) {
-    const ang = ((i * 137.5 + seed) % 360) * Math.PI / 180;
-    const d = ((i * 73 + seed * 7) % 100) / 100;
-    const v = sf(ang + rot * 0.01, m, n1, n2, n3, a, b);
-    if (v <= 0 || !isFinite(v)) continue;
-    const px = cx + v * scale * d * 0.8 * Math.cos(ang);
-    const py = cy + v * scale * d * 0.8 * Math.sin(ang);
-    const r = (0.6 + (i % 5) * 0.3).toFixed(1);
-    const op = (0.2 + (i % 4) * 0.1).toFixed(2);
-    pts += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" fill="${light}" opacity="${op}"/>`;
-  }
+  // Generate quasi pattern
+  const polys = quasiCrystal(symmetry, lines, seed);
+
+  // Build SVG
+  let paths = '';
+  polys.forEach(p => {
+    const d = 'M' + p.points.map(pt => `${pt[0].toFixed(1)},${pt[1].toFixed(1)}`).join('L') + 'Z';
+    const fillOp = 0.03 + p.color * 0.08;
+    const strokeOp = 0.15 + p.color * 0.35;
+    const strokeW = 0.4 + p.color * 0.6;
+    paths += `<path d="${d}" fill="${base}" opacity="${fillOp.toFixed(2)}" stroke="${p.color > 0.5 ? light : mid}" stroke-width="${strokeW.toFixed(1)}" stroke-opacity="${strokeOp.toFixed(2)}"/>`;
+  });
+
+  // Outer ring decoration (lighter — fewer lines)
+  const ringPath = quasiCrystal(symmetry, Math.max(4, Math.floor(lines * 0.5)), seed + 12345);
+  let ring = '';
+  ringPath.forEach(p => {
+    const d = 'M' + p.points.map(pt => `${(pt[0] * 1.06).toFixed(1)},${(pt[1] * 1.06).toFixed(1)}`).join('L') + 'Z';
+    ring += `<path d="${d}" fill="none" stroke="${base}" stroke-width="0.3" stroke-opacity="0.06"/>`;
+  });
 
   svg.innerHTML = `
-    <path d="${main}" fill="${dark}" opacity="0.05"/>
-    <path d="${main}" fill="none" stroke="${base}" stroke-width="2.2" opacity="0.95"/>
-    ${echoes}
-    <path d="${inner}" fill="none" stroke="${light}" stroke-width="1" opacity="0.4"/>
-    ${pts}
+    ${ring}
+    ${paths}
   `;
 
   document.getElementById('cardBorder').style.setProperty('--accent', vis.accent);
   document.getElementById('card').style.setProperty('--accent', vis.accent);
 }
 
-// ── Scenarios ──
+// ═══════════════════════════════════════════════════════════════
+// Scenarios
+// ═══════════════════════════════════════════════════════════════
+
 const S = {
   normal:  { ag: 12450, au: 2490, vol: 34, vlt: 28, liq: 72, time: 90 },
   vol:     { ag: 12450, au: 2490, vol: 82, vlt: 89, liq: 55, time: 90 },
@@ -265,9 +377,12 @@ const S = {
 
 function apply(k) {
   const s = S[k];
-  ['agReserve','auReserve','volume','volatility','liquidity','timeHeld'].forEach((id, i) => {
-    document.getElementById(id).value = s[id === 'agReserve' ? 'ag' : id === 'auReserve' ? 'au' : id === 'timeHeld' ? 'time' : id];
-  });
+  document.getElementById('agReserve').value = s.ag;
+  document.getElementById('auReserve').value = s.au;
+  document.getElementById('volume').value = s.vol;
+  document.getElementById('volatility').value = s.vlt;
+  document.getElementById('liquidity').value = s.liq;
+  document.getElementById('timeHeld').value = s.time;
   update();
 }
 
@@ -305,8 +420,8 @@ document.querySelectorAll('.scenario-btn').forEach(btn => {
 });
 document.getElementById('regenBtn').addEventListener('click', () => {
   const j = (v, p) => Math.max(1, Math.round(v * (1 + (Math.random()-0.5)*p)));
-  document.getElementById('agReserve').value = j(+document.getElementById('agReserve').value, 0.08);
-  document.getElementById('auReserve').value = j(+document.getElementById('auReserve').value, 0.08);
+  document.getElementById('agReserve').value = j(+document.getElementById('agReserve').value, 0.1);
+  document.getElementById('auReserve').value = j(+document.getElementById('auReserve').value, 0.1);
   update();
 });
 

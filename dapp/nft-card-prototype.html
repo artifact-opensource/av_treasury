@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AV LP Card — Quasi Crystal</title>
+<title>AV LP Card — Quasi Crystal Mint</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,17 +26,17 @@
     border-radius: 18px;
     border: 1px solid #111;
     position: relative; overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 120px rgba(255,215,0,0.03);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9);
   }
   .card-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .card-vignette {
     position: absolute; inset: 0; pointer-events: none; z-index: 1;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
   }
   .card-border {
     position: absolute; inset: -1px; border-radius: 18px; pointer-events: none; z-index: 3;
     background: linear-gradient(135deg, var(--accent, #ffd700) 0%, transparent 30%, transparent 70%, var(--accent, #ffd700) 100%);
-    opacity: 0.15;
+    opacity: 0.2;
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor; mask-composite: exclude;
     padding: 1px;
@@ -44,7 +44,7 @@
   .card-info {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 16px 20px; z-index: 4;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    background: linear-gradient(transparent, rgba(0,0,0,0.92));
   }
   .card-info .label { font-size: 0.48rem; text-transform: uppercase; letter-spacing: 0.15em; color: #2a2a2a; margin-bottom: 2px; }
   .card-info .value { font-size: 0.82rem; font-weight: 600; color: #fff; font-family: 'JetBrains Mono', monospace; }
@@ -77,13 +77,49 @@
   .scenario-btn:hover { background: #161616; color: #666; }
   .scenario-btn.active { background: rgba(255,215,0,0.06); border-color: rgba(255,215,0,0.25); color: #ffd700; }
 
-  .regen-btn {
-    width: 100%; padding: 10px; background: #060606;
-    border: 1px solid #141414; border-radius: 8px;
-    color: #2a2a2a; font-size: 0.62rem; cursor: pointer; transition: all 0.15s;
+  .mint-section { width: 340px; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .mint-btn {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, #0a0a0a, #111);
+    border: 1px solid #1a1a1a; border-radius: 10px;
+    color: #ffd700; font-size: 0.72rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    position: relative; overflow: hidden;
+  }
+  .mint-btn:hover { border-color: rgba(255,215,0,0.3); background: linear-gradient(135deg, #0c0c0c, #141414); }
+  .mint-btn:active { transform: scale(0.98); }
+  .mint-btn .shimmer {
+    position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.06), transparent);
+    animation: shimmer 2.5s infinite;
+  }
+  @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+
+  .mint-counter {
+    text-align: center; font-size: 0.52rem; color: #1a1a1a;
+    font-family: 'JetBrains Mono', monospace; margin-top: 2px;
+  }
+
+  /* Gallery */
+  .gallery-section { width: 340px; margin-top: 16px; }
+  .gallery-label { font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.12em; color: #1a1a1a; margin-bottom: 8px; }
+  .gallery-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+  .gallery-strip::-webkit-scrollbar { height: 2px; }
+  .gallery-strip::-webkit-scrollbar-track { background: #0a0a0a; }
+  .gallery-strip::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 1px; }
+
+  .gallery-item {
+    width: 52px; height: 72px; flex-shrink: 0;
+    background: #050505; border: 1px solid #111; border-radius: 6px;
+    position: relative; overflow: hidden; cursor: pointer; transition: all 0.15s;
+  }
+  .gallery-item:hover { border-color: #2a2a2a; transform: translateY(-2px); }
+  .gallery-item canvas { width: 100%; height: 100%; display: block; }
+  .gallery-item .gallery-tag {
+    position: absolute; bottom: 2px; left: 2px; right: 2px;
+    font-size: 0.3rem; color: #3a3a3a; text-align: center;
     font-family: 'JetBrains Mono', monospace;
   }
-  .regen-btn:hover { border-color: #2a2a2a; color: #555; }
 </style>
 </head>
 <body>
@@ -127,29 +163,35 @@
       <button class="scenario-btn" data-scenario="dormant">Dormant</button>
     </div>
   </div>
-  <button class="regen-btn" id="regenBtn">↻ NEW SEED</button>
+</div>
+
+<div class="mint-section">
+  <button class="mint-btn" id="mintBtn">
+    <span class="shimmer"></span>
+    ◆ MINT NEW CARD
+  </button>
+  <div class="mint-counter" id="mintCounter">minted: 0</div>
+</div>
+
+<div class="gallery-section">
+  <div class="gallery-label">← Recently Minted →</div>
+  <div class="gallery-strip" id="galleryStrip"></div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
 // Quasi-Crystalline Pattern Generator
 // Faithful port of quasi.js by Robin Darobin
-// with metric-driven multi-color rendering
 // ═══════════════════════════════════════════════════════════════
 
-function quasiCrystal(symmetry, lines, seed, colorMode) {
-  // Seed-based pseudo-random for unique but deterministic patterns
+function quasiCrystal(symmetry, lines, seed) {
   let s = seed;
-  const rand = () => { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; };
-
   const cx = 170, cy = 240;
   const scale = 14;
   const offsetX = 2, offsetY = 2;
   const win = 20;
   const halfMax = lines / 2;
-  const magnify = 1;
 
-  // Build symmetry vectors (deterministic — no rand() in original)
   const vx = [], vy = [], mm = [], b = [];
   for (let t = 0; t < symmetry; t++) {
     const phi = (t * 2) / symmetry * Math.PI;
@@ -175,26 +217,19 @@ function quasiCrystal(symmetry, lines, seed, colorMode) {
   for (let minMin = 0; minMin <= theMax; minMin += 0.4) {
     const rad1 = minMin * minMin;
     const rad2 = (minMin + 0.4) * (minMin + 0.4);
-
     for (let n = 1; n < theMax; n++) {
       for (let m = 1; m < theMax; m++) {
         const rad = (n - theMin) * (n - theMin) + (m - theMin) * (m - theMin);
         if (rad < rad1 || rad >= rad2) continue;
-
         for (let t = 0; t < symmetry - 1; t++) {
           for (let r = t + 1; r < symmetry; r++) {
             const denom = mm[r] - mm[t];
-            if (Math.abs(denom) < 1e-10) continue; // skip parallel lines
-
+            if (Math.abs(denom) < 1e-10) continue;
             const x0 = (b[t][n] - b[r][m]) / denom;
             const y0 = mm[t] * x0 + b[t][n];
-
-            // Boundary check (prevent glitchy out-of-bounds)
-            const dx0 = (x0) / win;
-            const dy0 = (y0) / win;
+            const dx0 = x0 / win, dy0 = y0 / win;
             if (dx0 < -0.3 || dx0 > 1.3 || dy0 < -0.3 || dy0 > 1.3) continue;
 
-            // Validate all symmetry axes
             let flag = false;
             const index = [];
             for (let i = 0; i < symmetry; i++) {
@@ -209,14 +244,9 @@ function quasiCrystal(symmetry, lines, seed, colorMode) {
             index[t] = n - 1;
             index[r] = m - 1;
 
-            // Compute polygon vertices
             let px = 0, py = 0;
-            for (let i = 0; i < symmetry; i++) {
-              px += vx[i] * index[i];
-              py += vy[i] * index[i];
-            }
+            for (let i = 0; i < symmetry; i++) { px += vx[i] * index[i]; py += vy[i] * index[i]; }
 
-            // Color computation (from original quasi.js)
             let colorVal = 0;
             for (let i = 0; i < symmetry; i++) colorVal += index[i];
             while (colorVal > (symmetry - 1) / 2) colorVal -= (symmetry - 1) / 2;
@@ -224,44 +254,36 @@ function quasiCrystal(symmetry, lines, seed, colorMode) {
             colorVal += Math.abs(vx[t] * vx[r] + vy[t] * vy[r]);
             if (colorVal > 1) colorVal -= 1;
 
-            // Track bounds
             minX = Math.min(minX, px); maxX = Math.max(maxX, px);
             minY = Math.min(minY, py); maxY = Math.max(maxY, py);
 
-            // Quad vertices
             const x1 = px, y1 = py;
             const x2 = px + vx[t], y2 = py + vy[t];
             const x3 = px + vx[t] + vx[r], y3 = py + vy[t] + vy[r];
             const x4 = px + vx[r], y4 = py + vy[r];
 
             polygons.push({
-              points: [
+              rawPts: [
                 [offsetX + (0.5 * (x1 / win + 1)) * scale, offsetY + (0.5 * (y1 / win + 1)) * scale],
                 [offsetX + (0.5 * (x2 / win + 1)) * scale, offsetY + (0.5 * (y2 / win + 1)) * scale],
                 [offsetX + (0.5 * (x3 / win + 1)) * scale, offsetY + (0.5 * (y3 / win + 1)) * scale],
                 [offsetX + (0.5 * (x4 / win + 1)) * scale, offsetY + (0.5 * (y4 / win + 1)) * scale]
               ],
-              color: colorVal,
-              // Store raw coords for diagonal computation
-              raw: [x1, y1, x2, y2, x3, y3, x4, y4],
-              symmetryAxes: [t, r]
+              color: colorVal
             });
 
-            // Diagonal data for internal structure
-            const midx1 = x1 + vx[t] * 0.5, midy1 = y1 + vy[t] * 0.5;
-            const midx2 = x2 + vx[r] * 0.5, midy2 = y2 + vy[r] * 0.5;
-            const midx3 = x4 + vx[t] * 0.5, midy3 = y4 + vy[t] * 0.5;
-            const midx4 = x3 + vx[r] * 0.5, midy4 = y3 + vy[r] * 0.5;
-
-            const dx1 = midx1 - midx2, dy1 = midy1 - midy2;
-            const dx2 = midx2 - midx3, dy2 = midy2 - midy3;
-            const dist1 = dx1 * dx1 + dy1 * dy1;
-            const dist2 = dx2 * dx2 + dy2 * dy2;
+            const mx1 = x1 + vx[t] * 0.5, my1 = y1 + vy[t] * 0.5;
+            const mx2 = x2 + vx[r] * 0.5, my2 = y2 + vy[r] * 0.5;
+            const mx3 = x4 + vx[t] * 0.5, my3 = y4 + vy[t] * 0.5;
+            const mx4 = x3 + vx[r] * 0.5, my4 = y3 + vy[r] * 0.5;
+            const ddx1 = mx1 - mx3, ddy1 = my1 - my3;
+            const ddx2 = mx2 - mx4, ddy2 = my2 - my4;
 
             diagonals.push({
-              d1: [midx1, midy1, midx3, midy3],
-              d2: [midx2, midy2, midx4, midy4],
-              dist1, dist2,
+              d1: [mx1, my1, mx3, my3],
+              d2: [mx2, my2, mx4, my4],
+              dist1: ddx1*ddx1 + ddy1*ddy1,
+              dist2: ddx2*ddx2 + ddy2*ddy2,
               color: colorVal
             });
           }
@@ -270,33 +292,19 @@ function quasiCrystal(symmetry, lines, seed, colorMode) {
     }
   }
 
-  // Center and scale the pattern
   const patW = maxX - minX || 1, patH = maxY - minY || 1;
-  const targetW = 260, targetH = 340;
-  const scaleFit = Math.min(targetW / patW, targetH / patH) * 0.82;
+  const targetW = 240, targetH = 320;
+  const scaleFit = Math.min(targetW / patW, targetH / patH) * 0.78;
   const shiftX = cx - (minX + patW / 2) * scaleFit;
   const shiftY = cy - (minY + patH / 2) * scaleFit;
 
-  const transform = pt => [
-    pt[0] * scaleFit + shiftX,
-    pt[1] * scaleFit + shiftY
-  ];
-
-  const transformRaw = (x, y) => {
-    const rx = offsetX + (0.5 * (x / win + 1)) * scale;
-    const ry = offsetY + (0.5 * (y / win + 1)) * scale;
-    return [rx * scaleFit + shiftX, ry * scaleFit + shiftY];
-  };
+  const tx = pt => [pt[0] * scaleFit + shiftX, pt[1] * scaleFit + shiftY];
 
   return {
-    polygons: polygons.map(p => ({
-      points: p.points.map(transform),
-      color: p.color,
-      axes: p.symmetryAxes
-    })),
+    polygons: polygons.map(p => ({ points: p.rawPts.map(tx), color: p.color })),
     diagonals: diagonals.map(d => ({
-      d1: [transformRaw(d.d1[0], d.d1[1]), transformRaw(d.d1[2], d.d1[3])],
-      d2: [transformRaw(d.d2[0], d.d2[1]), transformRaw(d.d2[2], d.d2[3])],
+      d1: [tx([d.d1[0], d.d1[1]]), tx([d.d1[2], d.d1[3]])],
+      d2: [tx([d.d2[0], d.d2[1]]), tx([d.d2[2], d.d2[3]])],
       dist1: d.dist1, dist2: d.dist2,
       color: d.color
     }))
@@ -331,7 +339,6 @@ function toVis(p) {
   const depth = p.liq / 100;
   const age = Math.min(p.time / 180, 1);
 
-  // Theme weights via softmax
   const w = softmax([
     act * 3 + p.vol / 40,
     stab * 3 + p.liq / 40,
@@ -341,173 +348,239 @@ function toVis(p) {
   ]);
   const dom = argmax(w);
 
-  // ── Quasi pattern uniqueness ──
-  // Symmetry: derived from position balance ratio
-  // Balanced pools → higher symmetry (harmonious)
-  // Imbalanced pools → lower symmetry (chaotic)
   const balance = Math.max(0, 1 - Math.abs(ratio - 0.2) / 0.3);
   const symmetry = Math.max(3, Math.round(3 + balance * 4 + act * 2));
-
-  // Lines (density): derived from TVL, capped for performance
   const lines = Math.max(10, Math.round(10 + Math.min(tvl / 25000, 12)));
-
-  // Seed: unique per position (deterministic from reserves)
   const seed = ((p.ag * 7919 + p.au * 104729) % 2147483646) + 1;
 
-  // ── Color system — high contrast, metric-driven ──
   const health = stab * 0.4 + depth * 0.4 + age * 0.2;
 
-  // 5 theme palettes (high contrast)
   const palettes = [
-    // 0: Activity (amber/fire)
-    { base: [255, 180, 40], mid: [255, 120, 20], light: [255, 220, 100], glow: [255, 80, 0] },
-    // 1: Stability (ice/cyan)
-    { base: [40, 200, 255], mid: [20, 140, 220], light: [100, 240, 255], glow: [0, 100, 200] },
-    // 2: Depth (emerald)
-    { base: [50, 220, 140], mid: [20, 160, 100], light: [100, 255, 180], glow: [0, 120, 80] },
-    // 3: Volatility (magenta/crimson)
-    { base: [240, 60, 140], mid: [180, 30, 100], light: [255, 120, 180], glow: [140, 0, 80] },
-    // 4: Age/Maturity (gold/violet)
-    { base: [220, 180, 60], mid: [160, 120, 40], light: [255, 220, 100], glow: [120, 80, 20] }
+    { base: [255, 180, 40],  mid: [255, 100, 20],  light: [255, 230, 120], glow: [255, 60, 0]   },
+    { base: [40, 200, 255],  mid: [20, 130, 220],  light: [120, 240, 255], glow: [0, 80, 200]   },
+    { base: [60, 230, 150],  mid: [20, 160, 100],  light: [120, 255, 190], glow: [0, 120, 80]   },
+    { base: [255, 60, 150],  mid: [180, 30, 100],  light: [255, 130, 200], glow: [140, 0, 80]   },
+    { base: [230, 180, 60],  mid: [160, 110, 30],  light: [255, 230, 100], glow: [120, 80, 20]   },
   ];
 
   const palette = palettes[dom];
+  const palette2 = palettes[(dom + 2) % 5];
+  const blend = Math.min(1, p.vlt / 100 * 0.5 + act * 0.3);
 
-  // Volatility shifts hue within palette
-  const vltShift = p.vlt / 100;
-  // Activity boosts saturation
-  const satBoost = 0.7 + act * 0.3;
-  // Health boosts brightness
-  const litBoost = 0.7 + health * 0.3;
-
-  // Secondary palette (adjacent) for color blending
-  const palette2 = palettes[(dom + 1) % 5];
-  const blend = (vltShift * 0.4 + act * 0.3); // blend factor between primary and secondary
-
-  // Compute blended colors
   const blendColor = (c1, c2, t) => [
     Math.round(c1[0] + (c2[0] - c1[0]) * t),
     Math.round(c1[1] + (c2[1] - c1[1]) * t),
     Math.round(c1[2] + (c2[2] - c1[2]) * t)
   ];
 
-  const rgb = (c, brightness=1) =>
-    `rgb(${Math.min(255, c[0]*brightness*satBoost)|0}, ${Math.min(255, c[1]*brightness*satBoost)|0}, ${Math.min(255, c[2]*brightness*satBoost)|0})`;
-
   const baseC = blendColor(palette.base, palette2.base, blend);
   const midC = blendColor(palette.mid, palette2.mid, blend);
   const lightC = blendColor(palette.light, palette2.light, blend);
   const glowC = blendColor(palette.glow, palette2.glow, blend);
-
-  // Accent for UI
   const accentHex = `rgb(${baseC[0]},${baseC[1]},${baseC[2]})`;
 
-  return {
-    symmetry, lines, seed,
-    baseC, midC, lightC, glowC, accentHex,
-    dom, health, act,
-    // For glow filter intensity
-    glowIntensity: 0.3 + vltShift * 0.5
-  };
+  return { symmetry, lines, seed, baseC, midC, lightC, glowC, accentHex, dom, health, act };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Render
+// Render SVG (main card)
 // ═══════════════════════════════════════════════════════════════
+
+function colorFromVal(c, baseC, midC, lightC, glowC) {
+  let r, g, b;
+  if (c < 0.33) {
+    const t = c / 0.33;
+    r = Math.round(baseC[0] + (midC[0] - baseC[0]) * t);
+    g = Math.round(baseC[1] + (midC[1] - baseC[1]) * t);
+    b = Math.round(baseC[2] + (midC[2] - baseC[2]) * t);
+  } else if (c < 0.66) {
+    const t = (c - 0.33) / 0.33;
+    r = Math.round(midC[0] + (lightC[0] - midC[0]) * t);
+    g = Math.round(midC[1] + (lightC[1] - midC[1]) * t);
+    b = Math.round(midC[2] + (lightC[2] - midC[2]) * t);
+  } else {
+    const t = (c - 0.66) / 0.34;
+    r = Math.round(lightC[0] + (glowC[0] - lightC[0]) * t);
+    g = Math.round(lightC[1] + (glowC[1] - lightC[1]) * t);
+    b = Math.round(lightC[2] + (glowC[2] - lightC[2]) * t);
+  }
+  return [r, g, b];
+}
 
 function render(vis) {
   const svg = document.getElementById('cardSvg');
-  const { symmetry, lines, seed, baseC, midC, lightC, glowC, glowIntensity } = vis;
-
-  // Generate quasi pattern
+  const { symmetry, lines, seed, baseC, midC, lightC, glowC } = vis;
   const data = quasiCrystal(symmetry, lines, seed);
   const { polygons, diagonals } = data;
 
-  // ── Background glow layer ──
-  const glowR = 60 + vis.act * 40;
-  const glowOpacity = 0.06 + vis.act * 0.08;
-
-  let bgGlow = `
-    <defs>
-      <radialGradient id="bgGlow" cx="50%" cy="45%" r="50%">
-        <stop offset="0%" stop-color="rgb(${baseC[0]},${baseC[1]},${baseC[2]})" stop-opacity="${glowOpacity.toFixed(2)}"/>
-        <stop offset="100%" stop-color="rgb(${baseC[0]},${baseC[1]},${baseC[2]})" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="bgGlow2" cx="50%" cy="45%" r="40%">
-        <stop offset="0%" stop-color="rgb(${lightC[0]},${lightC[1]},${lightC[2]})" stop-opacity="${(glowOpacity * 0.5).toFixed(2)}"/>
-        <stop offset="100%" stop-color="rgb(${lightC[0]},${lightC[1]},${lightC[2]})" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <rect width="340" height="480" fill="url(#bgGlow)"/>
-    <rect width="340" height="480" fill="url(#bgGlow2)"/>
-  `;
-
-  // ── Main polygon layer ──
   let paths = '';
   polygons.forEach(p => {
     const d = 'M' + p.points.map(pt => `${pt[0].toFixed(1)},${pt[1].toFixed(1)}`).join('L') + 'Z';
-    const c = p.color;
-
-    // Each polygon gets a unique color based on its position in the structure
-    // Blending between base, mid, and light based on colorVal
-    let col;
-    if (c < 0.33) {
-      const t = c / 0.33;
-      const r = Math.round(baseC[0] + (midC[0] - baseC[0]) * t);
-      const g = Math.round(baseC[1] + (midC[1] - baseC[1]) * t);
-      const b = Math.round(baseC[2] + (midC[2] - baseC[2]) * t);
-      col = `rgb(${r},${g},${b})`;
-    } else if (c < 0.66) {
-      const t = (c - 0.33) / 0.33;
-      const r = Math.round(midC[0] + (lightC[0] - midC[0]) * t);
-      const g = Math.round(midC[1] + (lightC[1] - midC[1]) * t);
-      const b = Math.round(midC[2] + (lightC[2] - midC[2]) * t);
-      col = `rgb(${r},${g},${b})`;
-    } else {
-      const t = (c - 0.66) / 0.34;
-      const r = Math.round(lightC[0] + (glowC[0] - lightC[0]) * t);
-      const g = Math.round(lightC[1] + (glowC[1] - lightC[1]) * t);
-      const b = Math.round(lightC[2] + (glowC[2] - lightC[2]) * t);
-      col = `rgb(${r},${g},${b})`;
-    }
-
-    const fillOp = 0.06 + c * 0.12;
-    const strokeOp = 0.2 + c * 0.5;
-    const strokeW = 0.5 + c * 0.8;
-
-    paths += `<path d="${d}" fill="${col}" fill-opacity="${fillOp.toFixed(2)}" stroke="${col}" stroke-width="${strokeW.toFixed(1)}" stroke-opacity="${strokeOp.toFixed(2)}"/>`;
+    const [r, g, b] = colorFromVal(p.color, baseC, midC, lightC, glowC);
+    const fillOp = 0.25 + p.color * 0.4;
+    const strokeOp = 0.5 + p.color * 0.5;
+    const strokeW = 0.6 + p.color * 1.0;
+    paths += `<path d="${d}" fill="rgb(${r},${g},${b})" fill-opacity="${fillOp.toFixed(2)}" stroke="rgb(${r},${g},${b})" stroke-width="${strokeW.toFixed(1)}" stroke-opacity="${strokeOp.toFixed(2)}"/>`;
   });
 
-  // ── Diagonal structure lines (the internal skeleton) ──
   let diags = '';
   diagonals.forEach(d => {
-    // Choose shorter diagonal for cleaner look
-    const useD1 = d.dist1 <= d.dist2;
-    const [d1x1, d1y1, d1x2, d1y2] = useD1 ? d.d1 : d.d2;
-    const c = d.color;
-
-    const col = c < 0.5
-      ? `rgb(${lightC[0]},${lightC[1]},${lightC[2]})`
-      : `rgb(${glowC[0]},${glowC[1]},${glowC[2]})`;
-
-    const op = 0.08 + c * 0.15;
-    diags += `<line x1="${d1x1.toFixed(1)}" y1="${d1y1.toFixed(1)}" x2="${d1x2.toFixed(1)}" y2="${d1y2.toFixed(1)}" stroke="${col}" stroke-width="0.4" stroke-opacity="${op.toFixed(2)}"/>`;
+    const [d1x1, d1y1, d1x2, d1y2] = d.dist1 <= d.dist2 ? d.d1 : d.d2;
+    const [r, g, b] = d.color < 0.5 ? lightC : glowC;
+    const op = 0.15 + d.color * 0.25;
+    diags += `<line x1="${d1x1.toFixed(1)}" y1="${d1y1.toFixed(1)}" x2="${d1x2.toFixed(1)}" y2="${d1y2.toFixed(1)}" stroke="rgb(${r},${g},${b})" stroke-width="0.5" stroke-opacity="${op.toFixed(2)}"/>`;
   });
 
-  // ── Outer ring echo ──
-  const ringData = quasiCrystal(symmetry, Math.max(5, Math.floor(lines * 0.55)), seed + 12345);
+  const ringData = quasiCrystal(symmetry, Math.max(5, Math.floor(lines * 0.5)), seed + 12345);
   let ring = '';
   ringData.polygons.forEach(p => {
-    const d = 'M' + p.points.map(pt => `${(pt[0] * 1.04).toFixed(1)},${(pt[1] * 1.04).toFixed(1)}`).join('L') + 'Z';
-    const c = p.color;
-    const col = `rgb(${baseC[0]},${baseC[1]},${baseC[2]})`;
-    ring += `<path d="${d}" fill="none" stroke="${col}" stroke-width="0.3" stroke-opacity="${(0.04 + c * 0.06).toFixed(2)}"/>`;
+    const d = 'M' + p.points.map(pt => `${(pt[0] * 1.035).toFixed(1)},${(pt[1] * 1.035).toFixed(1)}`).join('L') + 'Z';
+    ring += `<path d="${d}" fill="none" stroke="rgb(${baseC[0]},${baseC[1]},${baseC[2]})" stroke-width="0.4" stroke-opacity="0.12"/>`;
   });
 
-  svg.innerHTML = bgGlow + ring + paths + diags;
-
+  svg.innerHTML = ring + paths + diags;
   document.getElementById('cardBorder').style.setProperty('--accent', vis.accentHex);
   document.getElementById('card').style.setProperty('--accent', vis.accentHex);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Render thumbnail to canvas (for gallery)
+// ═══════════════════════════════════════════════════════════════
+
+function renderThumb(vis, canvas) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = 104;
+  const h = canvas.height = 144;
+  const { symmetry, lines, seed, baseC, midC, lightC, glowC } = vis;
+
+  ctx.fillStyle = '#050505';
+  ctx.fillRect(0, 0, w, h);
+
+  const data = quasiCrystal(symmetry, lines, seed);
+
+  // Scale down for thumbnail
+  const sx = w / 340, sy = h / 480;
+
+  data.polygons.forEach(p => {
+    const [r, g, b] = colorFromVal(p.color, baseC, midC, lightC, glowC);
+    ctx.beginPath();
+    ctx.moveTo(p.points[0][0] * sx, p.points[0][1] * sy);
+    ctx.lineTo(p.points[1][0] * sx, p.points[1][1] * sy);
+    ctx.lineTo(p.points[2][0] * sx, p.points[2][1] * sy);
+    ctx.lineTo(p.points[3][0] * sx, p.points[3][1] * sy);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${r},${g},${b},${(0.25 + p.color * 0.4).toFixed(2)})`;
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${r},${g},${b},${(0.5 + p.color * 0.5).toFixed(2)})`;
+    ctx.lineWidth = 0.3;
+    ctx.stroke();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Gallery
+// ═══════════════════════════════════════════════════════════════
+
+let mintedCards = [];
+let mintCount = 0;
+
+function addToGallery(vis, id) {
+  mintedCards.unshift({ vis, id, timestamp: Date.now() });
+  if (mintedCards.length > 20) mintedCards.pop();
+
+  const strip = document.getElementById('galleryStrip');
+  strip.innerHTML = '';
+
+  mintedCards.slice(0, 12).forEach((card, i) => {
+    const item = document.createElement('div');
+    item.className = 'gallery-item';
+    item.title = `Card #${card.id}`;
+    const canvas = document.createElement('canvas');
+    item.appendChild(canvas);
+
+    const tag = document.createElement('div');
+    tag.className = 'gallery-tag';
+    tag.textContent = `#${card.id}`;
+    item.appendChild(tag);
+
+    renderThumb(card.vis, canvas);
+
+    item.addEventListener('click', () => {
+      loadCard(card);
+    });
+
+    strip.appendChild(item);
+  });
+}
+
+function loadCard(card) {
+  const v = card.vis;
+  // Reconstruct position data from the vis
+  const p = v._positionData;
+  if (!p) return;
+
+  document.getElementById('agReserve').value = p.ag;
+  document.getElementById('auReserve').value = p.au;
+  document.getElementById('volume').value = p.vol;
+  document.getElementById('volatility').value = p.vlt;
+  document.getElementById('liquidity').value = p.liq;
+  document.getElementById('timeHeld').value = p.time;
+
+  updateUI(p);
+  render(v);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateUI(p) {
+  document.getElementById('agReserveVal').textContent = p.ag > 1000 ? (p.ag/1000).toFixed(1)+'K' : p.ag;
+  document.getElementById('auReserveVal').textContent = p.au > 1000 ? (p.au/1000).toFixed(1)+'K' : p.au;
+  document.getElementById('volumeVal').textContent = p.vol;
+  document.getElementById('volatilityVal').textContent = p.vlt;
+  document.getElementById('liquidityVal').textContent = p.liq;
+  document.getElementById('timeHeldVal').textContent = p.time+'d';
+
+  document.getElementById('positionId').textContent = `AG ${p.ag.toLocaleString()} · AU ${p.au.toLocaleString()}`;
+  document.getElementById('volValue').textContent = `+${(p.vol*0.07).toFixed(1)}%`;
+  document.getElementById('tvlValue').textContent = `$${((p.ag+p.au*20)/1000).toFixed(1)}K`;
+  document.getElementById('kValue').textContent = `k=${((p.ag*p.au)/1e6).toFixed(1)}M`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Mint New Card — Full randomization
+// ═══════════════════════════════════════════════════════════════
+
+function mintNewCard() {
+  mintCount++;
+
+  // Fully randomize position data — simulates a brand new LPNFT mint
+  // Use exponential distribution for realistic reserve distributions
+  const randExp = (min, max) => {
+    const u = Math.random();
+    return Math.round(min * Math.pow(max / min, u));
+  };
+
+  const ag = randExp(100, 100000);
+  const au = randExp(50, 50000);
+  const vol = Math.round(Math.random() * 100);
+  const vlt = Math.round(Math.random() * 100);
+  const liq = Math.round(Math.random() * 100);
+  const time = Math.round(1 + Math.random() * 364);
+
+  const vis = toVis({ ag, au, vol, vlt, liq, time });
+  vis._positionData = { ag, au, vol, vlt, liq, time };
+
+  // Update main card
+  updateUI({ ag, au, vol, vlt, liq, time });
+  render(vis);
+
+  // Add to gallery
+  addToGallery(vis, mintCount);
+
+  // Update counter
+  document.getElementById('mintCounter').textContent = `minted: ${mintCount}`;
+
+  // Scroll to card
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -542,19 +615,8 @@ function update() {
   const liq = +document.getElementById('liquidity').value;
   const time = +document.getElementById('timeHeld').value;
 
-  document.getElementById('agReserveVal').textContent = ag > 1000 ? (ag/1000).toFixed(1)+'K' : ag;
-  document.getElementById('auReserveVal').textContent = au > 1000 ? (au/1000).toFixed(1)+'K' : au;
-  document.getElementById('volumeVal').textContent = vol;
-  document.getElementById('volatilityVal').textContent = vlt;
-  document.getElementById('liquidityVal').textContent = liq;
-  document.getElementById('timeHeldVal').textContent = time+'d';
-
-  document.getElementById('positionId').textContent = `AG ${ag.toLocaleString()} · AU ${au.toLocaleString()}`;
-  document.getElementById('volValue').textContent = `+${(vol*0.07).toFixed(1)}%`;
-  document.getElementById('tvlValue').textContent = `$${((ag+au*20)/1000).toFixed(1)}K`;
-  document.getElementById('kValue').textContent = `k=${((ag*au)/1e6).toFixed(1)}M`;
-
-  render(toVis({ag, au, vol, vlt, liq, time}));
+  updateUI({ ag, au, vol, vlt, liq, time });
+  render(toVis({ ag, au, vol, vlt, liq, time }));
 }
 
 // ── Events ──
@@ -566,13 +628,9 @@ document.querySelectorAll('.scenario-btn').forEach(btn => {
     apply(btn.dataset.scenario);
   });
 });
-document.getElementById('regenBtn').addEventListener('click', () => {
-  const j = (v, p) => Math.max(1, Math.round(v * (1 + (Math.random()-0.5)*p)));
-  document.getElementById('agReserve').value = j(+document.getElementById('agReserve').value, 0.15);
-  document.getElementById('auReserve').value = j(+document.getElementById('auReserve').value, 0.15);
-  update();
-});
+document.getElementById('mintBtn').addEventListener('click', mintNewCard);
 
+// Initial render
 update();
 </script>
 </body>

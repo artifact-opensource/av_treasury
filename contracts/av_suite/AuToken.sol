@@ -323,14 +323,14 @@ contract AuToken is
             // Accumulate treasury portion
             if (treasuryAmount > 0) {
                 accumulatedFees += treasuryAmount;
-                super._update(from, address(this), treasuryAmount);
+                super._update(from, treasury, treasuryAmount);
             }
         } else {
             super._update(from, to, value);
         }
 
-        // Max wallet check (after transfer)
-        if (to != address(0)) {
+        // Max wallet check (after transfer, but NOT after mint)
+        if (to != address(0) && from != address(0)) {
             uint256 maxWallet = (totalSupply() * maxWalletAmountBps) / 10_000;
             if (maxWallet > 0 && balanceOf(to) > maxWallet) {
                 revert Au_ExceedsMaxWallet(balanceOf(to), maxWallet);

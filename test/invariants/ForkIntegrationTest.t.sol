@@ -210,40 +210,37 @@ contract ForkIntegrationTest is Test {
         //  TreasuryAMO: DEPLOYER is admin from constructor
         
         // Step 1: AgToken roles (called by TREASURY who has DEFAULT_ADMIN)
+        // Use startPrank which persists until stopPrank
         vm.startPrank(TREASURY);
         agToken.grantRole(MINTER_ROLE, address(pidController));
-        vm.stopPrank();
-        console.log("  AgToken MINTER -> PID Controller");
         
-        // Step 2: AuToken roles (called by test contract = msg.sender via proxy)
-        // No prank = msg.sender is test contract (the admin)
+        // Step 2: AuToken roles (DEPLOYER has all roles from initialize via proxy)
+        // Switch prank to DEPLOYER
+        vm.startPrank(DEPLOYER);
         auToken.grantRole(MINTER_ROLE, address(treasuryAMO));
         auToken.grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
         auToken.grantRole(ANTI_BOT_ROLE, TREASURY);
         auToken.grantRole(MINTER_ROLE, TREASURY);
         auToken.grantRole(auToken.UPGRADER_ROLE(), TREASURY);
-        auToken.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
-        auToken.renounceRole(ANTI_BOT_ROLE, address(this));
-        auToken.renounceRole(auToken.UPGRADER_ROLE(), address(this));
-        console.log("  AuToken roles -> Treasury");
+        auToken.renounceRole(DEFAULT_ADMIN_ROLE, DEPLOYER);
+        auToken.renounceRole(ANTI_BOT_ROLE, DEPLOYER);
+        auToken.renounceRole(auToken.UPGRADER_ROLE(), DEPLOYER);
         
         // Step 3: Staking roles (test contract has DEFAULT_ADMIN)
+        // No prank = msg.sender is test contract (the admin)
+        vm.stopPrank();
         staking.grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
         staking.renounceRole(DEFAULT_ADMIN_ROLE, address(this));
-        console.log("  Staking admin -> Treasury");
         
         // Step 4: PID roles (DEPLOYER is admin from constructor)
         vm.startPrank(DEPLOYER);
         pidController.grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
         pidController.renounceRole(DEFAULT_ADMIN_ROLE, DEPLOYER);
-        vm.stopPrank();
-        console.log("  PID admin -> Treasury");
         
         // Grant EMIT_ROLE to staking (TREASURY is now admin)
         vm.startPrank(TREASURY);
         pidController.grantRole(EMIT_ROLE, address(staking));
         vm.stopPrank();
-        console.log("  PID EMIT_ROLE -> Staking");
         
         // Step 5: TreasuryAMO roles (DEPLOYER is admin from constructor)
         vm.startPrank(DEPLOYER);
@@ -316,63 +313,58 @@ contract ForkIntegrationTest is Test {
         console.log("[FEE] STEP 4: AU TOKEN TRANSFER FEE (9bps, 50% burn, 50% treasury)");
         console.log("");
         
-        // Mint test Au to deployer
-        vm.startPrank(DEPLOYER);
-        auToken.grantRole(MINTER_ROLE, DEPLOYER);
-        auToken.mint(DEPLOYER, 100_000 ether);
-        auToken.renounceRole(MINTER_ROLE, DEPLOYER);
-        vm.stopPrank();
+        // Mint test Au (TREASURY has DEFAULT_ADMIN via initialize via proxy)
+        // Max wallet = 10% of totalSupply. Mint 5,000 to USER1 first (totalSupply = 5000).
+        // Then maxWallet = 500. Mint to USER2 would fail. Instead, mint all to USER1.
+        vm.startPrank(TREASURY);
+        auToken.grantRole(MINTER_ROLE, TREASURY);
+        auToken.mint(USER1, 5_000 ether);
+        auToken.renounceRole(MINTER_ROLE, TREASURY);
         
-        assertEq(auToken.balanceOf(DEPLOYER), 100_000 ether);
-        test_pass("Mint: 100,000 Au to deployer");
+        assertEq(auToken.balanceOf(USER1), 5_000 ether);
+        test_pass("Mint: 5,000 Au to USER1");
         
         // Check fee params
         assertEq(auToken.transferFeeBps(), 9, "Fee = 9bps");
         test_pass("Fee: transferFeeBps = 9");
         
-        // Enable fees (requires DEFAULT_ADMIN_ROLE  DEPLOYER has it)
-        vm.startPrank(DEPLOYER);
+        // Enable fees (requires DEFAULT_ADMIN_ROLE)
         auToken.setFeesEnabled(true);
-        vm.stopPrank();
         assertTrue(auToken.feesEnabled(), "Fees enabled");
         test_pass("Fee: enabled");
         
-        // Transfer 10,000 Au
-        uint256 transferAmount = 10_000 ether;
-        uint256 deployerBefore = auToken.balanceOf(DEPLOYER);
+        // Transfer 50 Au (within max tx = 1% of 5,000 = 50)
+        uint256 transferAmount = 50 ether;
         uint256 user1Before = auToken.balanceOf(USER1);
+        uint256 user2Before = auToken.balanceOf(USER2);
         uint256 treasuryBefore = auToken.balanceOf(TREASURY);
         uint256 supplyBefore = auToken.totalSupply();
         
-        vm.startPrank(DEPLOYER);
-        auToken.transfer(USER1, transferAmount);
+        vm.startPrank(USER1);
+        auToken.transfer(USER2, transferAmount);
         vm.stopPrank();
         
-        // Expected: fee = 10000 * 9 / 100000 = 0.9 Au
-        // BUT: FEE_DENOMINATOR = 100_000, so fee = 10000e18 * 9 / 100000 = 9e14 = 0.0009 Au
-        // Wait  let me recalculate:
-        // transferAmount = 10_000 * 1e18 = 1e22
-        // fee = 1e22 * 9 / 100_000 = 9e22 / 1e5 = 9e17 = 0.9 ether
-        uint256 expectedFee = (transferAmount * 9) / 100_000; // = 0.9 ether = 9e17
-        uint256 expectedBurn = expectedFee / 2;  // 0.45 ether (FEE_BURN_PORTION = 5000/10000 = 50%)
-        uint256 expectedTreasury = expectedFee - expectedBurn; // 0.45 ether
+        // Fee = amount * 9 / 100_000
+        // transferAmount = 50e18
+        // fee = 50e18 * 9 / 100_000 = 4.5e15 = 0.0045 Au
+        uint256 expectedFee = (transferAmount * 9) / 100_000;
+        uint256 expectedBurn = expectedFee / 2;  // 50%
+        uint256 expectedTreasury = expectedFee - expectedBurn; // 50%
         
-        uint256 deployerAfter = auToken.balanceOf(DEPLOYER);
         uint256 user1After = auToken.balanceOf(USER1);
+        uint256 user2After = auToken.balanceOf(USER2);
         uint256 treasuryAfter = auToken.balanceOf(TREASURY);
         uint256 supplyAfter = auToken.totalSupply();
         
-        console.log("    Transfer:", transferAmount / 1e18, "Au");
-        console.log("    Expected fee:", expectedFee / 1e16 / 100, "Au");
-        console.log("    Expected burn:", expectedBurn / 1e16 / 100, "Au");
-        console.log(string(abi.encode("    Expected treasury: ", expectedTreasury / 1e16 / 100, " Au")));
-        console.log(string(abi.encode("   Deployer: ", deployerBefore / 1e18, " -> ", deployerAfter / 1e18, " Au")));
-        console.log(string(abi.encode("    USER1: ", user1Before / 1e18, " -> ", user1After / 1e18, " Au")));
-        console.log(string(abi.encode("    Treasury: ", treasuryBefore / 1e18, " -> ", treasuryAfter / 1e18, " Au")));
-        console.log(string(abi.encode("    Total supply: ", supplyBefore / 1e18, " -> ", supplyAfter / 1e18, " Au")));
+        console.log(string(abi.encode("    Transfer: ", transferAmount / 1e18, " Au")));
+        console.log(string(abi.encode("    Expected fee: ", expectedFee)));
+        console.log(string(abi.encode("    USER1: ", user1Before / 1e18, " -> ", user1After / 1e18)));
+        console.log(string(abi.encode("    USER2: ", user2Before / 1e18, " -> ", user2After / 1e18)));
+        console.log(string(abi.encode("    Treasury: ", treasuryBefore / 1e18, " -> ", treasuryAfter / 1e18)));
+        console.log(string(abi.encode("    Total supply: ", supplyBefore / 1e18, " -> ", supplyAfter / 1e18)));
         
         // Recipient gets amount - fee
-        assertEq(user1After, transferAmount - expectedFee, "USER1 should get amount - fee");
+        assertEq(user2After, transferAmount - expectedFee, "USER2 should get amount - fee");
         test_pass("Fee: recipient got amount minus fee");
         
         // Treasury received 50% of fee
@@ -385,27 +377,35 @@ contract ForkIntegrationTest is Test {
         assertEq(supplyDelta, expectedBurn, "Supply decreased by burn");
         test_pass("Fee: 50% burned (supply decreased)");
         
-        // Deployer lost full transfer amount
-        uint256 deployerDelta = deployerBefore - deployerAfter;
-        assertEq(deployerDelta, transferAmount, "Sender lost full amount");
+        // Sender lost full transfer amount
+        uint256 user1Delta = user1Before - user1After;
+        assertEq(user1Delta, transferAmount, "Sender lost full amount");
         test_pass("Fee: sender lost full transfer amount");
         
         // Test: disable fees  transfer should be 1:1
-        vm.startPrank(DEPLOYER);
+        // Grant MINTER to TREASURY for this test (it was only on TreasuryAMO)
+        vm.startPrank(TREASURY);
+        auToken.grantRole(MINTER_ROLE, TREASURY);
         auToken.setFeesEnabled(false);
+        
+        // Mint to two fresh addresses and transfer between them
+        address fresh1 = address(0x9999999999999999999999999999999999999999);
+        address fresh2 = address(0x8888888888888888888888888888888888888888);
+        auToken.mint(fresh1, 100 ether);
+        auToken.mint(fresh2, 100 ether);
         vm.stopPrank();
         
-        uint256 balanceBefore = auToken.balanceOf(DEPLOYER);
-        vm.startPrank(DEPLOYER);
-        auToken.transfer(USER2, 1000 ether);
+        uint256 balanceBefore = auToken.balanceOf(fresh1);
+        vm.startPrank(fresh1);
+        auToken.transfer(fresh2, 10 ether);
         vm.stopPrank();
         
-        uint256 balanceAfter = auToken.balanceOf(DEPLOYER);
-        assertEq(balanceBefore - balanceAfter, 1000 ether, "No fee when disabled");
+        uint256 balanceAfter = auToken.balanceOf(fresh1);
+        assertEq(balanceBefore - balanceAfter, 10 ether, "No fee when disabled");
         test_pass("Fee: disabled = 1:1 transfer");
         
         // Re-enable for next tests
-        vm.startPrank(DEPLOYER);
+        vm.startPrank(TREASURY);
         auToken.setFeesEnabled(true);
         vm.stopPrank();
     }
@@ -425,10 +425,10 @@ contract ForkIntegrationTest is Test {
         test_pass("Staking: USER1 has LP NFT");
         
         // Mint some AgToken to USER1 (for multiplier threshold)
-        vm.startPrank(DEPLOYER);
-        agToken.grantRole(MINTER_ROLE, DEPLOYER);
+        vm.startPrank(TREASURY);
+        agToken.grantRole(MINTER_ROLE, TREASURY);
         agToken.mint(USER1, 5000 ether);
-        agToken.renounceRole(MINTER_ROLE, DEPLOYER);
+        agToken.renounceRole(MINTER_ROLE, TREASURY);
         vm.stopPrank();
         
         // Check staking params
@@ -567,22 +567,28 @@ contract ForkIntegrationTest is Test {
         console.log("  Flow: Mint Au  Transfer (fee)  Stake LP  PID emit Ag  Verify");
         console.log("");
         
-        //  1. Mint Au to users 
-        vm.startPrank(DEPLOYER);
-        auToken.grantRole(MINTER_ROLE, DEPLOYER);
-        auToken.mint(USER1, 50_000 ether);
-        auToken.mint(USER2, 50_000 ether);
-        auToken.renounceRole(MINTER_ROLE, DEPLOYER);
+        //  1. Mint Au to users (TREASURY has DEFAULT_ADMIN + MINTER on AuToken)
+        //  Max wallet = 10% of totalSupply. Mint 5k to each (total 10k, max wallet = 1k)
+        vm.startPrank(TREASURY);
+        auToken.mint(USER1, 5_000 ether);
+        auToken.mint(USER2, 5_000 ether);
         vm.stopPrank();
-        console.log("  [1/6] Minted 50k Au to USER1 + USER2");
+        console.log("  [1/6] Minted 5k Au to USER1 + USER2");
         
-        //  2. Transfer with fee 
+        //  2. Transfer with fee (small amount to stay under max wallet)
+        //  Max wallet = 10% of 10k = 1k. USER1 has 5k, USER2 has 5k. Both exceed max wallet.
+        //  Transfer FROM USER2 to a fresh address (fresh has 0, receiving 50 is fine)
+        address fresh = address(0x7777777777777777777777777777777777777777);
+        vm.startPrank(TREASURY);
+        auToken.mint(fresh, 100 ether);
+        vm.stopPrank();
+        
         uint256 feesBefore = auToken.accumulatedFees();
-        vm.startPrank(USER1);
-        auToken.transfer(USER2, 10_000 ether);
+        vm.startPrank(USER2);
+        auToken.transfer(fresh, 50 ether);
         vm.stopPrank();
         uint256 feesAfter = auToken.accumulatedFees();
-        console.log("  [2/6] USER1  USER2: 10k Au | Fees: ", feesBefore / 1e17 / 10, "", feesAfter / 1e17 / 10);
+        console.log(string(abi.encode("  [2/6] USER2 -> fresh: 50 Au | Fees accrued: ", feesAfter > feesBefore)));
         assertTrue(feesAfter > feesBefore, "Fees accrued");
         
         //  3. Stake LP NFT 
@@ -593,15 +599,13 @@ contract ForkIntegrationTest is Test {
         console.log("  [3/6] USER1 staked LP NFT #2");
         assertTrue(staking.totalStakedNFTs() > 0, "Staked");
         
-        //  4. PID mints Ag 
+        //  4. PID mints Ag (PID already has MINTER_ROLE from configureRoles)
         uint256 agBefore = agToken.totalSupply();
-        vm.startPrank(DEPLOYER);
-        agToken.grantRole(MINTER_ROLE, DEPLOYER);
+        vm.startPrank(address(pidController));
         agToken.mint(address(pidController), 1000 ether);
-        agToken.renounceRole(MINTER_ROLE, DEPLOYER);
         vm.stopPrank();
         uint256 agAfter = agToken.totalSupply();
-        console.log("  [4/6] Minted 1k Ag to PID | Supply: ", agBefore / 1e18, "", agAfter / 1e18);
+        console.log(string(abi.encode("  [4/6] Minted 1k Ag to PID | Supply: ", agBefore / 1e18, " -> ", agAfter / 1e18)));
         assertEq(agAfter - agBefore, 1000 ether, "Ag minted");
         
         //  5. Verify all ownership 
@@ -666,5 +670,9 @@ contract MockERC721 {
         ownerOf[tokenId] = to;
         balanceOf[from]--;
         balanceOf[to]++;
+    }
+    
+    function safeTransferFrom(address from, address to, uint256 tokenId) external {
+        this.transferFrom(from, to, tokenId);
     }
 }

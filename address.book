@@ -9,9 +9,20 @@ AuToken Proxy:    0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08
 AuToken Impl:     0xe195d283A5e1c58B9C5D5a196656C2E1a39ad6F8
 Treasury Safe:    0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
 
+## AU TOKEN DISTRIBUTION (2026-06-27)
+Total Supply:     1,000,000,000 Au
+Treasury Reserves: 999,000,000 Au
+Treasury Staking:  700,000 Au
+Deployer Ops:      300,000 Au
+
+## TREASURY SAFE CONFIG
+Threshold:        1 (single-sig via deployer)
+Owners:           0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E (deployer)
+                  0x88dB13685836D44964Ce0595E75cA045CF931312
+
 ## NOTES
 - No minting performed (as instructed)
 - All AuToken roles granted to Treasury Safe
 - AgToken admin set to Treasury Safe via initialize
-- Deployer (0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E) has no roles post-deploy
+- Deployer has MINTER_ROLE (can mint more if needed)
 - Verified on Basescan v2

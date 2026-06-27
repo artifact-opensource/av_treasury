@@ -1,0 +1,68 @@
+================================================================================
+  LP PROVISIONING PLAN — Aerodrome (Base) — v3.1 CLEAN REDEPLOY
+================================================================================
+  Status: READY FOR DEPLOY
+  Date: 2026-06-27
+  Treasury: QuasiCrystal Protocol
+================================================================================
+
+DEPLOYMENT ORDER (MUST FOLLOW):
+  1. AgToken (ARTIFACT) — governance token
+  2. AuToken (Artifact Utility) — utility token with 9bps fee (50% burn, 50% treasury)
+  3. QuasiCrystalLPNFT — LP NFT (EXISTING at 0x6D0aff5ca9C3352188699dC468550fdA6ec0687b)
+  4. Create AgToken/AuToken LP pair on Aerodrome → get LP address
+  5. TreasuryAMO — Automated Market Operations (needs LP + router)
+  6. AVLPStaking_v2 — LP staking with AuToken emissions
+  7. PID_Emission_Controller_v2 — PID controller for staking emissions
+  8. AvOracle — On-chain oracle
+  9. GovernorContract — Governance
+  10. ArtifactTimelock — Timelock controller (admin = Treasury Safe)
+
+TOKEN PARAMETERS:
+  AuToken:
+    Name: "Au Token"
+    Symbol: "Au"
+    Initial Supply: 10,000 Au (for bootstrap funding)
+    Decimals: 18
+    Fee: 9bps (50% burned, 50% to treasury)
+    Treasury: Treasury Safe (set in initialize)
+    Max Wallet: 10% of supply
+    Max TX: 1% of supply
+
+  AgToken:
+    Name: "Artifact"
+    Symbol: "AG"
+    Decimals: 18
+    No fees, no minting after deploy
+
+LP PROVISIONING:
+  Platform: Aerodrome (Base)
+  Pair: AgToken/AuToken
+  Fee Tier: Variable (Aerodrome SlipStream)
+  Treasury: QuasiCrystal Protocol
+  LP NFT .............. TBD (mint new or use 0x6D0aff5ca9C3352188699dC468550fdA6ec0687b)
+  PID Bootstrap Target ...... 500K NFT units
+  PID Max Target ............ 5M NFT units
+  4. NFT handling:
+     - Aerodrome LP NFT goes to Treasury (Gnosis Safe).
+     - Staking contract lpNFT set to the Au LP NFT address.
+     - LP NFT ownership = Treasury, controlled by multisig.
+
+TREASURY:
+  Treasury Safe: 0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e (1-of-2: dev + Binance)
+  Bootstrap Funding: 10,000 Au minted to TreasuryAMO
+
+GOVERNANCE:
+  Governor → proposes via Timelock → executes protocol changes
+  Timelock admin: Treasury Safe (NOT deployer)
+  Timelock delay: 0 (to be set via governance)
+  Proposer: Governor contract
+  Executor: None (open execution)
+
+SECURITY NOTES:
+  - Deployer key MUST be new and unused after deployment
+  - All admin roles transferred to Treasury Safe before deploy completes
+  - Deployer renounces ALL roles at end of script
+  - Nothing outside .env is modified
+  - Contracts verified on Basescan after deploy
+================================================================================

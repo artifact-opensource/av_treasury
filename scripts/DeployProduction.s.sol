@@ -32,27 +32,30 @@ contract DeployProduction is Script {
         address router = vm.envAddress("AERODROME_ROUTER");
         require(router != address(0), "AERODROME_ROUTER env var required");
         address deployer = vm.addr(1);
+        address treasury = vm.envAddress("SAFE_TREASURY_ADDRESS");
+        require(treasury != address(0), "SAFE_TREASURY_ADDRESS env var required");
 
         console.log("==================================================");
         console.log("  AV TREASURY - PRODUCTION DEPLOYMENT");
         console.log("==================================================");
         console.log("  Deployer:", deployer);
+        console.log("  Treasury:", treasury);
         console.log("  Network:", block.chainid);
         console.log("==================================================");
 
-        _deployTokens(deployer);
-        _deployOracle(deployer);
+        _deployTokens(deployer, treasury);
+        _deployOracle(deployer, treasury);
         _deployLPNFT();
         _deployStaking();
-        _deployPID(deployer);
-        _deployTreasuryAMO(deployer, router);
-        _deployGovernance(deployer);
-        _configureRoles(deployer);
-        _fundTreasury(deployer);
+        _deployPID(deployer, treasury);
+        _deployTreasuryAMO(treasury, router);
+        _deployGovernance(deployer, treasury);
+        _configureRoles(deployer, treasury);
+        _fundTreasury(treasury);
         _writeDeployedAddresses(router);
     }
 
-    function _deployTokens(address deployer) internal {
+    function _deployTokens(address deployer, address treasury) internal {
         console.log("\n[1/8] Deploying tokens...");
 
         AgToken ag = new AgToken();
@@ -61,19 +64,19 @@ contract DeployProduction is Script {
         console.log("  AgToken:", agToken);
 
         AuToken au = new AuToken();
-        au.initialize(deployer);
+        au.initialize(treasury);
         auToken = address(au);
-        console.log("  AuToken:", auToken);
+        console.log("  AuToken:", auToken, "treasury:", treasury);
     }
 
-    function _deployOracle(address deployer) internal {
+    function _deployOracle(address deployer, address treasury) internal {
         console.log("\n[2/8] Deploying oracle...");
 
         AvOracle oracle = new AvOracle(
             auToken,
             agToken,
-            deployer,
-            deployer
+            treasury,
+            treasury
         );
         avOracle = address(oracle);
         console.log("  AvOracle:", avOracle);
@@ -101,11 +104,11 @@ contract DeployProduction is Script {
         console.log("  AVLPStaking_v2:", lpStaking);
     }
 
-    function _deployPID(address deployer) internal {
+    function _deployPID(address deployer, address treasury) internal {
         console.log("\n[5/8] Deploying PID controller...");
 
         PID_Emission_Controller_v2 pid = new PID_Emission_Controller_v2(
-            deployer,
+            treasury,
             lpStaking,
             agToken,
             5e16,
@@ -117,29 +120,29 @@ contract DeployProduction is Script {
         console.log("  PID_Controller:", pidController);
     }
 
-    function _deployTreasuryAMO(address deployer, address router) internal {
+    function _deployTreasuryAMO(address admin, address router) internal {
         console.log("\n[6/8] Deploying Treasury AMO...");
 
         TreasuryAMO amo = new TreasuryAMO(
             auToken,
             agToken,
             router,
-            deployer
+            admin
         );
         treasuryAMO = address(amo);
         console.log("  TreasuryAMO:", treasuryAMO);
     }
 
-    function _deployGovernance(address deployer) internal {
+    function _deployGovernance(address deployer, address treasury) internal {
         console.log("\n[7/8] Deploying governance...");
 
         ArtifactTimelock tl = new ArtifactTimelock(
-            deployer,
+            treasury,
             address(0),
             deployer
         );
         timelock = address(tl);
-        console.log("  ArtifactTimelock:", timelock);
+        console.log("  ArtifactTimelock:", timelock, "admin:", treasury);
 
         GovernorContract gov = new GovernorContract(
             IVotes(address(agToken)),
@@ -148,19 +151,28 @@ contract DeployProduction is Script {
         governor = address(gov);
         console.log("  GovernorContract:", governor);
 
-        vm.startPrank(deployer);
+        vm.startPrank(treasury);
         tl.grantRole(keccak256("PROPOSER_ROLE"), governor);
-        tl.renounceRole(keccak256("PROPOSER_ROLE"), deployer);
+        tl.renounceRole(keccak256("PROPOSER_ROLE"), treasury);
         vm.stopPrank();
         console.log("  + Governor set as PROPOSER on Timelock");
+
+        // Transfer Timelock admin from deployer to Treasury Safe
+        // CRITICAL: deployer is admin by default (msg.sender in constructor)
+        // This prevents the compromised deployer from managing governance
+        vm.startPrank(deployer);
+        tl.grantRole(tl.DEFAULT_ADMIN_ROLE(), treasury);
+        tl.renounceRole(tl.DEFAULT_ADMIN_ROLE(), deployer);
+        vm.stopPrank();
+        console.log("  + Timelock ADMIN transferred to Treasury Safe");
     }
 
-    function _configureRoles(address deployer) internal {
+    function _configureRoles(address deployer, address treasury) internal {
         console.log("\n[8/8] Configuring roles...");
 
         bytes32 MINTER_ROLE = keccak256("MINTER_ROLE");
-        AuToken(auToken).grantRole(MINTER_ROLE, deployer);
-        console.log("  + MINTER_ROLE -> Deployer on AuToken");
+        AuToken(auToken).grantRole(MINTER_ROLE, treasury);
+        console.log("  + MINTER_ROLE -> Treasury on AuToken");
 
         vm.startPrank(deployer);
 
@@ -174,16 +186,20 @@ contract DeployProduction is Script {
         AvOracle(avOracle).grantRole(GOVERNOR_ROLE, governor);
         console.log("  + GOVERNOR -> Governor on AvOracle");
 
+        // Transfer AgToken admin from deployer to Treasury Safe
+        AgToken(agToken).grantRole(DEFAULT_ADMIN_ROLE, treasury);
+        AgToken(agToken).renounceRole(DEFAULT_ADMIN_ROLE, deployer);
+        console.log("  + AgToken ADMIN -> Treasury Safe");
         vm.stopPrank();
 
-        vm.startPrank(deployer);
+        vm.startPrank(treasury);
         bytes32 EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
         TreasuryAMO(treasuryAMO).grantRole(EXECUTOR_ROLE, timelock);
         console.log("  + EXECUTOR_ROLE -> Timelock on TreasuryAMO");
         vm.stopPrank();
     }
 
-    function _fundTreasury(address deployer) internal {
+    function _fundTreasury(address treasury) internal {
         console.log("\n  Funding treasury...");
 
         // AuToken maxWallet = totalSupply * 1000 / 10000 = totalSupply / 10.
@@ -195,7 +211,7 @@ contract DeployProduction is Script {
         AuToken(auToken).setMaxWalletAmount(10000);
         console.log("  + Temporarily set AuToken max wallet to 100% for bootstrap");
 
-        vm.startPrank(deployer);
+        vm.startPrank(treasury);
         AuToken(auToken).mint(treasuryAMO, treasuryAmount);
         vm.stopPrank();
         console.log("  + Minted treasury funding to TreasuryAMO");

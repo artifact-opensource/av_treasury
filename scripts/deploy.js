@@ -157,6 +157,11 @@ async function main() {
   await auToken.deployed();
   const auTokenAddress = auToken.address;
   console.log(`  ✅ AuToken deployed: ${auTokenAddress}`);
+
+  // Initialize AuToken with Treasury Safe
+  console.log(`  🔧 Initializing AuToken treasury to: ${treasury}`);
+  await auToken.initialize(treasury);
+  console.log(`  ✅ AuToken treasury initialized`);
   
   // ─── STEP 3: Deploy ArtifactTimelock ──────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -252,7 +257,7 @@ async function main() {
     ethers.utils.getAddress(auTokenAddress),       // _auToken
     CONFIG.RESERVE_TOKEN_ADDRESS,                 // _reserveToken (USDC on Base)
     CONFIG.AERODROME_ROUTER_ADDRESS,              // _aerodromeRouter
-    deployerAddress                               // _admin
+    treasury                                      // _admin (= Treasury Safe)
   );
   await treasuryAMO.deployed();
   const treasuryAMOAddress = treasuryAMO.address;

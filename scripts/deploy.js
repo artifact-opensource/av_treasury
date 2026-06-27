@@ -2,65 +2,56 @@
  * AV Treasury v3.1 — Mainnet Deployment Script (Base Network)
  * 
  * Deployment Order:
- * 1. AgToken (ARTIFACT) — ERC20 governance token
- * 2. AuToken (Artifact Utility) — ERC20 utility token
+ * 1. AgToken (ARTIFACT) — UUPS upgradeable governance token (implementation + ERC1967Proxy)
+ * 2. AuToken (Artifact Utility) — UUPS upgradeable utility token (implementation + ERC1967Proxy)
  * 3. ArtifactTimelock — Timelock controller for governance
- * 4. GovernorContract — DAO governance (2 params: token, executor)
- * 5. AVLPStaking_v2 — LP staking with 2.5x multiplier (BEFORE PID — PID needs staking)
- * 6. PID_Emission_Controller_v2 — Emission controller with dynamic cap (7 params)
- * 7. TreasuryAMO — Automated Market Operations (4 params: auToken, reserve, router, admin)
- * 8. Configure: Grant roles, set controllers, transfer ownership
+ * 4. GovernorContract — DAO governance (token, executor)
+ * 5. AVLPStaking_v2 — LP staking (implementation + ERC1967Proxy)
+ * 6. PID_Emission_Controller_v2 — Emission controller
+ * 7. TreasuryAMO — Automated Market Operations
+ * 8. Configure: Grant roles, set controllers, transfer ownership to Treasury Safe
+ * 
+ * ALL admin/ownership roles → Treasury Safe (SAFE_TREASURY_ADDRESS)
+ * Verification: Etherscan V2 (not Basescan)
  * 
  * Usage:
  *   npx hardhat run scripts/deploy.js --network base
- *   npx hardhat run scripts/deploy.js --network base_sepolia
  * 
  * Environment variables required (see .env):
- *   PRIVATE_KEY_BASE — Deployer private key
- *   RPC_URL_BASE — Base mainnet RPC
- *   DEVELOPER_WALLET_ADDRESS — Admin/timelock proposer
- *   MULTISIG_1_ADDRESS — First multisig signer
- *   MULTISIG_2_ADDRESS — Second multisig signer
- *   SAFE_TREASURY_ADDRESS — Gnosis Safe treasury
- *   ETHERSCAN_API_V2 — Basescan/Etherscan API key
+ *   PRIVATE_KEY_BASE     — Deployer private key
+ *   RPC_URL_BASE         — Base mainnet RPC
+ *   SAFE_TREASURY_ADDRESS — Gnosis Safe treasury (receives ALL admin roles)
+ *   ETHERSCAN_API_V2     — Etherscan V2 API key
+ *   AERODROME_ROUTER_ADDRESS — Aerodrome router on Base mainnet
+ *   LP_NFT_ADDRESS       — Aerodrome LP NFT (if known, else Treasury Safe as placeholder)
  */
 
-const { ethers, network: hardhatNetwork } = require("hardhat");
+const { ethers, network: hardhatNetwork, run } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
-// Ethers v5 API: parseEther is on utils
-const { parseEther, formatEther, keccak256, toUtf8Bytes } = ethers.utils;
-
 // ─── Configuration ───────────────────────────────────────────────
 const CONFIG = {
-  // Governance
-  TIMELOCK_DELAY: 2 * 24 * 3600, // 2 days (48 hours)
+  TIMELOCK_DELAY: 2 * 24 * 3600, // 2 days
   
-  // Token
   AG_NAME: "ARTIFACT",
   AG_SYMBOL: "ART",
   AU_NAME: "Artifact Utility",
   AU_SYMBOL: "AU",
   
-  // Initial supply (for initial minting if needed)
-  INITIAL_MINT: parseEther("100000"), // 100K tokens for deployer
-  
-  // Emission — PID controller constants
-  PID_TVL_TARGET: parseEther("10000000"), // $10M TVL target
-  PID_KP: parseEther("0.0001"),  // Proportional gain
-  PID_KI: parseEther("0.00001"), // Integral gain
-  PID_KD: parseEther("0.00005"), // Derivative gain
+  // PID controller constants
+  PID_TVL_TARGET: ethers.utils.parseEther("10000000"),
+  PID_KP: ethers.utils.parseEther("0.0001"),
+  PID_KI: ethers.utils.parseEther("0.00001"),
+  PID_KD: ethers.utils.parseEther("0.00005"),
   
   // Staking
-  AG_THRESHOLD: parseEther("1000"), // 1000 AG for max multiplier
+  AG_THRESHOLD: ethers.utils.parseEther("1000"),
   
   // Treasury
-  RESERVE_TOKEN_ADDRESS: process.env.USDC_BASE_ADDRESS || ethers.utils.getAddress("0x833589f4cdb0a6e3bc84827a6bd4c6b4a7a2eb3e"),
-  AERODROME_ROUTER_ADDRESS: process.env.AERODROME_ROUTER_ADDRESS || ethers.utils.getAddress("0x4752bA5Db23f44F6821471A762f7D6f2d65F10B9"),
-  BUYBACK_PCT: 12, // 12% of excess reserves
+  BUYBACK_PCT: 12,
   MIN_BUYBACK_USD: 500,
-  MAX_BUYBACK_EPOCH_BPS: 500, // 5% per epoch
+  MAX_BUYBACK_EPOCH_BPS: 500,
 };
 
 // ─── Utilities ───────────────────────────────────────────────────
@@ -84,13 +75,13 @@ function getAddress(name, envVar) {
   if (!value || value === "NOT_SET") {
     throw new Error(`Missing required address: ${name} (${envVar})`);
   }
-  return value;
+  return ethers.utils.getAddress(value);
 }
 
-async function verifyContract(name, address, constructorArgs = []) {
-  console.log(`\n📋 Verifying ${name} on Basescan...`);
+async function verifyOnEtherscan(name, address, constructorArgs = []) {
+  console.log(`\n  📋 Verifying ${name} on Etherscan...`);
   try {
-    await hre.run("verify:verify", {
+    await run("verify:verify", {
       address: address,
       constructorArguments: constructorArgs,
     });
@@ -100,17 +91,9 @@ async function verifyContract(name, address, constructorArgs = []) {
       console.log(`  ✅ ${name} already verified`);
     } else {
       console.log(`  ⚠️  Verification failed: ${error.message}`);
-      console.log(`  📌 Manual verification command:`);
-      console.log(`     npx hardhat verify --network base --contract contracts/${name}.sol:${name} ${address} ${constructorArgs.join(" ")}`);
+      console.log(`  📌 Manual: npx hardhat verify --network base --contract contracts/${name}.sol:${name} ${address} ${constructorArgs.join(" ")}`);
     }
   }
-}
-
-async function waitConfirmations(tx, confirmations = 5) {
-  console.log(`  ⏳ Waiting for ${confirmations} confirmations...`);
-  const receipt = await tx.wait(confirmations);
-  console.log(`  ✅ Confirmed (block ${receipt.blockNumber})`);
-  return receipt;
 }
 
 // ─── Main Deployment ─────────────────────────────────────────────
@@ -126,42 +109,71 @@ async function main() {
   console.log(`🌐 Network: ${hre.network.name} (chain ID: ${hre.network.config.chainId})`);
   
   const balance = await ethers.provider.getBalance(deployer.address);
-  console.log(`💰 Balance: ${formatEther(balance)} ETH\n`);
+  console.log(`💰 Balance: ${ethers.utils.formatEther(balance)} ETH\n`);
   
-  // Load config addresses
-  const admin = getAddress("Admin", "DEVELOPER_WALLET_ADDRESS");
-  const multisig1 = getAddress("Multisig 1", "MULTISIG_1_ADDRESS");
-  const multisig2 = getAddress("Multisig 2", "MULTISIG_2_ADDRESS");
+  // ─── Load addresses from .env ─────────────────────────────────
   const treasury = getAddress("Treasury Safe", "SAFE_TREASURY_ADDRESS");
+  const reserveToken = process.env.USDC_BASE_ADDRESS
+    ? ethers.utils.getAddress(process.env.USDC_BASE_ADDRESS)
+    : ethers.utils.getAddress("0x833589fCDB0A6e3bC84827A6bD4C6B4a7A2eB3e"); // USDC Base mainnet
+  const aerodromeRouterAddr = process.env.AERODROME_ROUTER_ADDRESS;
+  if (!aerodromeRouterAddr || aerodromeRouterAddr === "NOT_SET") {
+    throw new Error("AERODROME_ROUTER_ADDRESS must be set in .env. Get it from: https://aerodrome.finance or check a known Base mainnet pair on Basescan.");
+  }
+  const aerodromeRouter = ethers.utils.getAddress(aerodromeRouterAddr);
+  const lpNFTAddr = process.env.LP_NFT_ADDRESS;
+  if (!lpNFTAddr || lpNFTAddr === "NOT_SET") {
+    throw new Error("LP_NFT_ADDRESS must be set in .env. Create AgToken/AuToken LP on Aerodrome and set the NFT address.");
+  }
+  const lpNFTAddress = ethers.utils.getAddress(lpNFTAddr);
   
-  const deployerAddress = deployer.address;
+  console.log(`🏛️  Treasury Safe: ${treasury}`);
+  console.log(`💵 Reserve Token: ${reserveToken}`);
+  console.log(`🔄 Aerodrome Router: ${aerodromeRouter}`);
+  console.log(`🎫 LP NFT: ${lpNFTAddress}\n`);
   
-  // ─── STEP 1: Deploy AgToken ───────────────────────────────────
-  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 STEP 1/7: AgToken (ARTIFACT)");
+  // ─── STEP 1: Deploy AgToken (UUPS: implementation + proxy) ────
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📦 STEP 1/7: AgToken (ARTIFACT) — UUPS Proxy");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
   const AgToken = await ethers.getContractFactory("AgToken");
-  const agToken = await AgToken.deploy();
-  await agToken.deployed();
-  const agTokenAddress = agToken.address;
-  console.log(`  ✅ AgToken deployed: ${agTokenAddress}`);
+  const agTokenImpl = await AgToken.deploy();
+  await agTokenImpl.deployed();
+  console.log(`  ✅ AgToken implementation: ${agTokenImpl.address}`);
   
-  // ─── STEP 2: Deploy AuToken ───────────────────────────────────
+  // Deploy ERC1967Proxy with initialize call
+  const ERC1967Proxy = await ethers.getContractFactory("ERC1967Proxy");
+  const agTokenInitData = AgToken.interface.encodeFunctionData("initialize", [
+    treasury  // admin → Treasury Safe
+  ]);
+  const agTokenProxy = await ERC1967Proxy.deploy(agTokenImpl.address, agTokenInitData);
+  await agTokenProxy.deployed();
+  const agTokenAddress = agTokenProxy.address;
+  console.log(`  ✅ AgToken proxy: ${agTokenAddress}`);
+  
+  // Use proxy address for contract interactions
+  const agToken = AgToken.attach(agTokenAddress);
+  
+  // ─── STEP 2: Deploy AuToken (UUPS: implementation + proxy) ────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 STEP 2/7: AuToken (Artifact Utility)");
+  console.log("📦 STEP 2/7: AuToken (Artifact Utility) — UUPS Proxy");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
   const AuToken = await ethers.getContractFactory("AuToken");
-  const auToken = await AuToken.deploy();
-  await auToken.deployed();
-  const auTokenAddress = auToken.address;
-  console.log(`  ✅ AuToken deployed: ${auTokenAddress}`);
-
-  // Initialize AuToken with Treasury Safe
-  console.log(`  🔧 Initializing AuToken treasury to: ${treasury}`);
-  await auToken.initialize(treasury);
-  console.log(`  ✅ AuToken treasury initialized`);
+  const auTokenImpl = await AuToken.deploy();
+  await auTokenImpl.deployed();
+  console.log(`  ✅ AuToken implementation: ${auTokenImpl.address}`);
+  
+  const auTokenInitData = AuToken.interface.encodeFunctionData("initialize", [
+    treasury  // treasury → Treasury Safe
+  ]);
+  const auTokenProxy = await ERC1967Proxy.deploy(auTokenImpl.address, auTokenInitData);
+  await auTokenProxy.deployed();
+  const auTokenAddress = auTokenProxy.address;
+  console.log(`  ✅ AuToken proxy: ${auTokenAddress}`);
+  
+  const auToken = AuToken.attach(auTokenAddress);
   
   // ─── STEP 3: Deploy ArtifactTimelock ──────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -170,15 +182,15 @@ async function main() {
   
   const ArtifactTimelock = await ethers.getContractFactory("ArtifactTimelock");
   const timelock = await ArtifactTimelock.deploy(
-    admin,           // _proposer
-    admin,           // _executor
-    admin            // _canceler
+    treasury,   // _proposer → Treasury Safe
+    treasury,   // _executor → Treasury Safe
+    treasury    // _canceler → Treasury Safe
   );
   await timelock.deployed();
   const timelockAddress = timelock.address;
   console.log(`  ✅ ArtifactTimelock deployed: ${timelockAddress}`);
   console.log(`     Delay: ${CONFIG.TIMELOCK_DELAY}s (${CONFIG.TIMELOCK_DELAY / 3600}h)`);
-  console.log(`     Proposer/Executor/Canceler: ${admin}`);
+  console.log(`     Proposer/Executor/Canceler: ${treasury}`);
   
   // ─── STEP 4: Deploy GovernorContract ──────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -187,8 +199,8 @@ async function main() {
   
   const GovernorContract = await ethers.getContractFactory("GovernorContract");
   const governor = await GovernorContract.deploy(
-    agTokenAddress,           // IVotes _token
-    timelockAddress           // address _executor
+    agTokenAddress,   // IVotes _token
+    timelockAddress   // address _executor
   );
   await governor.deployed();
   const governorAddress = governor.address;
@@ -196,30 +208,30 @@ async function main() {
   console.log(`     Token: ${agTokenAddress}`);
   console.log(`     Executor: ${timelockAddress}`);
   
-  // ─── STEP 5: Deploy AVLPStaking_v2 (BEFORE PID — PID needs staking)
+  // ─── STEP 5: Deploy AVLPStaking_v2 (UUPS: impl + proxy) ──────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 STEP 5/7: AVLPStaking_v2");
+  console.log("📦 STEP 5/7: AVLPStaking_v2 — UUPS Proxy");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
-  // AVLPStaking_v2 is UUPS upgradeable — deploy implementation + call initialize
   const AVLPStaking = await ethers.getContractFactory("AVLPStaking_v2");
-  const staking = await AVLPStaking.deploy();
-  await staking.deployed();
-  const stakingAddress = staking.address;
-  console.log(`  ✅ AVLPStaking_v2 implementation deployed: ${stakingAddress}`);
+  const stakingImpl = await AVLPStaking.deploy();
+  await stakingImpl.deployed();
+  console.log(`  ✅ AVLPStaking_v2 implementation: ${stakingImpl.address}`);
   
-  // Call initialize
-  console.log("  ⚙️  Initializing AVLPStaking_v2...");
-  await staking.initialize(
-    ethers.utils.getAddress(auTokenAddress),    // _auToken
-    ethers.utils.getAddress(agTokenAddress),    // _agToken
-    deployerAddress                             // _lpNFT (placeholder, update via governance)
-  );
-  console.log(`  ✅ AVLPStaking_v2 initialized`);
+  const stakingInitData = AVLPStaking.interface.encodeFunctionData("initialize", [
+    auTokenAddress,   // _auToken
+    agTokenAddress,   // _agToken
+    lpNFTAddress      // _lpNFT (Treasury Safe until LP NFT is provided)
+  ]);
+  const stakingProxy = await ERC1967Proxy.deploy(stakingImpl.address, stakingInitData);
+  await stakingProxy.deployed();
+  const stakingAddress = stakingProxy.address;
+  console.log(`  ✅ AVLPStaking_v2 proxy: ${stakingAddress}`);
   console.log(`     AuToken: ${auTokenAddress}`);
   console.log(`     AgToken: ${agTokenAddress}`);
-  console.log(`     LP NFT: ${deployerAddress} (placeholder)`);
-  console.log(`     Max Multiplier: 2.5x`);
+  console.log(`     LP NFT: ${lpNFTAddress}`);
+  
+  const staking = AVLPStaking.attach(stakingAddress);
   
   // ─── STEP 6: Deploy PID_Emission_Controller_v2 ────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -228,24 +240,21 @@ async function main() {
   
   const PIDController = await ethers.getContractFactory("PID_Emission_Controller_v2");
   const pidController = await PIDController.deploy(
-    deployerAddress,                              // admin (will transfer to timelock)
-    ethers.utils.getAddress(stakingAddress),     // staking_ (AVLPStaking_v2)
-    ethers.utils.getAddress(agTokenAddress),     // agToken_
-    CONFIG.PID_TVL_TARGET,                        // targetTVL_
-    CONFIG.PID_KP,                                // kp_
-    CONFIG.PID_KI,                                // ki_
-    CONFIG.PID_KD                                 // kd_
+    treasury,                                    // admin → Treasury Safe
+    stakingAddress,                              // staking_
+    agTokenAddress,                              // agToken_
+    CONFIG.PID_TVL_TARGET,                       // targetTVL_
+    CONFIG.PID_KP,                               // kp_
+    CONFIG.PID_KI,                               // ki_
+    CONFIG.PID_KD                                // kd_
   );
   await pidController.deployed();
   const pidControllerAddress = pidController.address;
   console.log(`  ✅ PID_Emission_Controller_v2 deployed: ${pidControllerAddress}`);
-  console.log(`     Admin: ${deployerAddress}`);
+  console.log(`     Admin: ${treasury}`);
   console.log(`     Staking: ${stakingAddress}`);
   console.log(`     AgToken: ${agTokenAddress}`);
-  console.log(`     TVL Target: ${formatEther(CONFIG.PID_TVL_TARGET)}`);
-  console.log(`     KP: ${formatEther(CONFIG.PID_KP)}`);
-  console.log(`     KI: ${formatEther(CONFIG.PID_KI)}`);
-  console.log(`     KD: ${formatEther(CONFIG.PID_KD)}`);
+  console.log(`     TVL Target: ${ethers.utils.formatEther(CONFIG.PID_TVL_TARGET)}`);
   
   // ─── STEP 7: Deploy TreasuryAMO ───────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -254,17 +263,18 @@ async function main() {
   
   const TreasuryAMO = await ethers.getContractFactory("TreasuryAMO");
   const treasuryAMO = await TreasuryAMO.deploy(
-    ethers.utils.getAddress(auTokenAddress),       // _auToken
-    CONFIG.RESERVE_TOKEN_ADDRESS,                 // _reserveToken (USDC on Base)
-    CONFIG.AERODROME_ROUTER_ADDRESS,              // _aerodromeRouter
-    treasury                                      // _admin (= Treasury Safe)
+    auTokenAddress,       // _auToken
+    reserveToken,         // _reserveToken (USDC on Base)
+    aerodromeRouter,      // _aerodromeRouter
+    treasury              // _admin → Treasury Safe
   );
   await treasuryAMO.deployed();
   const treasuryAMOAddress = treasuryAMO.address;
   console.log(`  ✅ TreasuryAMO deployed: ${treasuryAMOAddress}`);
   console.log(`     AuToken: ${auTokenAddress}`);
-  console.log(`     Reserve Token: ${CONFIG.RESERVE_TOKEN_ADDRESS}`);
-  console.log(`     Aerodrome Router: ${CONFIG.AERODROME_ROUTER_ADDRESS}`);
+  console.log(`     Reserve Token: ${reserveToken}`);
+  console.log(`     Aerodrome Router: ${aerodromeRouter}`);
+  console.log(`     Admin: ${treasury}`);
   
   // ─── STEP 8: Configure Roles ──────────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -273,54 +283,90 @@ async function main() {
   
   // Grant MINTER role to PID controller on AgToken
   console.log("\n  🔐 Granting MINTER role to PID Controller...");
-  const MINTER_ROLE = keccak256(toUtf8Bytes("MINTER_ROLE"));
+  const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
   await agToken.grantRole(MINTER_ROLE, pidControllerAddress);
   console.log(`  ✅ AgToken MINTER_ROLE → PID Controller`);
+  
+  // Grant EMIT_ROLE to staking contract on PID controller
+  console.log("  🔐 Granting EMIT_ROLE to Staking contract...");
+  const EMIT_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EMIT_ROLE"));
+  await pidController.grantRole(EMIT_ROLE, stakingAddress);
+  console.log(`  ✅ PID Controller EMIT_ROLE → Staking`);
   
   // Grant MINTER role to TreasuryAMO on AuToken
   console.log("  🔐 Granting MINTER role to TreasuryAMO...");
   await auToken.grantRole(MINTER_ROLE, treasuryAMOAddress);
   console.log(`  ✅ AuToken MINTER_ROLE → TreasuryAMO`);
   
-  // Transfer ownership to timelock
-  console.log("\n  🏛️  Transferring governance to Timelock...");
-  await agToken.grantRole(await agToken.DEFAULT_ADMIN_ROLE(), timelockAddress);
-  await agToken.renounceRole(await agToken.DEFAULT_ADMIN_ROLE(), deployerAddress);
-  console.log(`  ✅ AgToken admin → Timelock`);
+  // Transfer ALL admin roles to Treasury Safe
+  console.log("\n  🏛️  Transferring ALL governance to Treasury Safe...");
   
-  await pidController.transferOwnership(timelockAddress);
-  console.log(`  ✅ PID Controller owner → Timelock`);
+  // AgToken: DEFAULT_ADMIN_ROLE → Treasury Safe
+  await agToken.grantRole(await agToken.DEFAULT_ADMIN_ROLE(), treasury);
+  await agToken.renounceRole(await agToken.DEFAULT_ADMIN_ROLE(), deployer.address);
+  console.log(`  ✅ AgToken admin → Treasury Safe`);
   
-  await treasuryAMO.transferOwnership(timelockAddress);
-  console.log(`  ✅ TreasuryAMO owner → Timelock`);
+  // AuToken: ALL roles → Treasury Safe (initialize grants roles to msg.sender=deployer)
+  console.log("  🔐 AuToken: transferring all roles to Treasury Safe...");
+  const AU_DEFAULT_ADMIN = await auToken.DEFAULT_ADMIN_ROLE();
+  const AU_ANTI_BOT = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ANTI_BOT_ROLE"));
+  const AU_UPGRADER = await auToken.UPGRADER_ROLE();
   
-  await staking.transferOwnership(timelockAddress);
-  console.log(`  ✅ AVLPStaking owner → Timelock`);
+  // Grant Treasury Safe all roles (except MINTER — that stays with TreasuryAMO)
+  await auToken.grantRole(AU_DEFAULT_ADMIN, treasury);
+  await auToken.grantRole(AU_ANTI_BOT, treasury);
+  await auToken.grantRole(AU_UPGRADER, treasury);
   
-  // ─── Verification ─────────────────────────────────────────────
+  // Renounce deployer's roles
+  await auToken.renounceRole(AU_DEFAULT_ADMIN, deployer.address);
+  await auToken.renounceRole(AU_ANTI_BOT, deployer.address);
+  await auToken.renounceRole(AU_UPGRADER, deployer.address);
+  console.log(`  ✅ AuToken all roles → Treasury Safe (MINTER stays with TreasuryAMO)`);
+  
+  // AVLPStaking_v2: owner → Treasury Safe
+  await staking.transferOwnership(treasury);
+  console.log(`  ✅ AVLPStaking_v2 owner → Treasury Safe`);
+  
+  // PID Controller: owner → Treasury Safe
+  await pidController.transferOwnership(treasury);
+  console.log(`  ✅ PID Controller owner → Treasury Safe`);
+  
+  // TreasuryAMO: owner → Treasury Safe
+  await treasuryAMO.transferOwnership(treasury);
+  console.log(`  ✅ TreasuryAMO owner → Treasury Safe`);
+  
+  // Deployer renounces any remaining roles
+  console.log("\n  🚫 Renouncing deployer roles...");
+  // If deployer still has any roles on TreasuryAMO
+  try {
+    const DEFAULT_ADMIN = await treasuryAMO.DEFAULT_ADMIN_ROLE();
+    if (await treasuryAMO.hasRole(DEFAULT_ADMIN, deployer.address)) {
+      await treasuryAMO.renounceRole(DEFAULT_ADMIN, deployer.address);
+    }
+  } catch (e) { /* already transferred */ }
+  
+  // ─── Verification (Etherscan V2) ──────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("🔍 ETHERSCAN VERIFICATION");
+  console.log("🔍 ETHERSCAN V2 VERIFICATION");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
   if (process.env.ETHERSCAN_API_V2 && process.env.ETHERSCAN_API_V2 !== "NOT_SET") {
-    console.log("\n  Waiting 30s for Basescan to index contracts...");
+    console.log("\n  ⏳ Waiting 30s for Etherscan to index contracts...");
     await new Promise(r => setTimeout(r, 30000));
     
-    await verifyContract("AgToken", agTokenAddress, []);
-    await verifyContract("AuToken", auTokenAddress, []);
-    await verifyContract("ArtifactTimelock", timelockAddress, [
-      admin,
-      admin,
-      admin
+    // Verify implementations (what matters for source code)
+    await verifyOnEtherscan("AgToken", agTokenImpl.address, []);
+    await verifyOnEtherscan("AuToken", auTokenImpl.address, []);
+    await verifyOnEtherscan("AVLPStaking_v2", stakingImpl.address, []);
+    await verifyOnEtherscan("ArtifactTimelock", timelockAddress, [
+      treasury, treasury, treasury
     ]);
-    await verifyContract("GovernorContract", governorAddress, [
+    await verifyOnEtherscan("GovernorContract", governorAddress, [
       agTokenAddress,
       timelockAddress
     ]);
-    // AVLPStaking_v2 is UUPS proxy — verify implementation, not proxy
-    console.log("  ⚠️  AVLPStaking_v2 is UUPS proxy — verify implementation manually");
-    await verifyContract("PID_Emission_Controller_v2", pidControllerAddress, [
-      deployerAddress,
+    await verifyOnEtherscan("PID_Emission_Controller_v2", pidControllerAddress, [
+      treasury,
       stakingAddress,
       agTokenAddress,
       CONFIG.PID_TVL_TARGET,
@@ -328,11 +374,11 @@ async function main() {
       CONFIG.PID_KI,
       CONFIG.PID_KD
     ]);
-    await verifyContract("TreasuryAMO", treasuryAMOAddress, [
+    await verifyOnEtherscan("TreasuryAMO", treasuryAMOAddress, [
       auTokenAddress,
-      CONFIG.RESERVE_TOKEN_ADDRESS,
-      CONFIG.AERODROME_ROUTER_ADDRESS,
-      deployerAddress
+      reserveToken,
+      aerodromeRouter,
+      treasury
     ]);
   } else {
     console.log("  ⚠️  ETHERSCAN_API_V2 not set — skipping verification");
@@ -346,32 +392,32 @@ async function main() {
   const deploymentInfo = {
     network: hre.network.name,
     chainId: hre.network.config.chainId,
-    deployer: deployerAddress,
+    deployer: deployer.address,
     timestamp: new Date().toISOString(),
     contracts: {
+      AgToken_impl: agTokenImpl.address,
       AgToken: agTokenAddress,
+      AuToken_impl: auTokenImpl.address,
       AuToken: auTokenAddress,
       ArtifactTimelock: timelockAddress,
       GovernorContract: governorAddress,
+      AVLPStaking_v2_impl: stakingImpl.address,
+      AVLPStaking_v2: stakingAddress,
       PID_Emission_Controller_v2: pidControllerAddress,
       TreasuryAMO: treasuryAMOAddress,
-      AVLPStaking_v2: stakingAddress,
     },
     config: {
       timelockDelay: CONFIG.TIMELOCK_DELAY,
-      votingPeriod: CONFIG.VOTING_PERIOD,
-      quorumPercent: CONFIG.QUORUM_PERCENT,
       tvlTarget: CONFIG.PID_TVL_TARGET.toString(),
-      bootstrapTVL: CONFIG.PID_BOOTSTRAP_TVL.toString(),
-      agThreshold: CONFIG.AG_THRESHOLD.toString(),
-      maxMultiplier: 25000,
+      kp: CONFIG.PID_KP.toString(),
+      ki: CONFIG.PID_KI.toString(),
+      kd: CONFIG.PID_KD.toString(),
       buybackPct: CONFIG.BUYBACK_PCT,
-      minBuybackUSD: CONFIG.MIN_BUYBACK_USD,
     },
-    admin: admin,
-    multisig1: multisig1,
-    multisig2: multisig2,
     treasury: treasury,
+    reserveToken: reserveToken,
+    aerodromeRouter: aerodromeRouter,
+    lpNFT: lpNFTAddress,
   };
   
   // Save deployment manifest
@@ -389,16 +435,16 @@ async function main() {
   }
   console.log("└─────────────────────────────────────┴────────────────────────────────────────────┘\n");
   
-  console.log("🏛️  All governance roles transferred to Timelock");
-  console.log(`🔒 Timelock address: ${timelockAddress}`);
-  console.log(`⏱️  Delay: ${CONFIG.TIMELOCK_DELAY / 3600} hours\n`);
+  console.log(`🏛️  All governance roles → Treasury Safe: ${treasury}`);
+  console.log(`⏱️  Timelock delay: ${CONFIG.TIMELOCK_DELAY / 3600} hours\n`);
   
   console.log("📌 Next steps:");
   console.log("   1. Review deployment manifest");
-  console.log("   2. Verify all contracts on Basescan");
+  console.log("   2. Verify all contracts on Etherscan");
   console.log("   3. Fund TreasuryAMO with reserve tokens (USDC)");
-  console.log("   4. Initialize PID controller parameters via governance");
-  console.log("   5. Test buyback execution via governance");
+  console.log("   4. Create AgToken/AuToken LP on Aerodrome → get LP NFT");
+  console.log("   5. Update AVLPStaking_v2 lpNFT via governance");
+  console.log("   6. Initialize PID controller parameters via governance");
 }
 
 main()

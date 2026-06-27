@@ -1,0 +1,22 @@
+{
+  "network": "base",
+  "date": "2026-06-27T17:27:25.167Z",
+  "deployer": "0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E",
+  "contracts": {
+    "AgTokenProxy": "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
+    "AgTokenImplementation": "0xBFD228862E407775D5911FD1a0fEF6bAb49534Da",
+    "TreasurySafe": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e",
+    "AuTokenProxy": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
+    "AuTokenImplementation": "0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61"
+  },
+  "roles": {
+    "AuTokenAdmin": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e",
+    "AgTokenOwner": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e"
+  },
+  "verification": {
+    "AgTokenProxy": "https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674#code",
+    "AgTokenImpl": "https://basescan.org/address/0xBFD228862E407775D5911FD1a0fEF6bAb49534Da#code",
+    "AuTokenProxy": "https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08#code",
+    "AuTokenImpl": "https://basescan.org/address/0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61#code"
+  }
+}

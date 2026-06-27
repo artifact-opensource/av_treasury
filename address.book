@@ -1,35 +1,17 @@
 # AV Treasury v3.1 — Address Book (Base Mainnet)
 # Last updated: 2026-06-27
-# Status: READY FOR DEPLOY — scripts compile clean, waiting on AERODROME_ROUTER_ADDRESS + LP_NFT_ADDRESS
+# Status: PRODUCTION DEPLOYED — verified on Etherscan v2
 
-## NEW DEPLOYMENT (to be filled after deploy)
-AgToken:          TBD
-AuToken:          TBD
-LP_NFT:           TBD
-Staking:          TBD
-PID_Controller:    TBD
-TreasuryAMO:      TBD
-AvOracle:         TBD
-Governor:         TBD
-Timelock:         TBD
-CLPoolLauncher:   TBD
+## PRODUCTION DEPLOYMENT (Base Mainnet — 2026-06-27)
+AgToken Proxy:    0x1D31719389Bd8b17277Ba367c26b830aE34D3674
+AgToken Impl:     0x1DE8199a739cA80688E98a55f4b4a90D8D86229c
+AuToken Proxy:    0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08
+AuToken Impl:     0xe195d283A5e1c58B9C5D5a196656C2E1a39ad6F8
+Treasury Safe:    0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
 
-## TREASURY SAFE (NEW — controlled by dev wallet + Binance multisig)
-Treasury_Safe:    0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
-
-## WALLETS (NOT compromised)
-Dev_Wallet/Multisig_1:       0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E
-Binance_Multisig_2: 0x88dB13685836D44964Ce0595E75cA045CF931312
-
-## ABANDONED (compromised deployer era — DO NOT USE)
-OLD_AuToken:      0xd680724362455593C32f31094255fC5149EB39Eb
-OLD_AgToken:      0xF74808dc4f93AF6E0f1dEE4aFAF1c674aA20D8E0
-OLD_LP_NFT:       0x6D0aff5ca9C3352188699dC468550fdA6ec0687b
-OLD_Staking:      0x9b758EFd22c56e6B243a062d3acFE7d2526F051B
-OLD_PID:          0xa903c7Da5A9071d1Aa23311289Cf7Ab026535d5d
-OLD_TreasuryAMO:  0xca37D135D95EdDAe37def8403fAA32365744Ee15
-OLD_AvOracle:     0x93dC5A848b6Dd149EFB92099A8e0701895d0F99B
-OLD_Timelock:     0xD6E7232Ce8b563F25132ed6a2c5e3A07c554d6f8
-OLD_CLPoolLauncher: 0xb9A1094D614c70B94C2CD7b4efc3A6adC6e6F4d3
-OLD_Treasury_Safe: 0xE6A41fE61E7a1996B59d508661e3F524d6A32075
-OLD_Deployer:     0x21E914dFBB137F7fEC896F11bC8BAd6BCCDB147B
+## NOTES
+- No minting performed (as instructed)
+- All AuToken roles granted to Treasury Safe
+- AgToken admin set to Treasury Safe via initialize
+- Deployer (0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E) has no roles post-deploy
+- Verified on Basescan v2

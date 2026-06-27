@@ -286,10 +286,10 @@ async function main() {
   console.log("⚙️  STEP 8: Configuration");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
-  // Grant MINTER role to PID controller on AgToken
+  // Grant MINTER role to PID controller on AgToken (TREASURY has DEFAULT_ADMIN)
   console.log("\n  🔐 Granting MINTER role to PID Controller...");
   const MINTER_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE"));
-  await agToken.grantRole(MINTER_ROLE, pidControllerAddress);
+  await agToken.connect(treasury).grantRole(MINTER_ROLE, pidControllerAddress);
   console.log(`  ✅ AgToken MINTER_ROLE → PID Controller`);
   
   // Grant EMIT_ROLE to staking contract on PID controller
@@ -329,18 +329,21 @@ async function main() {
   await auToken.renounceRole(AU_UPGRADER, deployer.address);
   console.log(`  ✅ AuToken all roles → Treasury Safe (MINTER stays with TreasuryAMO)`);
   
-  // AVLPStaking_v2: owner → Treasury Safe
-  await staking.transferOwnership(treasury);
-  console.log(`  ✅ AVLPStaking_v2 owner → Treasury Safe`);
+  // AVLPStaking_v2: DEFAULT_ADMIN_ROLE → Treasury Safe (deployer has it from initialize)
+  await staking.grantRole(DEFAULT_ADMIN_ROLE, treasury);
+  await staking.renounceRole(DEFAULT_ADMIN_ROLE, deployer.address);
+  console.log(`  ✅ AVLPStaking_v2 admin → Treasury Safe`);
   
-  // PID Controller: owner → Treasury Safe
-  await pidController.transferOwnership(treasury);
-  console.log(`  ✅ PID Controller owner → Treasury Safe`);
+  // PID Controller: DEFAULT_ADMIN_ROLE → Treasury Safe (deployer is admin from constructor)
+  await pidController.grantRole(DEFAULT_ADMIN_ROLE, treasury);
+  await pidController.renounceRole(DEFAULT_ADMIN_ROLE, deployer.address);
+  console.log(`  ✅ PID Controller admin → Treasury Safe`);
   
-  // TreasuryAMO: owner → Treasury Safe (only if deployed)
+  // TreasuryAMO: DEFAULT_ADMIN_ROLE → Treasury Safe (only if deployed)
   if (hasRouter) {
-    await treasuryAMO.transferOwnership(treasury);
-    console.log(`  ✅ TreasuryAMO owner → Treasury Safe`);
+    await treasuryAMO.grantRole(DEFAULT_ADMIN_ROLE, treasury);
+    await treasuryAMO.renounceRole(DEFAULT_ADMIN_ROLE, deployer.address);
+    console.log(`  ✅ TreasuryAMO admin → Treasury Safe`);
   }
   
   // Deployer renounces any remaining roles

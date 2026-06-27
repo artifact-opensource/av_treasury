@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import "../../contracts/AgToken.sol";
+import "../../contracts/av_suite/AgToken.sol";
 
 /**
  * @title AgTokenInvariants

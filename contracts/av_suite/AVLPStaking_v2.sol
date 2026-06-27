@@ -62,6 +62,7 @@ contract AVLPStaking_v2 is
 
     // Staking state
     uint256 public totalWeights;
+    uint256 public totalStakedCount;
     uint256 public accAuPerWeight;
     uint256 public accAgPerWeight;
     uint256 public lastRewardBlock;
@@ -143,6 +144,14 @@ contract AVLPStaking_v2 is
     }
 
     // ============ UPGRADE TIMELOCK ============
+    /**
+     * @notice Get total number of staked NFT positions
+     * @return Total count of staked LP NFTs
+     */
+    function totalStakedNFTs() external view returns (uint256) {
+        return totalStakedCount;
+    }
+
     function announceUpgrade(address newImplementation) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (newImplementation == address(0)) revert Staking_ZeroAddress();
         require(newImplementation.code.length > 0, "Staking: not a contract");
@@ -230,6 +239,7 @@ contract AVLPStaking_v2 is
         _stakedAt[tokenId] = block.timestamp;
 
         lpNFT.safeTransferFrom(msg.sender, address(this), tokenId);
+        totalStakedCount++;
         emit StakedNFT(msg.sender, tokenId, weight);
     }
 
@@ -248,6 +258,7 @@ contract AVLPStaking_v2 is
         uint256 pendingAg = _pendingAg[tokenId] + (_stakedWeights[tokenId] * accAgPerWeight) - _debtAg[tokenId];
 
         totalWeights -= _stakedWeights[tokenId];
+        totalStakedCount--;
         delete _stakedWeights[tokenId];
         delete _stakeOwner[tokenId];
         delete _pendingAu[tokenId];

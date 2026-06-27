@@ -2,11 +2,11 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import "../../contracts/AgToken.sol";
-import "../../contracts/AuToken.sol";
-import "../../contracts/PID_Emission_Controller_v2.sol";
-import "../../contracts/TreasuryAMO.sol";
-import "../../contracts/AvOracle.sol";
+import "../../contracts/av_suite/AgToken.sol";
+import "../../contracts/av_suite/AuToken.sol";
+import "../../contracts/av_suite/PID_Emission_Controller_v2.sol";
+import "../../contracts/av_suite/TreasuryAMO.sol";
+import "../../contracts/av_suite/AvOracle.sol";
 
 /// @title MockAerodromeRouter
 /// @notice Minimal mock for TreasuryAMO's aerodromeRouter dependency

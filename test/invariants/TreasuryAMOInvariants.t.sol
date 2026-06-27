@@ -2,9 +2,9 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import "../../contracts/TreasuryAMO.sol";
-import "../../contracts/AgToken.sol";
-import "../../contracts/AuToken.sol";
+import "../../contracts/av_suite/TreasuryAMO.sol";
+import "../../contracts/av_suite/AgToken.sol";
+import "../../contracts/av_suite/AuToken.sol";
 
 /**
  * @title TreasuryAMOInvariants

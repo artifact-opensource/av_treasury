@@ -39,7 +39,7 @@ contract GovernorContract is
     uint256 public constant INITIAL_PROPOSAL_THRESHOLD = 100000e18;
 
     /// @notice Initial quorum: 4% of total supply (basis points).
-    uint256 public constant INITIAL_QUORUM_BPS = 400;
+    uint256 public constant INITIAL_QUORUM_BPS = 4;
 
     // ─── State ────────────────────────────────────────────────────────
 

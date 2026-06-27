@@ -2,9 +2,9 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import "../../contracts/PID_Emission_Controller_v2.sol";
-import "../../contracts/AgToken.sol";
-import "../../contracts/AVLPStaking_v2.sol";
+import "../../contracts/av_suite/PID_Emission_Controller_v2.sol";
+import "../../contracts/av_suite/AgToken.sol";
+import "../../contracts/av_suite/AVLPStaking_v2.sol";
 
 /**
  * @title PIDControllerInvariants

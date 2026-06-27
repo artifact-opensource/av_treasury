@@ -116,21 +116,21 @@ async function main() {
   const reserveToken = process.env.USDC_BASE_ADDRESS
     ? ethers.utils.getAddress(process.env.USDC_BASE_ADDRESS)
     : ethers.utils.getAddress("0x833589fCDB0A6e3bC84827A6bD4C6B4a7A2eB3e"); // USDC Base mainnet
+  
+  // Aerodrome router + LP NFT are ONLY needed for TreasuryAMO (buyback/swap)
+  // Phase 1 (tokens/governance/staking) does NOT need them
   const aerodromeRouterAddr = process.env.AERODROME_ROUTER_ADDRESS;
-  if (!aerodromeRouterAddr || aerodromeRouterAddr === "NOT_SET") {
-    throw new Error("AERODROME_ROUTER_ADDRESS must be set in .env. Get it from: https://aerodrome.finance or check a known Base mainnet pair on Basescan.");
-  }
-  const aerodromeRouter = ethers.utils.getAddress(aerodromeRouterAddr);
+  const hasRouter = aerodromeRouterAddr && aerodromeRouterAddr !== "NOT_SET";
   const lpNFTAddr = process.env.LP_NFT_ADDRESS;
-  if (!lpNFTAddr || lpNFTAddr === "NOT_SET") {
-    throw new Error("LP_NFT_ADDRESS must be set in .env. Create AgToken/AuToken LP on Aerodrome and set the NFT address.");
-  }
-  const lpNFTAddress = ethers.utils.getAddress(lpNFTAddr);
+  const hasLPNFT = lpNFTAddr && lpNFTAddr !== "NOT_SET";
+  
+  const aerodromeRouter = hasRouter ? ethers.utils.getAddress(aerodromeRouterAddr) : ethers.constants.AddressZero;
+  const lpNFTAddress = hasLPNFT ? ethers.utils.getAddress(lpNFTAddr) : treasury; // placeholder until LP exists
   
   console.log(`🏛️  Treasury Safe: ${treasury}`);
   console.log(`💵 Reserve Token: ${reserveToken}`);
-  console.log(`🔄 Aerodrome Router: ${aerodromeRouter}`);
-  console.log(`🎫 LP NFT: ${lpNFTAddress}\n`);
+  console.log(`🔄 Aerodrome Router: ${hasRouter ? aerodromeRouter : "⚠️  NOT SET — TreasuryAMO will be skipped"}`);
+  console.log(`🎫 LP NFT: ${hasLPNFT ? lpNFTAddress : "⚠️  NOT SET — using Treasury Safe as placeholder"}\n`);
   
   // ─── STEP 1: Deploy AgToken (UUPS: implementation + proxy) ────
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -256,25 +256,30 @@ async function main() {
   console.log(`     AgToken: ${agTokenAddress}`);
   console.log(`     TVL Target: ${ethers.utils.formatEther(CONFIG.PID_TVL_TARGET)}`);
   
-  // ─── STEP 7: Deploy TreasuryAMO ───────────────────────────────
-  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("📦 STEP 7/7: TreasuryAMO");
-  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  
-  const TreasuryAMO = await ethers.getContractFactory("TreasuryAMO");
-  const treasuryAMO = await TreasuryAMO.deploy(
-    auTokenAddress,       // _auToken
-    reserveToken,         // _reserveToken (USDC on Base)
-    aerodromeRouter,      // _aerodromeRouter
-    treasury              // _admin → Treasury Safe
-  );
-  await treasuryAMO.deployed();
-  const treasuryAMOAddress = treasuryAMO.address;
-  console.log(`  ✅ TreasuryAMO deployed: ${treasuryAMOAddress}`);
-  console.log(`     AuToken: ${auTokenAddress}`);
-  console.log(`     Reserve Token: ${reserveToken}`);
-  console.log(`     Aerodrome Router: ${aerodromeRouter}`);
-  console.log(`     Admin: ${treasury}`);
+  // ─── STEP 7: Deploy TreasuryAMO (only if router is set) ───────
+  let treasuryAMOAddress = ethers.constants.AddressZero;
+  if (hasRouter) {
+    console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📦 STEP 7/7: TreasuryAMO");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
+    const TreasuryAMO = await ethers.getContractFactory("TreasuryAMO");
+    const treasuryAMO = await TreasuryAMO.deploy(
+      auTokenAddress,       // _auToken
+      reserveToken,         // _reserveToken (USDC on Base)
+      aerodromeRouter,      // _aerodromeRouter
+      treasury              // _admin → Treasury Safe
+    );
+    await treasuryAMO.deployed();
+    treasuryAMOAddress = treasuryAMO.address;
+    console.log(`  ✅ TreasuryAMO deployed: ${treasuryAMOAddress}`);
+    console.log(`     AuToken: ${auTokenAddress}`);
+    console.log(`     Reserve Token: ${reserveToken}`);
+    console.log(`     Aerodrome Router: ${aerodromeRouter}`);
+    console.log(`     Admin: ${treasury}`);
+  } else {
+    console.log("\n⏭️  STEP 7/7: TreasuryAMO — SKIPPED (set AERODROME_ROUTER_ADDRESS to deploy)");
+  }
   
   // ─── STEP 8: Configure Roles ──────────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -293,18 +298,19 @@ async function main() {
   await pidController.grantRole(EMIT_ROLE, stakingAddress);
   console.log(`  ✅ PID Controller EMIT_ROLE → Staking`);
   
-  // Grant MINTER role to TreasuryAMO on AuToken
-  console.log("  🔐 Granting MINTER role to TreasuryAMO...");
-  await auToken.grantRole(MINTER_ROLE, treasuryAMOAddress);
-  console.log(`  ✅ AuToken MINTER_ROLE → TreasuryAMO`);
+  // Grant MINTER role to TreasuryAMO on AuToken (only if deployed)
+  if (hasRouter) {
+    console.log("  🔐 Granting MINTER role to TreasuryAMO...");
+    await auToken.grantRole(MINTER_ROLE, treasuryAMOAddress);
+    console.log(`  ✅ AuToken MINTER_ROLE → TreasuryAMO`);
+  }
   
   // Transfer ALL admin roles to Treasury Safe
   console.log("\n  🏛️  Transferring ALL governance to Treasury Safe...");
   
-  // AgToken: DEFAULT_ADMIN_ROLE → Treasury Safe
-  await agToken.grantRole(await agToken.DEFAULT_ADMIN_ROLE(), treasury);
-  await agToken.renounceRole(await agToken.DEFAULT_ADMIN_ROLE(), deployer.address);
-  console.log(`  ✅ AgToken admin → Treasury Safe`);
+  // AgToken: initialize(admin) already grants DEFAULT_ADMIN_ROLE + UPGRADER_ROLE to Treasury Safe
+  // Deployer never has roles — nothing to transfer or renounce
+  console.log(`  ✅ AgToken: Treasury Safe already has all roles (set in initialize)`);
   
   // AuToken: ALL roles → Treasury Safe (initialize grants roles to msg.sender=deployer)
   console.log("  🔐 AuToken: transferring all roles to Treasury Safe...");
@@ -331,19 +337,22 @@ async function main() {
   await pidController.transferOwnership(treasury);
   console.log(`  ✅ PID Controller owner → Treasury Safe`);
   
-  // TreasuryAMO: owner → Treasury Safe
-  await treasuryAMO.transferOwnership(treasury);
-  console.log(`  ✅ TreasuryAMO owner → Treasury Safe`);
+  // TreasuryAMO: owner → Treasury Safe (only if deployed)
+  if (hasRouter) {
+    await treasuryAMO.transferOwnership(treasury);
+    console.log(`  ✅ TreasuryAMO owner → Treasury Safe`);
+  }
   
   // Deployer renounces any remaining roles
   console.log("\n  🚫 Renouncing deployer roles...");
-  // If deployer still has any roles on TreasuryAMO
-  try {
-    const DEFAULT_ADMIN = await treasuryAMO.DEFAULT_ADMIN_ROLE();
-    if (await treasuryAMO.hasRole(DEFAULT_ADMIN, deployer.address)) {
-      await treasuryAMO.renounceRole(DEFAULT_ADMIN, deployer.address);
-    }
-  } catch (e) { /* already transferred */ }
+  if (hasRouter) {
+    try {
+      const DEFAULT_ADMIN = await treasuryAMO.DEFAULT_ADMIN_ROLE();
+      if (await treasuryAMO.hasRole(DEFAULT_ADMIN, deployer.address)) {
+        await treasuryAMO.renounceRole(DEFAULT_ADMIN, deployer.address);
+      }
+    } catch (e) { /* already transferred */ }
+  }
   
   // ─── Verification (Etherscan V2) ──────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -374,12 +383,14 @@ async function main() {
       CONFIG.PID_KI,
       CONFIG.PID_KD
     ]);
-    await verifyOnEtherscan("TreasuryAMO", treasuryAMOAddress, [
-      auTokenAddress,
-      reserveToken,
-      aerodromeRouter,
-      treasury
-    ]);
+    if (hasRouter) {
+      await verifyOnEtherscan("TreasuryAMO", treasuryAMOAddress, [
+        auTokenAddress,
+        reserveToken,
+        aerodromeRouter,
+        treasury
+      ]);
+    }
   } else {
     console.log("  ⚠️  ETHERSCAN_API_V2 not set — skipping verification");
   }

@@ -21,14 +21,14 @@ The system is fully autonomous: all market operations, emissions, and liquidity 
 | # | Contract | Address | Description |
 |---|----------|---------|-------------|
 | 1 | **QuasiCrystalLPNFT** | `0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8` | ERC721 representing ownership of the Aerodrome Au/ETH LP position |
-| 2 | **AVLPStaking_v2** | `0xd81Ca2F4E2c29d5d92fb6a224767c011c769b1E3` | Staking contract — deposit LP NFTs, earn Au + Ag rewards |
+| 2 | **AVLPStaking_v2** | `0x8F638B6C2EBD61A638561B6993930CF25D53ACB9` | Staking contract — deposit LP NFTs, earn Au + Ag rewards |
 | 3 | **PID_Emission_Ctrl** | `0xB8F240870DBc1cD5F9262F8180350A29ea404268` | Dynamic emission controller — adjusts rewards based on TVL targets |
 | 4 | **ArtifactTimelock** | `0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77` | Governance timelock — queues and executes protocol changes |
 | 5 | **GovernorContract** | `0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03` | Governance contract — proposals, voting, and execution |
-| 6 | **FlashLoan** | `0x8DE65Bf42802EFBCbbdaaA89041FE7cd9C9858FA` | Flash loan facilitator — enables zero-collateral Au/Ag flash swaps |
-| 7 | **TreasuryFlashBuy** | `0xaff7261f8CACA80d292A58E3fAEf72F0268F8053` | On-chain buyback engine — executes large Au buybacks from the treasury |
-| 8 | **AvOracle** | `0x39E7A01da3fD73df7eED92a52F82237a381A01FE` | Decentralized oracle — Au/Ag price feeds with Chainlink primary + TWAP fallback |
-| 9 | **DexSimulator** | `0xED29f07E7b6F017619D83FD55DA673eE648c613c` | Simulation infrastructure — stress-tests operations before mainnet execution |
+| 6 | **FlashLoan** | `0x4DDD1873964E5C2E3BE6712E199812903E6696B9` | Flash loan facilitator — enables zero-collateral Au/Ag flash swaps |
+| 7 | **TreasuryFlashBuy** | `0xCE73711EE793AF348837C09B729680B12DF6D8C0` | On-chain buyback engine — executes large Au buybacks from the treasury |
+| 8 | **AvOracle** | `0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19` | Decentralized oracle — Au/Ag price feeds with Chainlink primary + TWAP fallback |
+| 9 | **DexSimulator** | `0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2` | Simulation infrastructure — stress-tests operations before mainnet execution |
 | 10 | **TreasuryAMO** | `0xF096cD4D24811B0F824c929907196bCB796bca88` | Autonomous Market Operations — manages liquidity, buybacks, and reserves |
 
 ### Pre-existing (Not Deployed by Us)

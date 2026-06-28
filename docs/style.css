@@ -191,7 +191,38 @@ body {
   border: 1px solid rgba(255, 215, 0, 0.2);
   padding: 0.4rem 1rem;
   border-radius: 50px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.2rem;
+}
+
+.hero-hierarchy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-hierarchy .hier-system {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.hero-hierarchy .hier-subsystem {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.hero-hierarchy .hier-tokens {
+  color: var(--silver);
+  font-weight: 500;
+}
+
+.hero-hierarchy .hier-arrow {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.75rem;
 }
 
 .hero-title {
@@ -226,6 +257,11 @@ body {
   font-size: 1.1rem;
   color: var(--text-dim);
   margin-bottom: 3rem;
+  font-weight: 300;
+}
+
+.hero-divider {
+  color: rgba(255, 255, 255, 0.4);
   font-weight: 300;
 }
 

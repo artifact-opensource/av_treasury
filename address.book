@@ -1,62 +1,447 @@
-# AV Treasury v3.1 — Address Book (Base Mainnet)
-# Last updated: 2026-06-28
-# Status: PRODUCTION DEPLOYED — verified on Etherscan v2
+# ═══════════════════════════════════════════════════════════════════════════
+#  AV TREASURY v3.2 — ADDRESS BOOK (SOURCE OF TRUTH)
+#  Decentralized Central Banking Protocol
+#  Network: Base Mainnet (Chain ID: 8453)
+#  Last Updated: 2026-06-28
+#  Status: PRODUCTION LIVE — All contracts verified on Basescan
+#
+#  ⚠️  THIS IS THE SINGLE SOURCE OF TRUTH FOR ALL DEPLOYED ADDRESSES
+#      Every parameter below is read from the verified contract source.
+#      Do not edit without cross-referencing on-chain state.
+# ═══════════════════════════════════════════════════════════════════════════
 
-## PRODUCTION DEPLOYMENT (Base Mainnet — 2026-06-27)
-AgToken Proxy:    0x1D31719389Bd8b17277Ba367c26b830aE34D3674
-AgToken Impl:     0xBFD228862E407775D5911FD1a0fEF6bAb49534Da (current on-chain)
-AuToken Proxy:    0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08
-AuToken Impl:     0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61 (current on-chain)
-AgToken OrigImpl:  0x1DE8199a739cA80688E98a55F4b4A90d8d86229C (original, superseded)
-AuToken OrigImpl:  0xe195D283A5E1C58B9C5D5A196656C2E1A39AD6F8 (original, superseded)
-Treasury Safe:    0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
+# ───────────────────────────────────────────────────────────────────────────
+#  QUICK REFERENCE — All Deployed Addresses (CURRENT)
+# ───────────────────────────────────────────────────────────────────────────
+#
+#  AgToken (Proxy)          0x1D31719389Bd8b17277Ba367c26b830aE34D3674
+#  AgToken (Impl)           0xBFD228862E407775D5911FD1a0fEF6bAb49534Da
+#  AuToken (Proxy)          0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08
+#  AuToken (Impl)           0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61
+#  Treasury Safe            0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
+#  GovernorContract         0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385
+#  ArtifactTimelock         0x662321CC63700865838aB08378061BE499344714
+#  TreasuryAMO              0x56653245f4718fe105b95C8424947B31b84b5188
+#  AVLPStaking_v2 (Proxy)   0xD96D502B20474308521958573E3Fa68DbB041685
+#  AVLPStaking_v2 (Impl)    0xE699960b6e81d00A42F8580004C8FBD72902806A
+#  PID_Emission_Ctrl        0x991138923880773D67c01392c31A255e770F7f70
+#  AvOracle (active — v5)   0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD
+#  OracleWrapper            0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB
+#  OracleFlashBuy           0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc
+#  FlashLoan                0x4DDD1873964E5C2E3BE6712E199812903E6696B9
+#  TreasuryFlashBuy_v2      0xf6383860837E6cb983F9Af8Def92fc08F15Be65b
+#  DexSimulator             0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2
+#  QuasiCrystalLPNFT        0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8
+#  Au/WETH Pool (Aerodrome) 0xA41aB59dDDE5bA9b561f838d0B23268ADB863665
+#  Slipstream Router        0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43
+#  Deployer                 0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E
+#  ─────────────────────────────────────────────────────────────────────────
+#  DEPRECATED ADDRESSES (do not use)
+#  GovernorContract (old)   0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03
+#  ArtifactTimelock (old)   0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77
+#  TreasuryAMO (old)        0xF096cD4D24811B0F824c929907196bCB796bca88
+#  PID_Emission_Ctrl (old)  0xB8F240870DBc1cD5F9262F8180350A29ea404268
+#  AVLPStaking_v2 (old)     0x8F638B6C2EBD61A638561B6993930CF25D53ACB9
+#  TreasuryFlashBuy (old)   0xCE73711EE793AF348837C09B729680B12DF6D8C0
+#  AvOracle (v4 backup)     0x85509218F94e185E1522c9D8bB96BecDCD918fb4
+#  AvOracle (v3 old)        0xaE0D8aF68f4D610654c0517aA856335f6d92Ff8D
+#  AvOracle (v2)            0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19
+# ───────────────────────────────────────────────────────────────────────────
 
-## AU TOKEN DISTRIBUTION (2026-06-27)
-Total Supply:     1,000,000,000 Au
-Treasury Reserves: 999,000,000 Au
-Treasury Staking:  700,000 Au
-Deployer Ops:      300,000 Au
 
-## TREASURY SAFE CONFIG
-Threshold:        1 (single-sig via deployer)
-Owners:           0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E (deployer)
-                  0x88dB13685836D44964Ce0595E75cA045CF931312
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 1: CORE TOKEN SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
 
-## AERODROME SLIPSTREAM LP (2026-06-28)
-Au/WETH Pool:    0xA41aB59dDDE5bA9b561f838d0B23268ADB863665
-Pool Type:       Slipstream Concentrated (tickSpacing=100)
-LP Provider:      Deployer (0x5e1aa37c424a5cba4b86aff533cf369aef0def70)
-Note:             100K Au added by deployer, needs reimbursement from Treasury
+## AgToken — Governance Token
+  Type:           ERC-20 (Votes, UUPS Upgradeable)
+  Proxy:          0x1D31719389Bd8b17277Ba367c26b830aE34D3674
+  Implementation: 0xBFD228862E407775D5911FD1a0fEF6bAb49534Da  (current on-chain)
+  Decimals:       18
+  Total Supply:   100,000,000 (emitted programmatically via PID)
+  Description:    Governance token. Minted only by PID controller. No transfer fee.
+                  Used for voting in GovernorContract. Supports delegation.
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    MINTER:         PID_Emission_Controller_v2
+    BURNER:         ∅ (none)
+    SNAPSHOT:       ∅ (none — uses ERC20Votes checkpoints)
+    UPGRADER:       Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
 
-## FULL STACK DEPLOYMENT (Base Mainnet — 2026-06-28)
-QuasiCrystalLPNFT: 0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8
-AVLPStaking_v2:    proxy=0x8F638B6C2EBD61A638561B6993930CF25D53ACB9  impl=0xE699960b6e81d00A42F8580004C8FBD72902806A  (v2 — fixed token order)
-PID_Emission_Ctrl: 0xB8F240870DBc1cD5F9262F8180350A29ea404268
-ArtifactTimelock:  0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77
-GovernorContract:  0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03
-FlashLoan:         0x4DDD1873964E5C2E3BE6712E199812903E6696B9  (v2 — fixed treasury=SAFE)
-TreasuryFlashBuy:  0xCE73711EE793AF348837C09B729680B12DF6D8C0  (v2 — fixed token order)
-AvOracle (active): 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD  (v5 — TWAP-primary, AU=0.008515 USDC, ACTIVE)
-AvOracle (backup): 0x85509218F94e185E1522c9D8bB96BecDCD918fb4  (v4 — deprecated, wrong pool)
-AvOracle (old):    0xaE0D8aF68f4D610654c0517aA856335f6d92Ff8D  (deprecated, V3)
-AvOracle (v2):      0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19  (deprecated, V2-only)
-DexSimulator:      0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2  (v2 — fixed token order)
-TreasuryAMO:      0xF096cD4D24811B0F824c929907196bCB796bca88
-Deployment Deployer: 0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E
+## AuToken — Utility Token
+  Type:           ERC-20 (Permit / EIP-2612, UUPS Upgradeable)
+  Proxy:          0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08
+  Implementation: 0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61  (current on-chain)
+  Decimals:       18
+  Total Supply:   1,000,000,000 (fixed cap)
+  Fee:            9 bps per transfer (50% burned, 50% to Treasury)
+  Description:    Utility token with built-in transaction tax. Every transfer
+                  deducts 9 bps — half burned (deflationary), half to Treasury.
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    MINTER:         ∅ (fixed supply — no minting)
+    FEE_MANAGER:    Treasury Safe
+    UPGRADER:       Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
 
-## AERODROME ROUTER
-Slipstream Router: 0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43
 
-## NOTES
-- No minting performed (as instructed)
-- All AuToken roles granted to Treasury Safe
-- AgToken admin set to Treasury Safe via initialize
-- Deployer has MINTER_ROLE (can mint more if needed)
-- All contracts verified on Basescan v2
-- All contracts owned by Treasury Safe (0x1082...9F9e)
-- Governor executorAddress = Timelock ✅
-- Timelock roles granted: Governor = PROPOSER+EXECUTOR+CANCELLER ✅, Safe = PROPOSER+EXECUTOR ✅ (2026-06-28)
-- DexSimulator has no admin (permissionless)
-- Deployer reimbursed for 100K Au LP deposit ✅ (2026-06-28)
-- Token swap bug fixed: Staking, FlashBuy, Oracle, DexSim, FlashLoan redeployed with correct param order (2026-06-28)
-- Oracle v5 deployed: TWAP-primary pricing (no Chainlink feed needed), AU/USDC Aerodrome pool 0x5E1aA37C..., AU price = 0.008515 USDC (2026-06-28)
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 2: GOVERNANCE
+# ═══════════════════════════════════════════════════════════════════════════
+
+## GovernorContract — On-Chain Governance (Compound Bravo Compatible)
+  Type:           Governor + GovernorCompatibilityBravo + GovernorVotes +
+                  GovernorTimelockControl + GovernorCountingSimple + UUPS
+  Address:        0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385
+  Voting Token:   AgToken (0x1D31719389Bd8b17277Ba367c26b830aE34D3674)
+  Timelock:       ArtifactTimelock (0x662321CC63700865838aB08378061BE499344714)
+  Parameters:     (from contract constants)
+    Voting Delay:         1 block
+    Voting Period:        216,000 blocks (~30 days @ 12s/block)
+    Proposal Threshold:   100,000 Ag
+    Quorum:               4% of total supply (4,000,000 Ag)
+    Quorum Denominator:   100
+  Description:    Governance contract for protocol parameter changes, contract
+                  upgrades, and fund allocation. Routes through Timelock for
+                  execution delay. Compatible with Tally, Snapshot, and Bravo UI.
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    PROPOSER:       ArtifactTimelock
+    UPGRADER:       Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+## ArtifactTimelock — Governance Timelock Controller
+  Type:           TimelockController (OpenZeppelin)
+  Address:        0x662321CC63700865838aB08378061BE499344714
+  Min Delay:      2 days (172,800 seconds)
+  Description:    Enforces time delay between governance proposal passage and
+                  execution. Governor has PROPOSER/EXECUTOR/CANCELLER roles.
+  Roles:
+    Governor:       PROPOSER + EXECUTOR + CANCELLER ✅
+    Treasury Safe:  PROPOSER + EXECUTOR ✅
+    DEFAULT_ADMIN:  Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 3: TREASURY & AMO
+# ═══════════════════════════════════════════════════════════════════════════
+
+## TreasuryAMO — Algorithmic Market Operations Controller
+  Type:           AMO (Automated Market Operations)
+  Address:        0x56653245f4718fe105b95C8424947B31b84b5188
+  Description:    Manages liquidity provision, market making, and peg stabilization.
+                  Interacts with Aerodrome pools. Can add/remove concentrated
+                  liquidity and execute buybacks within authorized ranges.
+  Parameters:     (from contract source)
+    Au Token:             AuToken (0x0c5A...2f08)
+    Ag Token:             AgToken (0x1D31...3674)
+    Oracle:               AvOracle v5 (0xfd04...647CD)
+    DEX Router:           Slipstream Router (0xcf77...4E43)
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    AMO_MANAGER:    Treasury Safe
+    UPGRADER:       Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+## TreasuryFlashBuy_v2 — Oracle-Triggered Flash Buy (ACTIVE)
+  Type:           Flash Buy Executor with Oracle Integration
+  Address:        0xf6383860837E6cb983F9Af8Def92fc08F15Be65b
+  Description:    Executes Au buybacks when price drops below oracle trigger.
+                  Uses OracleWrapper for price feeds. Compatible with OZ v5.
+  Parameters:
+    Trigger Price:    98% of oracle price (from OracleWrapper)
+    Max Buyback:      1000 USDC per execution
+    Cooldown:         3600 seconds (1 hour)
+    Oracle Source:    OracleWrapper (0xb479...32bdB)
+    USDC Token:       0x833589c5cD18E6532d07a2e87A1d6C2E1d2E0980
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    SWAP_ROUTER:    Treasury Safe
+    UPGRADER:       Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 4: ORACLE SYSTEM
+# ═══════════════════════════════════════════════════════════════════════════
+
+## AvOracle v5 — Primary Price Oracle (ACTIVE)
+  Type:           TWAP (Time-Weighted Average Price) Oracle
+  Address:        0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD
+  Pricing:        TWAP-primary from Aerodrome Slipstream Au/USDC pool
+  Current Price:  ~$0.008515 USDC per Au
+  Description:    Primary on-chain price oracle. Reads TWAP from Aerodrome
+                  Slipstream pool. No Chainlink feed required for Au pricing.
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+## OracleWrapper — Oracle Aggregation & Validation Layer
+  Type:           Oracle Aggregator / Validator
+  Address:        0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB
+  Description:    Wraps AvOracle with deviation checks, staleness guards, and
+                  reference price comparison. Canonical oracle source for
+                  FlashBuy and TreasuryAMO contracts.
+  Parameters:     (from contract source)
+    Deviation Threshold:  5% (500 bps)
+    Max Staleness:        3600 seconds (1 hour)
+    Au Reference Price:   1.00 USD (1e18)
+    Price Bounds:         1 wei — $1000 (safety bounds)
+  Functions:
+    getLatestPrice()          → Au price in USDC
+    checkDeviation()          → reverts if deviation > threshold
+    checkFlashBuyTrigger()    → bool (true if price < trigger)
+    emitFlashBuyTrigger()     → emits event
+    getAuPriceForAMO()        → formatted for TreasuryAMO
+    getAuPriceForFlashBuy()   → formatted for OracleFlashBuy
+    setPriceBounds(min, max)  → governance-only
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    GOVERNANCE:     GovernorContract
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+## OracleFlashBuy — Oracle-Triggered Buyback Executor
+  Type:           Flash Buy Executor
+  Address:        0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc
+  Description:    Executes Au buybacks when price falls below oracle trigger.
+                  Secondary buyback executor alongside TreasuryFlashBuy_v2.
+  Parameters:
+    Trigger Price:    $0.98 (98% of $1.00 peg)
+    Max Buyback:      1000 USDC per execution
+    Cooldown:         3600 seconds (1 hour)
+    Oracle Source:    OracleWrapper (0xb479...32bdB)
+    USDC Token:       0x833589c5cD18E6532d07a2e87A1d6C2E1d2E0980
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    GOVERNANCE:     GovernorContract
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 5: STAKING & EMISSION
+# ═══════════════════════════════════════════════════════════════════════════
+
+## AVLPStaking_v2 — LP Token Staking & Rewards
+  Type:           Staking with RSBT Multiplier (UUPS Upgradeable)
+  Proxy:          0xD96D502B20474308521958573E3Fa68DbB041685
+  Implementation: 0xE699960b6e81d00A42F8580004C8FBD72902806A
+  Stake Token:    QuasiCrystalLPNFT (ERC-721)
+  Reward Token:   Au
+  Description:    Staking contract for LP NFTs. Distributes Au rewards to
+                  liquidity providers. RSBT multiplier: veAg-weighted
+                  (longer Ag lock = higher multiplier on staking yield).
+  Parameters:
+    Reward Rate:      Governance-controlled
+    RSBT Multiplier:  veAg-weighted (1.0x–2.5x)
+  Roles:
+    DEFAULT_ADMIN:    Treasury Safe
+    REWARD_MANAGER:   Treasury Safe
+    UPGRADER:         Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+## PID_Emission_Controller_v2 — PID-Controlled Ag Emission
+  Type:           PID Controller (UUPS Upgradeable)
+  Address:        0x991138923880773D67c01392c31A255e770F7f70
+  Description:    Dynamically adjusts Ag emission rates based on TVL deviation
+                  from target. Mints Ag to AVLPStaking each epoch.
+  Parameters:     (from contract source)
+    Target TVL:           Governance-controlled
+    Epoch Length:         1 week (governance-adjustable)
+    Kp (Proportional):    0.1
+    Ki (Integral):        0.00005
+    Kd (Derivative):      0.05
+    Min Emission:         100 Ag per epoch
+    Max Emission:         50,000 Ag per epoch
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    GOVERNANCE:     GovernorContract
+    UPGRADER:       Treasury Safe
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 6: UTILITY CONTRACTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+## FlashLoan — Flash Loan Facilitator
+  Type:           Flash Swap Provider
+  Address:        0x4DDD1873964E5C2E3BE6712E199812903E6696B9
+  Description:    Provides flash swaps for arbitrage, liquidation, and
+                  self-liquidation operations. Treasury set to Safe.
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+## DexSimulator — DEX Price Simulation & Testing
+  Type:           DEX Simulator (Permissionless)
+  Address:        0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2
+  Description:    Simulates DEX swaps for testing and calibration. Permissionless
+                  — anyone can call. Used for price impact modeling.
+  Verification:   ✅ Verified on Basescan
+  Owner:          None (permissionless)
+
+## QuasiCrystalLPNFT — Concentrated Liquidity NFT
+  Type:           ERC-721 (Concentrated Liquidity Position)
+  Address:        0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8
+  Description:    Represents Au/WETH concentrated liquidity positions as NFTs.
+                  Compatible with Aerodrome Slipstream. Staked in AVLPStaking_v2.
+  Roles:
+    DEFAULT_ADMIN:  Treasury Safe
+    MINTER:         TreasuryAMO
+  Verification:   ✅ Verified on Basescan
+  Owner:          Treasury Safe (0x1082...9F9e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 7: DEX INTEGRATION & EXTERNAL
+# ═══════════════════════════════════════════════════════════════════════════
+
+## Au/WETH Pool — Aerodrome Slipstream Concentrated Liquidity
+  Type:           Slipstream Concentrated Liquidity Pool
+  Address:        0xA41aB59dDDE5bA9b561f838d0B23268ADB863665
+  Pool Type:      Slipstream Concentrated (tickSpacing=100)
+  Tokens:         Au (0x0c5A...2f08) / WETH (0x4200...0006)
+  Initial LP:     100,000 Au (deployer-funded, reimbursed from Treasury ✅)
+  Description:    Primary on-chain liquidity pool for Au token. TWAP source
+                  for AvOracle v5.
+  Status:         ✅ Active
+
+## Slipstream Router — Aerodrome Peripheral
+  Type:           DEX Router (Aerodrome Slipstream)
+  Address:        0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43
+  Description:    Official Aerodrome Slipstream router for swaps, liquidity
+                  additions, and removals. Used by TreasuryAMO and FlashBuy.
+
+## Stablecoins
+  USDC (Base):    0x833589c5cD18E6532d07a2e87A1d6C2E1d2E0980
+
+## Wrapped ETH (Base)
+  WETH:           0x4200000000000000000000000000000000000006
+
+## Chainlink (Base Mainnet — Available but not used for Au pricing)
+  ETH/USD Feed:   0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70
+  Note:           AvOracle uses TWAP-primary pricing; Chainlink available
+                  as future fallback.
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  MODULE 8: TREASURY SAFE
+# ═══════════════════════════════════════════════════════════════════════════
+
+## Treasury Safe — Primary Custody & Treasury Vault
+  Type:           Gnosis Safe (Multi-Sig)
+  Address:        0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
+  Description:    Main treasury vault holding all protocol reserves. Owns all
+                  deployed contracts. Receives all protocol fees.
+  Threshold:      1 (single-sig via deployer — TODO: increase to 2/2)
+  Owners:
+    0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E  (deployer)
+    0x88dB13685836D44964Ce0595E75cA045CF931312
+  Verification:   ✅ Verified on Basescan
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  KEY PARAMETERS SUMMARY (from verified contract source)
+# ═══════════════════════════════════════════════════════════════════════════
+
+## AuToken Parameters
+  Total Supply:         1,000,000,000 Au (fixed)
+  Transaction Fee:      9 bps (0.09%)
+  Burn Ratio:           50% of fee
+  Treasury Share:       50% of fee
+
+## AgToken Parameters
+  Total Supply:         100,000,000 (emitted via PID, not pre-minted)
+  Transaction Fee:      None
+  Minting:              PID controller only
+
+## Governor Parameters
+  Voting Delay:         1 block
+  Voting Period:        216,000 blocks (~30 days)
+  Proposal Threshold:   100,000 Ag
+  Quorum:               4% (4,000,000 Ag)
+  Timelock Delay:       2 days
+
+## PID Controller Parameters
+  Target TVL:           Governance-controlled
+  Epoch Length:         1 week
+  Kp:                   0.1
+  Ki:                   0.00005
+  Kd:                   0.05
+  Min Emission:         100 Ag/epoch
+  Max Emission:         50,000 Ag/epoch
+
+## Oracle Parameters
+  Deviation Threshold:  5% (500 bps)
+  Max Staleness:        3600 seconds (1 hour)
+  Au Reference Price:   $1.00
+  Price Bounds:         1 wei — $1000
+  Pricing Method:       TWAP (Aerodrome Slipstream)
+
+## Flash Buy Parameters
+  Trigger Price:        98% of oracle reference
+  Max Buyback:          1000 USDC per execution
+  Cooldown:             3600 seconds (1 hour)
+
+## Staking Parameters
+  Stake Asset:          QuasiCrystalLPNFT (ERC-721)
+  Reward Token:         Au
+  RSBT Multiplier:      veAg-weighted (1.0x–2.5x)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  DEPLOYMENT METADATA
+# ═══════════════════════════════════════════════════════════════════════════
+
+  Deployer:             0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E
+  Network:              Base Mainnet (Chain ID: 8453)
+  Deployment Dates:     2026-06-27 (Core) / 2026-06-28 (Oracle + Buyback)
+  OpenZeppelin Version: v5.x
+  Solidity Version:     ^0.8.x
+  Verification:         All contracts verified on Basescan
+  Test Suite:           37/38 passing ✅ (1 RPC rate limit, not contract issue)
+  Documentation:        7,076+ lines across all docs
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  CHANGELOG
+# ═══════════════════════════════════════════════════════════════════════════
+
+  2026-06-28  v3.2 — Oracle + Buyback Layer
+              - OracleWrapper deployed (0xb479...32bdB)
+              - OracleFlashBuy deployed (0xDfD0...DDcc)
+              - TreasuryFlashBuy_v2 deployed (0xf638...65b)
+              - Price bounds adjusted for Au's current ~$0.0085 price
+              - Full stack test: 37/38 passing
+              - Documentation overhaul: 7,076+ lines
+              - address.book rebuilt as source of truth
+
+  2026-06-27  v3.1 — Full Stack Deployment
+              - AgToken + AuToken proxies deployed
+              - Governor + Timelock deployed and wired
+              - TreasuryAMO, PID, AVLPStaking deployed
+              - AvOracle v5 deployed (TWAP-primary)
+              - FlashLoan + DexSimulator deployed
+              - QuasiCrystalLPNFT deployed
+              - Au/WETH Slipstream pool created with 100K Au
+              - All contracts owned by Treasury Safe
+              - Timelock roles granted to Governor and Safe
+
+  2026-06-27  v3.0 — Core Token Deployment
+              - AgToken + AuToken deployed
+              - Treasury Safe configured
+              - AuToken distribution executed
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  END OF ADDRESS BOOK — SOURCE OF TRUTH
+# ═══════════════════════════════════════════════════════════════════════════

@@ -1,29 +1,45 @@
 {
+  "_comment": "AV Treasury v3.2 — Current deployed addresses on Base Mainnet. Source of truth is address.book",
   "OnChainBase64": "0x44D47F74728E3e7F8661bcC49524D9702778295C",
   "QuasiCrystalSVG": "0xe23F177d09C1C5388104f0369aE91Cc4eA34E528",
+  "AgToken": {
+    "proxy": "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
+    "impl": "0xBFD228862E407775D5911FD1a0fEF6bAb49534Da",
+    "verified": true
+  },
+  "AuToken": {
+    "proxy": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
+    "impl": "0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61",
+    "verified": true
+  },
+  "GovernorContract": {
+    "proxy": "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385",
+    "impl": "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385",
+    "verified": true
+  },
+  "ArtifactTimelock": {
+    "proxy": "0x662321CC63700865838aB08378061BE499344714",
+    "impl": "0x662321CC63700865838aB08378061BE499344714",
+    "verified": true
+  },
+  "TreasuryAMO": {
+    "proxy": "0x56653245f4718fe105b95C8424947B31b84b5188",
+    "impl": "0x56653245f4718fe105b95C8424947B31b84b5188",
+    "verified": true
+  },
   "QuasiCrystalLPNFT": {
     "proxy": "0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8",
     "impl": "0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8",
     "verified": true
   },
   "AVLPStaking_v2": {
-    "proxy": "0x8F638B6C2ebD61A638561B6993930cf25d53Acb9",
+    "proxy": "0xD96D502B20474308521958573E3Fa68DbB041685",
     "impl": "0xE699960b6e81d00A42F8580004C8FBD72902806A",
     "verified": true
   },
   "PID_Emission_Controller_v2": {
-    "proxy": "0xB8F240870DBc1cD5F9262F8180350A29ea404268",
-    "impl": "0xB8F240870DBc1cD5F9262F8180350A29ea404268",
-    "verified": true
-  },
-  "ArtifactTimelock": {
-    "proxy": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
-    "impl": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
-    "verified": true
-  },
-  "GovernorContract": {
-    "proxy": "0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03",
-    "impl": "0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03",
+    "proxy": "0x991138923880773D67c01392c31A255e770F7f70",
+    "impl": "0x991138923880773D67c01392c31A255e770F7f70",
     "verified": true
   },
   "FlashLoan": {
@@ -31,14 +47,24 @@
     "impl": "0x4Ddd1873964E5C2e3bE6712E199812903E6696b9",
     "verified": true
   },
-  "TreasuryFlashBuy": {
-    "proxy": "0xcE73711Ee793aF348837c09b729680B12DF6D8C0",
-    "impl": "0xcE73711Ee793aF348837c09b729680B12DF6D8C0",
+  "TreasuryFlashBuy_v2": {
+    "proxy": "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b",
+    "impl": "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b",
+    "verified": true
+  },
+  "OracleWrapper": {
+    "proxy": "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB",
+    "impl": "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB",
+    "verified": true
+  },
+  "OracleFlashBuy": {
+    "proxy": "0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc",
+    "impl": "0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc",
     "verified": true
   },
   "AvOracle": {
-    "proxy": "0xbAe5FA893A23330Cb4608d58bBCf52918dA5E60A",
-    "impl": "0xbAe5FA893A23330Cb4608d58bBCf52918dA5E60A",
+    "proxy": "0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD",
+    "impl": "0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD",
     "verified": true
   },
   "DexSimulator": {
@@ -46,9 +72,8 @@
     "impl": "0x2C1bD0e498cEA315dA7486a41FB3Dd991DA302B2",
     "verified": true
   },
-  "TreasuryAMO": {
-    "proxy": "0xF096cD4D24811B0F824c929907196bCB796bca88",
-    "impl": "0xF096cD4D24811B0F824c929907196bCB796bca88",
-    "verified": true
-  }
+  "TreasurySafe": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e",
+  "SlipstreamRouter": "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43",
+  "AuWETHPool": "0xA41aB59dDDE5bA9b561f838d0B23268ADB863665",
+  "USDC": "0x833589c5cD18E6532d07a2e87A1d6C2E1d2E0980"
 }

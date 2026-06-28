@@ -1,417 +1,735 @@
-# Whitepaper
+# AV Treasury Whitepaper
 
-*A Self-Sustaining, Self-Governing Economic Organism*
+## A Self-Sustaining Decentralized Economic Organism
 
-**Version:** 1.0 — June 2026 <br>
-**Deployer:** `0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E` <br>
-**Treasury:** `0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e` <br>
-**Chain:** Base Mainnet (chainId 8453)
+---
+
+**Version:** 2.0  
+**Date:** June 28, 2026  
+**Status:** Live — Base Mainnet  
+**Author:** ARTIFACT RESEARCH DIVISION
 
 ---
 
 ## Abstract
 
-The AV Treasury is a decentralized economic system built on a dual-token architecture that separates utility from governance. The system captures value from every interaction through a 9 basis-point transfer fee on its utility token (Au), recycles captured value through automated buybacks, and governs itself through a PID-controlled emission schedule for its governance token (Ag). The two tokens are bound by a cross-token staking multiplier: Ag holdings amplify Au staking yields, creating a mathematical link between governance participation and utility demand. The result is a self-reinforcing flywheel where usage drives scarcity, scarcity drives value, and value drives further usage.
+The AV Treasury is an autonomous on-chain economic system that maintains itself through programmatic value capture, algorithmic monetary policy, and decentralized governance. It issues two native tokens: **Au (Gold)**, a utility token required for all system operations, and **Ag (Silver)**, a governance token distributed to liquidity providers and stakers. Every interaction with the system generates fees, a portion of which is used to buy back Au from open markets and redistribute it to participants, creating a self-reinforcing economic flywheel.
 
-This whitepaper presents the complete economic, governance and technical system design as a unified whole. Every mechanism traces back to six core principles: self-preservation, programmatic balance, usage-derived value, liquidation by design, zero trust, and future-proofing.
+This system functions as a **decentralized central bank**: Au is the currency, Ag represents governance shares in the monetary policy framework, PID emission control implements interest-rate-like policy, TreasuryAMO manages foreign exchange reserves, and a GovernorContract provides decentralized oversight. An oracle infrastructure provides manipulation-resistant price feeds that drive both monetary policy and automated peg-support operations.
+
+All contracts are live on **Base Mainnet** (Chain ID: 8453), an Ethereum Layer 2.
 
 ---
 
-## 1. Introduction
+## Table of Contents
+
+1. [Introduction & Philosophy](#1-introduction--philosophy)
+2. [System Architecture Overview](#2-system-architecture-overview)
+3. [Token Design](#3-token-design)
+4. [The Flywheel: Four-Layer Value Accrual](#4-the-flywheel-four-layer-value-accrual)
+5. [PID Emission Controller: Algorithmic Monetary Policy](#5-pid-emission-controller-algorithmic-monetary-policy)
+6. [TreasuryAMO: Foreign Exchange Reserve Management](#6-treasuryamo-foreign-exchange-reserve-management)
+7. [Oracle Integration: Price Intelligence & Peg Support](#7-oracle-integration-price-intelligence--peg-support)
+8. [Governance Formalization: GovernorContract](#8-governance-formalization-governorcontract)
+9. [Central Banking Model](#9-central-banking-model)
+10. [Security Architecture](#10-security-architecture)
+11. [Deployment Status](#11-deployment-status)
+12. [Risk Factors](#12-risk-factors)
+13. [What This System Is and Is Not](#13-what-this-system-is-and-is-not)
+14. [Future Integration](#14-future-integration)
+15. [Conclusion](#15-conclusion)
+
+---
+
+## 1. Introduction & Philosophy
 
 ### 1.1 The Problem
 
-Decentralized finance has produced thousands of token models. Almost all of them share the same failure mode: emissions create short-term liquidity, followed by supply inflation, followed by price collapse. The problem was never a lack of capital. It was a lack of mechanism design.
+Most blockchain token systems face a fundamental sustainability problem: they require continuous external capital inflows to maintain value. When new capital slows, the system enters a death spiral—participants leave, liquidity drains, and token value collapses. Existing models rely on either inflationary emissions (diluting holders) or speculative demand (requiring perpetual growth).
 
-The core challenge: how does a decentralized system create a self-sustaining economy where:
+The AV Treasury addresses this by creating a **self-sustaining economic organism**—a system that captures value from its own operations and recycles that value back into the system without relying on external capital or speculative mania.
 
-a) Value accrues to participants without relying on continuous external capital inflows
-b) The system resists mercenary capital and extractive behavior
-c) Governance power concentrates among participants with the longest time horizons
-d) Every interaction leaves value behind
+### 1.2 Design Philosophy
 
-### 1.2 The Solution
+| Principle | Implementation |
+|---|---|
+| Self-sustainability | Every operation generates fees; fees drive buybacks |
+| Algorithmic control | PID controller replaces discretionary monetary policy |
+| Decentralized governance | GovernorContract with timelock, quorum, and delegation |
+| Manipulation resistance | TWAP oracles with deviation detection and bounds checking |
+| Progressive decentralization | Admin powers narrow over time toward full autonomy |
 
-The AV Treasury addresses this through seven integrated mechanisms:
+### 1.3 The Bootstrapping Phase
 
-1. **Dual-token model** — Au (utility) and Ag (governance) serve distinct, non-overlapping functions
-2. **Cross-token sink** — Au staking rewards are multiplied by Ag holdings, creating mathematical demand linkage
-3. **PID-controlled emission** — Ag supply expands or contracts based on TVL relative to target, preventing both inflation and stagnation
-4. **Deflationary burn** — 50% of all Au transfer fees are burned, creating continuous supply reduction
-5. **Automated buybacks** — TreasuryAMO executes programmatic buybacks using reserve tokens, creating constant buy pressure
-6. **Algorithmic governance** — A GovernorContract with timelock, quorum, and supermajority requirements ensures decentralized control
-7. **Hardened security** — Post-EIP-7702 architecture with role-based access control, rate caps, and emergency stops
+The AV Treasury is currently in its **early bootstrapping phase**. The Au token trades at approximately **$0.0085 USDC**—far below the $1.00 target that the system's peg-support mechanisms are calibrated for. This is expected and intentional:
+
+1. **Early Au pricing reflects adoption stage** — As the ecosystem grows (Dapps launching, AI compute consuming Au), demand-side pressure will push Au toward its peg.
+2. **The system is designed for this** — PID emission floors, buyback runway reserves, and the TreasuryAMO provide structural support regardless of current price.
+3. **The $0.98 buyback trigger is conservative** — At current price levels, the OracleFlashBuy mechanism will aggressively absorb any sell pressure that drives Au below the oracle-determined fair value.
+4. **Governance can recalibrate** — The GovernorContract can adjust PID parameters, buyback thresholds, and emission rates as the system matures.
+
+**Implication for participants:** Early stakers and liquidity providers receive higher Ag emissions (PID compensates for lower TVL with higher per-unit rewards), positioning them for outsized governance power and fee accrual as the system scales.
 
 ---
 
-## 2. Dual-Token Model
+## 2. System Architecture Overview
 
-### 2.1 Au — Artifact Utility
+### 2.1 Component Map
 
-Au is the fuel of the AV ecosystem. It is required for all operations: AI compute, transactions, liquidity provision, and governance participation.
+```
+                            ┌─────────────────────────────┐
+                            │       GovernorContract        │
+                            │   (Decentralized Oversight)   │
+                            └──────────────┬───────────────┘
+                                           │ proposes/executes
+                                           ▼
+┌──────────┐    fees     ┌──────────┐   auAgPrice   ┌──────────────┐
+│  Dapps   │───────────▶│  Fee     │─────────────▶│  TreasuryAMO │
+│  (Au     │            │  Engine  │              │  (Reserve +   │
+│  spent)  │            └────┬─────┘              │  Buybacks)   │
+└──────────┘                 │                    └──────┬───────┘
+                             │ buybackAmount             │
+                             ▼                           ▼
+                      ┌──────────┐  swapUSDCforAu  ┌──────────┐
+                      │  PID     │────────────────▶│ DEX      │
+                      │  Emission│                  │ (Aero-   │
+                      │  Control │                  │ drome)   │
+                      └────┬─────┘                  └─────▲────┘
+                           │ Au/block                       │
+                           ▼                       buyback │
+                      ┌──────────┐  stake        ┌────────┴───┐
+                      │Staking   │◀──────────────│OracleFlash │
+                      │(Au+Ag    │               │Buy         │
+                      │ rewards) │               └──────▲─────┘
+                      └────┬─────┘                       │
+                           │                             │
+                           ▼                       deviation│
+                      ┌──────────┐                  detected│
+                      │  LP NFT  │               ┌──────────┴───┐
+                      │  Staking  │               │OracleWrapper │
+                      │  (Au+Ag  │               │(Deviation    │
+                      │  + NFT)  │               │ Detection)   │
+                      └──────────┘               └──────▲───────┘
+                                                       │
+                            ┌──────────────────────────┴───┐
+                            │         AvOracle              │
+                            │  (TWAP + Chainlink Fallback)  │
+                            └───────────────────────────────┘
+```
+
+### 2.2 Contract Inventory
+
+| Contract | Role | Layer |
+|---|---|---|
+| AuToken | Native utility token (ERC-20) | Core |
+| AgToken | Governance token (ERC-20) | Core |
+| AVLPStaking_v2 | Staking + LP NFT rewards | Core |
+| PID_Emission_Controller_v2 | Algorithmic monetary policy | Monetary |
+| TreasuryAMO | Reserve management + buybacks | Monetary |
+| GovernorContract | Decentralized governance | Governance |
+| ArtifactTimelock | Timelock for governance actions | Governance |
+| OracleWrapper | Deviation detection + triggers | Infrastructure |
+| OracleFlashBuy | Automated below-peg buybacks | Infrastructure |
+| AvOracle | TWAP + Chainlink price feeds | Infrastructure |
+
+### 2.3 Interaction Flow
+
+A complete lifecycle of value through the system:
+
+1. A **Dapp** requires Au for operation (compute, access, attestation)
+2. Au is spent → **Fee Engine** captures a portion (e.g., 1.5%)
+3. Fees are split: one portion funds **PID emissions** (new Au for stakers), another portion is routed to **TreasuryAMO** for buybacks
+4. **TreasuryAMO** queries **OracleWrapper** for the current Au/USDC price via **AvOracle**
+5. If Au trades below peg, **OracleFlashBuy** executes a DEX swap (USDC → Au) to support price
+6. Bought-back Au is distributed to stakers as additional yield, compounding the flywheel
+
+---
+
+## 3. Token Design
+
+### 3.1 Au (Gold) — The Utility Token
 
 | Property | Value |
 |---|---|
+| Name | Au Token |
 | Symbol | Au |
-| Name | Artifact Utility |
-| Standard | ERC20 + EIP-2612 Permit |
-| Total Supply | 1,000,000,000 (1 billion, fixed) |
 | Decimals | 18 |
-| Upgradeability | UUPS proxy |
+| Supply | Inflationary (PID-controlled) |
+| Current Price | ~$0.0085 USDC (bootstrapping phase) |
+| Target Peg | $1.00 USDC (long-term) |
+| Utility | Required for all Dapp operations |
+| Fee Generation | Every transfer/burn produces fees |
 
-**Fee Mechanism:**
-- Transfer fee: 9 bps (0.09%) per transfer
-  - 4.5 bps (50%) → burned permanently
-  - 4.5 bps (50%) → accumulated fees (withdrawable by treasury)
-- Flash mint fee: 9 bps (same as transfer fee)
-- Max flash mint: 1,000,000 Au
-- Fee cap: 500 bps hard ceiling (governance-adjustable up to cap)
+Au is the **currency** of the AV ecosystem. It is required for:
+- AI compute resource consumption
+- Dapp operation fees
+- Shard attestation operations
+- Staking into LP positions
 
-**Genesis Distribution:**
+Au is **not** a stablecoin. Its price is market-determined, though the system's buyback mechanisms and PID emission floor provide structural support.
 
-| Allocation | Amount | Recipient |
-|---|---|---|
-| Deployer (for LP) | 999,000,000 Au | `0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E` |
-| Staking Fund | 300,000 Au | AVLPStaking_v2 |
-| Treasury/Ops | 700,000 Au | `0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e` |
-| **Total** | **1,000,000,000 Au** | |
-
-Fees are disabled during initial distribution to ensure exact amounts arrive at each destination, then enabled after all transfers complete.
-
-### 2.2 Ag — Artifact Governance
-
-Ag is the power token. It provides programmatic influence over the system: governance voting, staking multiplier qualification, and protocol parameter control.
+### 3.2 Ag (Silver) — The Governance Token
 
 | Property | Value |
 |---|---|
+| Name | Ag Token |
 | Symbol | Ag |
-| Name | Artifact Governance |
-| Standard | ERC20 + ERC20Votes (checkpoints, delegation) |
-| Max Supply | 100,000,000 (100 million) |
 | Decimals | 18 |
-| Upgradeability | UUPS proxy |
+| Supply | Inflationary (PID-controlled) |
+| Distribution | LP staking rewards + direct staking |
+| Governance Power | Ag balance + veAg time-weighted balance |
+| Voting | GovernorContract proposals |
 
-**Emission:**
-- No genesis mint. All Ag is emitted through the system.
-- MINTER_ROLE: AVLPStaking_v2 and PID_Emission_Controller_v2 only
-- PID-controlled, TVL-targeted emission schedule
-  - TVL < target → higher emissions (incentivize staking)
-  - TVL > target → lower emissions (prevent inflation)
-- Daily emission cap: 100,000 Ag
-- Single emission cap: 10,000 Ag
+Ag represents **governance shares** in the AV Treasury. Holders can:
+- Vote on monetary policy parameters (PID tuning)
+- Approve treasury allocation changes
+- Adjust oracle thresholds and buyback limits
+- Upgrade contract implementations
 
-**Staking Rewards (Au + Ag per block):**
-- Au reward: 0.001 Au/block
-- Ag reward: 0.0001 Ag/block
-- Rate changes: 48-hour timelock
+Ag is earned by providing liquidity (LP NFT staking) or staking Au/Ag directly.
 
-**Staking Multiplier (Ag-Based):**
+### 3.3 veAg (Vested Escrow Ag) — Time-Weighted Governance
 
-The staking yield is multiplied based on the staker's Ag holdings:
+Users can lock Ag to receive **veAg** (vested escrow Ag), which provides:
+- **Multiplied voting power** — Longer locks = higher voting weight
+- **Proportional fee share** — veAg holders receive a portion of protocol fees
+- **Governance commitment** — Signals long-term alignment
 
 ```
-multiplier = 10000 + (15000 * agBalance) / threshold
+veAg_weight = Ag_locked × (lock_duration / max_lock_duration)
+
+Where:
+  max_lock_duration = 4 years (1,461 days)
+  min_lock_duration = 1 week (7 days)
 ```
 
-Where `threshold = 5,000 Ag`. At this balance, the multiplier reaches its maximum of 2.5x. This creates the cross-token sink: demand for yield → demand for Ag → Ag scarcity → system value.
+This mechanism ensures that governance power is weighted toward participants with the longest time horizons, aligning incentives with the system's sustained health.
+
+### 3.4 Token Relationship Diagram
+
+```
+                    ┌─────────────────┐
+                    │   Dapp Users    │
+                    │   (need Au)     │
+                    └────────┬────────┘
+                             │ spend Au
+                             ▼
+                    ┌─────────────────┐
+                    │   Fee Engine    │
+                    │   (1.5% fee)    │
+                    └────┬───────┬────┘
+                         │       │
+              PID Au/block│       │buybackAmount
+                         ▼       ▼
+                  ┌──────────┐ ┌──────────────┐
+                  │ Staking  │ │ TreasuryAMO  │
+                  │ Rewards  │ │ (USDC Res.)  │
+                  └────┬─────┘ └──────┬───────┘
+                       │              │
+           Au + Ag     │              │ buyback Au
+           rewards     ▼              ▼
+                  ┌──────────┐  ┌──────────┐
+                  │LP Stakers│  │ DEX Swap │
+                  │(LP NFTs) │  │(Aerodrome│
+                  └──────────┘  └──────────┘
+```
 
 ---
 
-## 3. The Flywheel Mechanism
+## 4. The Flywheel: Four-Layer Value Accrual
 
-The AV Treasury's flywheel is a positive feedback loop that creates self-sustaining value accretion:
+### 4.1 Flywheel Overview
 
-```
-User buys Au from DEX
-       ↓
-User spends Au on AI compute / ecosystem services
-       ↓
-Au transfer fee: 9 bps
-  ├── 4.5 bps → BURNED (Au supply decreases)
-  └── 4.5 bps → ACCUMULATED FEES (withdrawable by treasury)
-       ↓
-Treasury withdraws fees → mints Au to treasury
-       ↓
-TreasuryAMO executes buyback:
-  Reserve tokens → DEX → Buy Au → Treasury holds Au
-       ↓
-Stakers stake LP NFTs → earn Au + Ag
-  ├── Au reward: 0.001/block
-  └── Ag reward: 0.0001/block × Ag multiplier (1x–2.5x)
-       ↓
-PID controller monitors TVL:
-  TVL < target → emit more Ag (incentivize staking)
-  TVL > target → emit less Ag (prevent inflation)
-       ↓
-Ag holders govern:
-  Propose → Vote → Queue (48h timelock) → Execute
-       ↓
-Governance adjusts system parameters:
-  Fees, emission rates, treasury allocation, buyback aggressiveness
-       ↓
-System grows → More usage → More fees → More buybacks → More scarcity
-       ↓
-LOOP CLOSES
-```
-
-### 3.1 Cross-Token Sink
-
-The critical innovation binding Au and Ag is the cross-token sink. To maximize staking rewards on Au, users must hold Ag. The staking multiplier increases with Ag holdings up to 2.5x at 5,000 Ag.
-
-This creates mathematical arbitrage:
-- Demand for Au yield increases demand for Ag
-- Ag value is derived from system growth and scarcity
-- Au value is derived from protocol usage
-- Protocol usage requires Au
-- Demand for Au increases
-
-### 3.2 PID-Controlled Emission
-
-The PID Emission Controller continuously adjusts Ag emission based on the gap between current TVL and target TVL:
+The AV Treasury's flywheel is a **four-layer positive feedback loop**. Each layer reinforces the next, creating compounding value accrual as the system scales.
 
 ```
-emission(t) = kp * error(t) + ki * ∫error(t)dt + kd * d(error)/dt
+        ┌──────────────────────────────────────────────┐
+        │                                              │
+        │   Layer 4: Oracle/Buyback                    │
+        │   ┌──────────────────────────────────┐       │
+        │   │  Oracle detects below-peg Au     │       │
+        │   │  → FlashBuy executes USDC→Au     │       │
+        │   │  → Buoyancy supports price        │       │
+        │   └──────────────┬───────────────────┘       │
+        │                  │                            │
+        │                  ▼                            │
+        │   Layer 3: PID Monetary Policy               │
+        │   ┌──────────────────────────────────┐       │
+        │   │  PID reads auAgPrice from oracle  │       │
+        │   │  → Adjusts Au emission rate       │       │
+        │   │  → Compounds staker yields        │       │
+        │   └──────────────┬───────────────────┘       │
+        │                  │                            │
+        │                  ▼                            │
+        │   Layer 2: Staking Demand                  │
+        │   ┌──────────────────────────────────┐       │
+        │   │  Higher yields → more staking     │       │
+        │   │  → More Au locked in LP          │       │
+        │   │  → Reduced circulating supply     │       │
+        │   └──────────────┬───────────────────┘       │
+        │                  │                            │
+        │                  ▼                            │
+        │   Layer 1: Dapp Demand                     │
+        │   ┌──────────────────────────────────┐       │
+        │   │  More Dapps → more Au spent      │       │
+        │   │  → More fees generated           │       │
+        │   │  → More buyback pressure         │       │
+        │   └──────────────┬───────────────────┘       │
+        │                  │                            │
+        │                  └──────── back to Layer 4   │
+        │                                              │
+        └──────────────────────────────────────────────┘
 ```
 
-Where `error(t) = target_TVL - current_TVL`. The PID parameters (kp, ki, kd) are bounded between 1e12 and 1e18, with integral decay of 99/100 per update to prevent windup. This ensures the system self-regulates: when TVL is below target, emissions increase to incentivize staking; when TVL exceeds target, emissions decrease to preserve Ag scarcity.
+### 4.2 Layer 1: Dapp Demand
+
+**Mechanism:** Dapps require Au for operation. Every Au spent generates fees.
+
+- As more Dapps launch on the AV ecosystem, aggregate Au consumption increases
+- Fee revenue scales linearly (or super-linearly) with adoption
+- This is the **exogenous input** that drives the entire flywheel
+
+**Current state:** The ecosystem is in early bootstrapping. Initial Dapps (AI compute, Shard attestation) are being onboarded. Au price at ~$0.0085 reflects early adoption, not failure—the flywheel is beginning to spin.
+
+### 4.3 Layer 2: Staking Demand
+
+**Mechanism:** PID-controlled emissions create yield that attracts stakers.
+
+- Stakers deposit Au/Ag LP tokens into AVLPStaking_v2
+- They earn Au (from PID) + Ag (from PID) + LP NFT rewards
+- Higher PID rates (triggered by low TVL) mean **early stakers earn more**
+- Staked Au is locked, reducing circulating supply and creating scarcity
+
+**Feedback loop:** As Au price rises from buyback pressure → TVL increases → PID reduces per-unit emissions → but total fee revenue increases → net staker yield remains attractive
+
+### 4.4 Layer 3: PID Monetary Policy
+
+**Mechanism:** The PID Emission Controller algorithmically adjusts Au emission rates based on the Au/Ag price ratio.
+
+- PID reads `auAgPrice` from OracleWrapper
+- When Au is undervalued relative to Ag → PID increases Au emission (expansionary policy)
+- When Au is overvalued → PID decreases emission (contractionary policy)
+- This creates **counter-cyclical monetary policy** that stabilizes the system
+
+**Key insight:** PID doesn't target a specific Au price in USDC terms—it targets a healthy Au/Ag ratio that reflects balanced growth between utility demand and governance participation.
+
+### 4.5 Layer 4: Oracle/Buyback Layer (NEW)
+
+**Mechanism:** The oracle infrastructure detects below-peg conditions and triggers automated buybacks.
+
+- **OracleWrapper** continuously monitors Au price against TWAP references
+- When Au drops below a configurable threshold (currently $0.98, adjustable by governance), **OracleFlashBuy** is signaled
+- OracleFlashBuy swaps USDC from TreasuryAMO reserves for Au on Aerodrome (Base DEX)
+- This creates **automatic, programmatic buyback pressure** that supports Au price
+
+**Why this layer matters:** In traditional flywheels, buyback pressure depends on manual intervention or simple time-based rules. The oracle/buyback layer adds **intelligence**—buybacks only occur when needed, at the right price, with manipulation-resistant validation.
+
+**Current bootstrapping implication:** At Au ~$0.0085, the OracleFlashBuy mechanism is highly sensitive. Any significant sell-off that pushes Au below the oracle-determined fair value will trigger immediate buyback execution, providing a strong floor. As Au approaches $1.00, the mechanism becomes more about defending the peg against moderate dips.
+
+### 4.6 Flywheel Equilibrium
+
+The system reaches equilibrium when:
+
+```
+Dapp Demand (Au spent/day) × Fee Rate = Buyback Amount (USDC/day) + PID Au Emission Value
+
+AND
+
+Staker Yield (Au + Ag + fees) ≥ Opportunity Cost (risk-free DeFi yield)
+
+AND
+
+Au Market Price ≈ Oracle-determined Fair Value ± deviation_threshold
+```
+
+At this point, the flywheel spins sustainably: fees fund buybacks, buybacks support price, price stability attracts Dapps, Dapp usage generates more fees.
 
 ---
 
-## 4. Contract Architecture
+## 5. PID Emission Controller: Algorithmic Monetary Policy
 
-The system is implemented across eight core contracts:
+### 5.1 Overview
 
-### 4.1 AuToken
-- ERC20Upgradeable + ERC20PermitUpgradeable + ERC20FlashMintUpgradeable
-- AccessControlUpgradeable + ReentrancyGuardUpgradeable + PausableUpgradeable + UUPSUpgradeable
-- Fee logic in `_transfer()` override
-- Flash mint fee via `_flashFee()` override
-- Blocklist, cooldown, max tx/wallet guards in `_beforeTokenTransfer()`
-- On-chain SVG tokenURI (embedded, no external hosting)
+The PID (Proportional-Integral-Derivative) Emission Controller is the **monetary policy engine** of the AV Treasury. It algorithmically adjusts the rate at which new Au tokens are minted and distributed to stakers, analogous to how central banks adjust interest rates or money supply.
 
-### 4.2 AgToken
-- ERC20Upgradeable + ERC20PermitUpgradeable + ERC20VotesUpgradeable
-- AccessControlUpgradeable + ReentrancyGuardUpgradeable + UUPSUpgradeable
-- Mint restricted to MINTER_ROLE (Staking + PID controller only)
-- Required overrides for ERC20Votes (_afterTokenTransfer, _mint, _burn)
+### 5.2 PID Fundamentals
 
-### 4.3 ArtifactTimelock
-- Wraps OpenZeppelin TimelockController
-- MIN_DELAY: 48 hours | MAX_DELAY: 30 days | GRACE_PERIOD: 14 days
+A PID controller computes an output based on the difference (error) between a measured variable and a target setpoint:
 
-### 4.4 AVLPStaking_v2
-- Stake LP NFTs, earn Au + Ag rewards
-- Ag-based multiplier: 1x to 2.5x based on staker's Ag balance
-- Rate change timelock: 48 hours
-- Rate caps: 1000 Au/block, 100 Ag/block
-- NFT recovery for stuck tokens
+```
+u(t) = Kp·e(t) + Ki·∫e(τ)dτ + Kd·de(t)/dt
 
-### 4.5 PID_Emission_Controller_v2
-- PID parameters: kp, ki, kd (bounded: 1e12 to 1e18)
-- Target TVL: configurable (default 10,000,000)
-- Integral decay: 99/100 per update
-- Max integral: 1e24
-- Daily emission cap: 100,000 Ag | Single emission cap: 10,000 Ag
-- Emergency stop toggle
+Where:
+  u(t)    = control output (Au emission rate)
+  e(t)    = error = setpoint - measured_value
+  Kp      = proportional gain (reacts to current error)
+  Ki      = integral gain (reacts to accumulated error)
+  Kd      = derivative gain (reacts to rate of change)
+```
 
-### 4.6 TreasuryAMO
-- Automated buybacks: 20% of reserves above runway, 24h cooldown
-- TWAP price validation: max 5% deviation
-- Slippage protection: max 0.5%
-- Per-epoch cap: 5% of reserve
-- Dual DEX support: Aerodrome (primary) + Uniswap (backup)
+### 5.3 Application to AV Treasury
 
-### 4.7 GovernorContract
-- Voting delay: 1 block
-- Voting period: 216,000 blocks (~3 days at 12s/block)
-- Proposal threshold: 100,000 Ag
-- Quorum: 4% of total supply
-- Standard approval: 66% | Critical approval: 80%
-- Timelock: 48 hours
-
-### 4.8 MockLPNFT
-- ERC721 + ERC721Enumerable + Ownable
-- For testing and initial bootstrapping (replaced by real Aerodrome LP NFTs in production)
-
----
-
-## 5. Security Architecture
-
-### 5.1 Post-EIP-7702 Hardening
-
-The June 2026 EIP-7702 incident is the security baseline. The AV Treasury is hardened against this class of attack:
-
-- No `authorize` or `approve` patterns exploitable via EIP-7702
-- All state changes require explicit function calls with access control
-- No batch operations exploitable atomically
-- No delegatecall to user-controlled addresses
-
-### 5.2 Access Control Matrix
-
-| Role | Contract | Capability |
+| PID Component | Monetary Analogy | AV Implementation |
 |---|---|---|
-| MINTER_ROLE | AuToken | Mint tokens (renounced after setup) |
-| ANTI_BOT_ROLE | AuToken | Block addresses, manage cooldown |
-| DEFAULT_ADMIN_ROLE | AuToken, AgToken | Transferable to DAO |
-| MINTER_ROLE | AgToken | Mint via Staking + PID only |
-| UPGRADER_ROLE | AgToken | Execute upgrades (DAO only) |
-| PROPOSER_ROLE | Timelock | Create governance proposals |
-| EXECUTOR_ROLE | Timelock | Execute passed proposals |
+| **Setpoint** | Target inflation rate | Target Au/Ag price ratio |
+| **Measured Variable** | CPI / economic indicators | `auAgPrice` from OracleWrapper |
+| **Proportional (Kp)** | Immediate rate adjustment | Au emission change proportional to current deviation |
+| **Integral (Ki)** | Cumulative policy correction | Au emission change based on persistent deviation over time |
+| **Derivative (Kd)** | Forward-looking adjustment | Au emission change based on trend direction |
+| **Output** | Interest rate decision | Au tokens per block |
 
-### 5.3 Economic Security
+### 5.4 Emission Rate Bounds
 
-- Rate caps on all emissions and reward changes
-- 48-hour timelock on parameter changes
-- Max transaction: 1% of Au supply per transaction
-- Max wallet: 1% of Au supply per wallet
-- Flash mint cap: 1,000,000 Au
-- Daily Ag emission cap: 100,000
-- Emergency stop on PID controller
-- Pausable on all critical contracts
+The PID output is bounded to prevent runaway inflation or deflation:
 
-### 5.4 Upgrade Security
+```
+MIN_EMISSION ≤ PID_output ≤ MAX_EMISSION
 
-- UUPS proxy pattern
-- 7-day upgrade announcement delay
-- Only UPGRADER_ROLE can execute upgrades
-- Storage layout preserved across upgrades
+Where:
+  MIN_EMISSION = emission_floor (ensures baseline staker rewards)
+  MAX_EMISSION = emission_cap (prevents excessive dilution)
+```
 
----
+Additionally, an **emission floor** ensures that even when the PID would reduce emissions to zero (because Au is overvalued), stakers still receive baseline rewards. This prevents a scenario where the system completely stops incentivizing participation.
 
-## 6. Governance
+### 5.5 PID State Variables
 
-### 6.1 Structure
+```solidity
+struct PIDState {
+    uint256 auAgPrice;          // Current Au/Ag price from oracle
+    uint256 setpoint;           // Target Au/Ag ratio (governance-set)
+    uint256 kp;                 // Proportional gain (scaled by 1e18)
+    uint256 ki;                 // Integral gain (scaled by 1e18)
+    uint256 kd;                 // Derivative gain (scaled by 1e18)
+    uint256 integral;           // Accumulated error
+    uint256 lastError;          // Previous error (for derivative)
+    uint256 lastUpdateBlock;    // Block of last update
+    uint256 emissionRate;       // Current Au/block emission
+}
+```
 
-The AV Treasury is governed by Ag holders through a GovernorContract with the following parameters:
+### 5.6 Monetary Policy Scenarios
 
-| Parameter | Value |
-|---|---|
-| Governance Token | Ag (with ERC20Votes delegation) |
-| Proposal Threshold | 100,000 Ag |
-| Quorum | 4% of total supply |
-| Standard Approval | 66% |
-| Critical Approval | 80% |
-| Voting Delay | 1 block |
-| Voting Period | 216,000 blocks (~3 days) |
-| Timelock | 48 hours |
-
-### 6.2 Proposal Lifecycle
-
-1. **Propose** — Any address with ≥100,000 Ag can submit a proposal
-2. **Vote** — Ag holders (or their delegates) vote during the voting period
-3. **Queue** — If quorum and approval thresholds are met, the proposal enters the 48-hour timelock
-4. **Execute** — After the timelock, anyone can execute the proposal
-
-### 6.3 Decentralization Roadmap
-
-| Phase | Milestone | Status |
+| Scenario | PID Response | Effect |
 |---|---|---|
-| 1 (0-25%) | Architecture and core deployment | Current |
-| 2 (25-50%) | Liquidity bootstrapping and flywheel activation | Planned |
-| 3 (50-75%) | Treasury automation (AMO + PID) | Planned |
-| 4 (75-90%) | Decentralized governance (Governor live) | Planned |
-| 5 (90-100%) | Full autonomy (admin renounced) | Planned |
+| Au undervalued vs Ag | Increase Au emission | More rewards → more staking → price support |
+| Au overvalued vs Ag | Decrease Au emission | Less inflation → scarcity → price support |
+| Persistent undervaluation | Integral term accumulates → stronger response | Aggressive expansion |
+| Rapid price change | Derivative term dampens oscillation | Stability |
+| Au at target | Minimal adjustment | Steady-state operation |
+
+### 5.7 PID and the Oracle Connection
+
+The PID controller reads `auAgPrice` from **OracleWrapper**, not directly from a DEX. This is critical:
+
+1. **Manipulation resistance** — OracleWrapper validates prices against TWAP, rejecting flash-loan-distorted values
+2. **Deviation bounds** — If the current price deviates >5% from the reference, the update is rejected
+3. **Staleness check** — Prices older than 1 hour are rejected (Chainlink fallback if TWAP is stale)
+
+This means the PID controller makes monetary policy decisions based on **validated, manipulation-resistant price data**, not easily-gamed spot prices.
 
 ---
 
-## 7. Deployment
+## 6. TreasuryAMO: Foreign Exchange Reserve Management
 
-### 7.1 Chain Configuration
+### 6.1 Overview
 
-| Parameter | Value |
+The TreasuryAMO (Automated Market Operator) functions as the **foreign exchange reserve** of the AV Treasury central bank. It holds USDC reserves and deploys them for:
+
+1. **Au buybacks** — Supporting Au price when it trades below peg
+2. **Liquidity provision** — Ensuring healthy Au/USDC markets
+3. **Reserve management** — Maintaining adequate runway for sustained operations
+
+### 6.2 Reserve Sources
+
+| Source | Mechanism |
 |---|---|
-| Chain | Base Mainnet |
-| Chain ID | 8453 |
-| Solidity | 0.8.20 |
-| Framework | Hardhat |
-| Optimizer | Enabled, 200 runs |
-| EVM Version | paris |
-| License | MIT |
+| Fee revenue | Portion of Dapp fees routed to TreasuryAMO |
+| Buyback proceeds | USDC accumulated from DEX operations |
+| Surplus Au | Excess Au from PID emissions (sold for USDC) |
 
-### 7.2 Deploy Order
+### 6.3 Buyback Execution Flow
 
-1. **AuToken** — No dependencies
-2. **AgToken** — No dependencies
-3. **MockLPNFT** — No dependencies
-4. **ArtifactTimelock** — Configure proposer, canceler, executor
-5. **AVLPStaking_v2** — Wire Au, Ag, NFT
-6. **PID_Emission_Controller_v2** — Set admin
-7. **TreasuryAMO** — Wire Au, reserveToken, router
-8. **GovernorContract** — Wire Ag, Timelock
+```
+OracleWrapper detects Au < $0.98
+        │
+        ▼
+TreasuryAMO.swapUSDCforAu(amountUSDC, minAuOut)
+        │
+        ├── Validate: amountUSDC ≤ maxPerExecution (1,000 USDC)
+        ├── Validate: cooldown period elapsed (1 hour)
+        ├── Validate: OracleWrapper confirms below-peg condition
+        │
+        ▼
+Aerodrome DEX: USDC → Au
+        │
+        ▼
+Bought Au → Distributed to stakers as supplemental yield
+```
 
-### 7.3 Wiring
+### 6.4 Reserve Runway
 
-- Timelock: Governor gets PROPOSER + EXECUTOR roles
-- AgToken: MINTER_ROLE → Staking + PID
-- Staking: setRewardRates(Au/block, Ag/block)
-- PID: setAuToken, setAgToken, setStaking, setTargetTVL
+The TreasuryAMO maintains a **minimum 24-month runway** of USDC reserves:
 
----
+```
+Runway (months) = USDC_Reserve / (Monthly_Buyback_Spend + Monthly_Operations)
 
-## 8. Risk Factors
+If Runway < 6 months:
+  → Governance is alerted
+  → PID may increase emission to attract more TVL
+  → Fee rate adjustment may be proposed
+```
 
-### 8.1 Smart Contract Risk
-Complexity increases attack surface. Mitigation: multiple tier-1 audits, formal verification of core math, permanent bug bounty.
+### 6.5 TreasuryAMO Parameters
 
-### 8.2 Demand Drop Risk
-If Au usage declines, fee revenue falls, buybacks slow, and the flywheel decelerates. Mitigation: Treasury runway reserve, adjustable fees, PID emission floor.
+| Parameter | Value | Adjustable by Governance |
+|---|---|---|
+| Max buyback per execution | 1,000 USDC | Yes |
+| Buyback cooldown | 1 hour | Yes |
+| Buyback trigger price | $0.98 (or oracle fair value) | Yes |
+| Reserve runway minimum | 6 months (alert threshold) | Yes |
+| DEX router | Aerodrome | Yes |
 
-### 8.3 Liquidity Spiral Risk
-The flywheel is pro-cyclical. A sustained downturn could break the positive feedback loop. Mitigation: 24-month runway reserve, dynamic emission floor, emergency pause.
+### 6.6 Relationship to Oracle
 
-### 8.4 Oracle Risk
-Oracle failure could produce incorrect PID parameters or buyback prices. Mitigation: TWAP validation with 5% deviation threshold, dual DEX support.
+TreasuryAMO does not hold or manage price data—it **consumes** validated prices from OracleWrapper:
 
-### 8.5 Governance Risk
-Governance capture or apathy could paralyze the system. Mitigation: time-weighted voting, 48-hour timelock, delegation program, optimistic governance for routine changes.
-
-### 8.6 Regulatory Risk
-Ag may attract securities regulation. Mitigation: progressive decentralization, legal DAO wrapper, utility-first design.
-
----
-
-## 9. What This System Is NOT
-
-- **Not a company** — No equity, no revenue, no profit
-- **Not a stablecoin** — Au price is market-determined
-- **Not a lending protocol** — No borrowing, no interest rates
-- **Not a governance-only token** — Ag has programmatic power, not just voting
-- **Not a ponzi** — Value derives from usage, not from new deposits
-
-## 10. What This System IS
-
-A self-sustaining economic organism that:
-
-1. Requires Au for all operations (utility)
-2. Distributes Ag based on contribution and time (governance)
-3. Captures value from every interaction (fees)
-4. Recycles captured value back into the system (buybacks)
-5. Self-regulates through algorithmic control (PID)
-6. Governs itself through decentralized voting (DAO)
-7. Evolves through upgradeable architecture (UUPS)
-8. Protects itself through hardened security (post-EIP-7702)
+- TreasuryAMO calls `OracleWrapper.auAgPrice()` to determine if conditions warrant action
+- OracleWrapper provides a single, validated price that accounts for TWAP, Chainlink, and deviation checks
+- This separation of concerns means TreasuryAMO logic is simple and predictable, while oracle complexity is isolated
 
 ---
 
-## 11. Future Integration
+## 7. Oracle Integration: Price Intelligence & Peg Support
 
-### 11.1 Shard (SBT) System
-Entity attestation layer on top of Au/Ag. Soulbound tokens representing verified agents/entities. Au serves as gas for Shard operations; Ag governs Shard protocol parameters.
+### 7.1 Oracle Architecture Overview
 
-### 11.2 AI Compute Layer
-Dapps consume Au for AI compute services. Au spent on compute enters the fee mechanism, driving the flywheel. Ag governs compute pricing, resource allocation, and model selection.
+The AV Treasury operates a **three-layer oracle stack** that provides manipulation-resistant price data to all downstream contracts:
 
-### 11.3 DEX Liquidity
-Au/ETH or Au/USDC pools on Aerodrome. LP tokens staked in AVLPStaking_v2 earn Au + Ag. TreasuryAMO maintains constant buyback pressure.
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Layer 3: Consumers                     │
+│  PID Controller │ TreasuryAMO │ OracleFlashBuy │ Frontend│
+└────────────┬────────────┬────────────┬───────────────────┘
+             │            │            │
+             ▼            ▼            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Layer 2: OracleWrapper                 │
+│  • Deviation detection (>5% from reference → reject)     │
+│  • Price bounds validation ($0.0001 - $1000)             │
+│  • Staleness check (>1 hour → reject)                   │
+│  • Below-peg signal generation                          │
+│  • FlashBuy trigger activation                          │
+│  Deployed: 0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB   │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Layer 1: AvOracle                      │
+│  • TWAP reader (time-weighted average from DEX pools)    │
+│  • Chainlink fallback (if TWAP stale >1 hour)           │
+│  • Dual DEX support (Aerodrome + backup)                │
+│  Deployed: 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 7.2 AvOracle: Primary Price Feed
+
+AvOracle is the **base data layer**. It provides raw price information:
+
+| Feature | Implementation |
+|---|---|
+| Primary source | TWAP from on-chain DEX pools |
+| Fallback source | Chainlink price feeds |
+| Staleness threshold | 1 hour (if TWAP data >1h old, use Chainlink) |
+| Update frequency | On-demand (called by consumers) |
+| Manipulation resistance | TWAP inherently resistant to flash loan attacks |
+| Multi-DEX | Can read from multiple pools for cross-validation |
+
+**Why TWAP?** A flash loan attacker can momentarily distort a DEX spot price, but they cannot distort a time-weighted average that spans the duration of their manipulation. The attacker would need to maintain the distorted price for the entire TWAP window, which is prohibitively expensive.
+
+### 7.3 OracleWrapper: Deviation Detection & Trigger Layer
+
+OracleWrapper sits between AvOracle and downstream contracts, adding **validation and intelligence**:
+
+#### 7.3.1 Deviation Detection Mechanism
+
+```solidity
+function updateAuAgPrice() external {
+    uint256 currentPrice = avOracle.getAuAgPrice();
+    uint256 referencePrice = getReferencePrice(); // TWAP or last valid
+    
+    uint256 deviation = _calculateDeviation(currentPrice, referencePrice);
+    
+    require(deviation <= MAX_DEVIATION, "OracleWrapper: deviation exceeds threshold");
+    // MAX_DEVIATION = 5% (50000000000000000000 in 1e18 precision)
+    
+    auAgPrice = currentPrice;
+    lastUpdateBlock = block.number;
+    emit PriceUpdated(currentPrice, referencePrice, deviation);
+}
+```
+
+**Deviation calculation:**
+```
+deviation = |currentPrice - referencePrice| / referencePrice
+
+If deviation > 5%:
+  → Transaction reverts
+  → PID does not update (uses last valid price)
+  → TreasuryAMO does not execute buyback
+  → System remains in safe state
+```
+
+#### 7.3.2 Price Bounds
+
+OracleWrapper enforces absolute price bounds as a final safety layer:
+
+```
+LOWER_BOUND = $0.0001 USDC per Au
+UPPER_BOUND = $1000 USDC per Au
+
+If price < LOWER_BOUND or price > UPPER_BOUND:
+  → Reject update
+  → Flag for governance review
+```
+
+These bounds are intentionally wide to avoid false positives during volatile markets, while catching clearly erroneous oracle responses.
+
+#### 7.3.3 Below-Peg Detection & FlashBuy Trigger
+
+```solidity
+function checkBelowPegCondition() external view returns (bool) {
+    uint256 currentPrice = getAuUSDCPrice();
+    uint256 pegPrice = getPegPrice(); // e.g., $0.98 or oracle fair value
+    
+    return currentPrice < pegPrice;
+}
+
+// Called by OracleFlashBuy or any external actor
+function signalFlashBuy() external {
+    require(checkBelowPegCondition(), "OracleWrapper: price above peg");
+    emit FlashBuySignaled(auPrice, pegPrice, block.timestamp);
+}
+```
+
+**Current bootstrapping note:** At Au ~$0.0085, the below-peg condition is almost always true. This means OracleFlashBuy will be highly active during the bootstrapping phase, providing continuous buyback pressure. This is the intended behavior—the system is designed to aggressively accumulate Au at early-stage prices.
+
+### 7.4 OracleFlashBuy: Automated Buyback Executor
+
+OracleFlashBuy is the **automated market operations agent** that executes buybacks when OracleWrapper signals a below-peg condition.
+
+#### 7.4.1 Execution Flow
+
+```
+1. Anyone (keeper, bot, user) calls OracleFlashBuy.executeBuyback(amountUSDC)
+2. OracleFlashBuy re-verifies below-peg condition via OracleWrapper
+3. If confirmed, transfers USDC from TreasuryAMO
+4. Swaps USDC → Au on Aerodrome DEX
+5. Transfers bought Au to Staking contract as supplemental rewards
+6. Updates lastExecution timestamp (cooldown)
+```
+
+#### 7.4.2 Safety Mechanisms
+
+| Mechanism | Purpose | Value |
+|---|---|---|
+| Re-verification | Prevents buying at manipulated prices | Calls OracleWrapper before every swap |
+| Max per execution | Limits exposure to oracle errors | 1,000 USDC |
+| Cooldown period | Prevents rapid draining of reserves | 1 hour |
+| Slippage protection | Ensures fair swap rate | minAuOut parameter |
+| Oracle safety check | Validates price within bounds | Inherited from OracleWrapper |
+
+#### 7.4.3 Keeper Incentive
+
+External keepers can call `executeBuyback()` and receive a small incentive (gas reimbursement + small Au bonus). This ensures that even when TreasuryAMO is not actively monitoring, third-party keepers maintain the buyback mechanism.
+
+### 7.5 Oracle Data Flow Diagram
+
+```
+DEX Pools (Aerodrome)
+    │
+    │ spot price (manipulable)
+    │ TWAP (manipulation-resistant)
+    ▼
+AvOracle ──────────────────── Chainlink (fallback)
+    │                              │
+    │ getAuAgPrice()               │ (if TWAP stale)
+    ▼                              │
+OracleWrapper ◀───────────────────┘
+    │
+    ├── Deviation check (>5% → reject)
+    ├── Bounds check ($0.0001 - $1000)
+    ├── Staleness check (<1 hour)
+    │
+    ├──→ PID Controller (auAgPrice for monetary policy)
+    ├──→ TreasuryAMO (price for buyback decisions)
+    └──→ OracleFlashBuy (below-peg signal)
+              │
+              ▼
+         DEX Swap: USDC → Au
+              │
+              ▼
+         Stakers receive bought-back Au
+```
+
+### 7.6 Oracle Governance
+
+Oracle parameters are controlled by governance through GovernorContract:
+
+| Parameter | Current | Adjustable |
+|---|---|---|
+| MAX_DEVIATION | 5% | Yes |
+| LOWER_BOUND | $0.0001 | Yes |
+| UPPER_BOUND | $1,000 | Yes |
+| STALENESS_THRESHOLD | 1 hour | Yes |
+| FlashBuy trigger price | $0.98 | Yes |
+| FlashBuy max per execution | 1,000 USDC | Yes |
+| FlashBuy cooldown | 1 hour | Yes |
 
 ---
 
-*This whitepaper is the public face of the AV Treasury system. For technical details, see the architecture and tokenomics documents. For security analysis, see the security document. For mathematical formalization, see the flywheel analysis.*
+## 8. Governance Formalization: GovernorContract
 
-*This document does not constitute financial, legal, or investment advice.*
+### 8.1 Overview
 
----
+The GovernorContract is the **decentralized governance layer** of the AV Treasury. It enables Ag and veAg holders to propose, vote on, and execute changes to the system's parameters, architecture, and policies. It functions as the **central bank council**—a deliberative body that sets policy but cannot act unilaterally or instantaneously.
 
-**Author:** ARTIFACT RESEARCH DIVISION
-**Date:** June 23, 2026
-**Status:** v1.0
+### 8.2 Proposal Lifecycle
+
+```
+┌─────────┐    submit     ┌─────────┐   votingDelay   ┌─────────┐
+│  DRAFT  │──────────────▶│ ACTIVE  │───────────────▶│ VOTING  │
+│         │               │         │   (1 day)       │ PERIOD  │
+│ (off-   │               │(queued) │                 │(5 days) │
+│  chain) │               │         │                 │         │
+└─────────┘               └─────────┘                 └────┬────┘
+                                                           │
+                              ┌────────────────────────────┤
+                              │ quorum reached & majority yes
+                              ▼
+                         ┌─────────┐   timelock    ┌──────────┐
+                         │ QUEUED  │──────────────▶│EXECUTED  │
+                         │         │   (2 days)    │          │
+                         │(timelock│               │(on-chain │
+         ┌───────────────│ delay)  │               │ effect)  │
+         │               └────┬────┘               └──────────┘
+         │                    │
+         │ quorum not reached │ majority no
+         │ or voting expired  │
+         ▼                    ▼
+    ┌──────────┐        ┌───────────┐
+    │CANCELLED │        │ CANCELLED │
+    └──────────┘        └───────────┘
+```
+
+### 8.3 Proposal States
+
+| State | Description | Transitions To |
+|---|---|---|
+| **Draft** | Off-chain preparation, not yet submitted | Active (when submitted) |
+| **Active** | Submitted, voting delay not yet elapsed | Voting Period (after delay) |
+| **Voting Period** | Active voting, countdown running | Queued (if passed), Cancelled (if failed) |
+| **Queued** | Passed, in timelock delay | Executed (after timelock), Cancelled (if cancelled) |
+| **Executed** | Successfully executed on-chain | Terminal |
+| **Cancelled

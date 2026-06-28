@@ -1,6 +1,6 @@
 # AV Treasury — Technical Architecture
 
-*Contract-by-contract breakdown with function signatures, storage layout, access control, and deployment wiring.*
+*Definitive technical reference for the AV Treasury decentralized central banking protocol on Base (Ethereum L2).*
 
 **Solidity:** 0.8.20 | **Chain:** Base (8453) | **Upgradeability:** UUPS | **License:** MIT
 
@@ -8,558 +8,825 @@
 
 ## Table of Contents
 
-1. [Architecture Overview](#1-architecture-overview)
-2. [Contract Dependency Graph](#2-contract-dependency-graph)
-3. [AuToken](#3-autoken)
-4. [AgToken](#4-agtoken)
-5. [ArtifactTimelock](#5-artifacttimelock)
-6. [AVLPStaking_v2](#6-avlpstaking_v2)
-7. [PID_Emission_Controller_v2](#7-pid_emission_controller_v2)
-8. [TreasuryAMO](#8-treasuryamo)
-9. [GovernorContract](#9-governorcontract)
-10. [MockLPNFT](#10-mocklpnft)
-11. [Access Control Matrix](#11-access-control-matrix)
-12. [Upgrade Flow](#12-upgrade-flow)
-13. [Deployment Order & Wiring](#13-deployment-order--wiring)
-14. [Gas Considerations](#14-gas-considerations)
-15. [Wiring Diagram (ASCII)](#15-wiring-diagram-ascii)
+1. [Executive Summary](#1-executive-summary)
+2. [System Architecture Diagram](#2-system-architecture-diagram)
+3. [Contract Inventory](#3-contract-inventory)
+4. [Data Flow](#4-data-flow)
+5. [Monetary Policy Engine](#5-monetary-policy-engine)
+6. [AMO Module](#6-amo-module)
+7. [Oracle Module](#7-oracle-module)
+8. [Governance Module](#8-governance-module)
+9. [Token Module](#9-token-module)
+10. [Flash Buy Module](#10-flash-buy-module)
+11. [Staking Module](#11-staking-module)
+12. [Security Architecture](#12-security-architecture)
+13. [Upgradeability](#13-upgradeability)
+14. [Gas Architecture](#14-gas-architecture)
+15. [Integration Points](#15-integration-points)
 
 ---
 
-## 1. Architecture Overview
+## 1. Executive Summary
 
-The AV Treasury system consists of 8 core contracts deployed behind UUPS proxy patterns where upgradeability is required. The architecture separates concerns into four layers:
+The AV Treasury is a decentralized central banking protocol that algorithmically manages a dual-token monetary system — **Au** (utility token with demurrage-like fee mechanics) and **Ag** (governance token with algorithmic emission) — to achieve price stability, sustainable growth, and community governance. The system implements a **PID-controlled emission controller** that adjusts Ag minting based on Total Value Locked (TVL) feedback, an **Automated Market Operations (AMO)** module that conducts on-chain buybacks analogous to central bank open market operations, a **multi-layered oracle system** combining TWAP primary feeds with Chainlink fallback and automated below-peg buyback triggers, and a **governance pipeline** (GovernorContract → 48h Timelock → Treasury Safe) that ensures all parameter changes and upgrades are subject to time-delayed, community-approved execution. The protocol captures value through a 9 basis point transfer fee on Au (split 50/50 between burn and treasury accumulation), deploys accumulated reserves for automated liquidity provision and buybacks, and incentivizes long-term alignment via Ag-boosted LP staking with a 1x–2.5x multiplier.
+
+---
+
+## 2. System Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    GOVERNANCE LAYER                      │
-│  GovernorContract ─── ArtifactTimelock                   │
-│         │                   │                            │
-│         │              48h delay                         │
-│         ▼                   ▼                            │
-├─────────────────────────────────────────────────────────┤
-│                    ECONOMIC LAYER                        │
-│  TreasuryAMO ◄──── PID_Emission_Controller_v2            │
-│         │                   │                            │
-│    buybacks            Ag mint                           │
-│         │                   │                            │
-│         ▼                   ▼                            │
-├─────────────────────────────────────────────────────────┤
-│                    STAKING LAYER                         │
-│  AVLPStaking_v2 ◄──── MockLPNFT (or real Aerodrome NFT)  │
-│         │                                                │
-│    Au + Ag rewards                                       │
-│    Ag-based multiplier                                   │
-│         │                                                │
-│         ▼                                                │
-├─────────────────────────────────────────────────────────┤
-│                    TOKEN LAYER                           │
-│  AuToken (ERC20+Permit+FlashMint)                        │
-│  AgToken (ERC20+Permit+Votes)                            │
-│         │           │                                    │
-│    9 bps fee     PID emission                            │
-│    burn + accum  no genesis mint                         │
-└─────────────────────────────────────────────────────────┘
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                           AV TREASURY — SYSTEM ARCHITECTURE                      ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+                              ┌─────────────────────────┐
+                              │     GovernorContract     │
+                              │  Governor + TimelockCtrl │
+                              │  Voting: Ag (ERC20Votes) │
+                              │  Delay: 1 block          │
+                              │  Period: 216k blocks     │
+                              │  Quorum: 4%              │
+                              │  Approval: 66% / 80%     │
+                              └────────────┬────────────┘
+                                           │ PROPOSER + EXECUTOR
+                                           ▼
+                              ┌─────────────────────────┐
+                              │   ArtifactTimelock       │
+                              │   MIN_DELAY: 48 hours    │
+                              │   MAX_DELAY: 30 days     │
+                              │   GRACE_PERIOD: 14 days  │
+                              └────────────┬────────────┘
+                                           │ Queued Operations
+                                           ▼
+                              ┌─────────────────────────┐
+                              │     Treasury Safe        │
+                              │   (DAO Treasury Vault)   │
+                              └────────────┬────────────┘
+                                           │
+              ┌────────────────────────────┼────────────────────────────┐
+              │                            │                            │
+              ▼                            ▼                            ▼
+   ┌──────────────────┐      ┌─────────────────────┐      ┌──────────────────┐
+   │  PID_Emission_v2  │      │    TreasuryAMO       │      │  AVLPStaking_v2  │
+   │  kp, ki, kd       │      │  Buybacks            │      │  LP NFT Staking  │
+   │  targetTVL        │      │  Liquidity Mgmt      │      │  Au + Ag Rewards │
+   │  daily cap: 100k  │      │  Reserve Management  │      │  Ag Multiplier   │
+   │  single cap: 10k  │      │  Price Bands         │      │  1x → 2.5x       │
+   └────────┬─────────┘      └──────────┬──────────┘      └────────┬─────────┘
+            │ mints Ag                   │ buys Au                  │ earns Au+Ag
+            │                            │                          │
+            ▼                            ▼                          ▼
+   ┌──────────────────────────────────────────────────────────────────────────┐
+   │                          CORE TOKEN LAYER                                 │
+   │  ┌────────────────────────────┐    ┌────────────────────────────┐        │
+   │  │        AuToken              │    │        AgToken              │        │
+   │  │  ERC20 + Permit + FlashMint │    │  ERC20 + Permit + Votes    │        │
+   │  │  9 bps fee (50% burn)       │    │  No genesis mint            │        │
+   │  │  Anti-bot: cooldown, max tx  │    │  Algorithmic emission only  │        │
+   │  │  Blocklist, max wallet       │    │  Delegatable voting power   │        │
+   │  └────────────────────────────┘    └────────────────────────────┘        │
+   └──────────────────────────────────────────────────────────────────────────┘
+
+                              ┌─────────────────────────┐
+                              │     Oracle System        │
+                              │                          │
+                              │  ┌───────────────────┐   │
+                              │  │ AvOracle           │   │
+                              │  │ TWAP-primary       │   │
+                              │  │ Chainlink-fallback │   │
+                              │  └────────┬──────────┘   │
+                              │           │              │
+                              │  ┌────────▼──────────┐   │
+                              │  │ OracleWrapper      │   │
+                              │  │ Deviation checks   │   │
+                              │  │ Flash buy triggers │   │
+                              │  └────────┬──────────┘   │
+                              │           │              │
+                              │  ┌────────▼──────────┐   │
+                              │  │ OracleFlashBuy     │   │
+                              │  │ Auto below-peg     │   │
+                              │  │ buyback execution  │   │
+                              │  └───────────────────┘   │
+                              └─────────────────────────┘
+
+                              ┌─────────────────────────┐
+                              │    Flash Buy System      │
+                              │                          │
+                              │  TreasuryFlashBuy        │
+                              │  OracleFlashBuy          │
+                              │  FlashLoan               │
+                              └─────────────────────────┘
+
+                              ┌─────────────────────────┐
+                              │    LP NFT Layer          │
+                              │                          │
+                              │  MockLPNFT (test)        │
+                              │  Aerodrome LP NFT (prod) │
+                              └─────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                              VALUE FLOW (FLYWHEEL)                              ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                ║
+║   Au Transfer ──► 9 bps Fee                                                    ║
+║        │                                                                       ║
+║        ├── 4.5 bps ──► BURNED (deflationary pressure)                          ║
+║        │                                                                       ║
+║        └── 4.5 bps ──► Treasury Reserves                                       ║
+║                           │                                                    ║
+║                           ▼                                                    ║
+║                    TreasuryAMO Buyback                                         ║
+║                    Reserve ──DEX──► Au (buy pressure)                           ║
+║                           │                                                    ║
+║                           ▼                                                    ║
+║                    Stakers Earn Au + Ag                                        ║
+║                    Ag Multiplier Boosts Yield                                  ║
+║                           │                                                    ║
+║                           ▼                                                    ║
+║                    PID Adjusts Ag Emission                                     ║
+║                    Based on TVL vs Target                                      ║
+║                           │                                                    ║
+║                           ▼                                                    ║
+║                    Ag Holders Govern                                           ║
+║                    Propose → Vote → Timelock → Execute                         ║
+║                           │                                                    ║
+║                           ▼                                                    ║
+║                    System Grows → More Usage → More Fees                       ║
+║                           │                                                    ║
+║                           ▼                                                    ║
+║                    ═══════ LOOP CLOSES ═══════                                 ║
+║                                                                                ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## 2. Contract Dependency Graph
+## 3. Contract Inventory
+
+### 3.1 Core Contracts
+
+| Contract | File | Proxy Pattern | Role | Dependencies |
+|---|---|---|---|---|
+| `AuToken` | `contracts/av_suite/AuToken.sol` | UUPS | Utility token with fee-on-transfer, flash mint, anti-bot | None |
+| `AgToken` | `contracts/av_suite/AgToken.sol` | UUPS | Governance token with algorithmic emission, voting | None |
+| `ArtifactTimelock` | `contracts/av_suite/TimelockController.sol` | None (standalone) | 48h time-delayed operation queue | None |
+| `AVLPStaking_v2` | `contracts/av_suite/AVLPStaking_v2.sol` | UUPS | LP NFT staking with Au+Ag rewards and Ag multiplier | AuToken, AgToken, IERC721 |
+| `PID_Emission_Controller_v2` | `contracts/av_suite/PID_Emission_Controller_v2.sol` | None | PID-controlled Ag emission based on TVL feedback | AgToken, AVLPStaking_v2 |
+| `TreasuryAMO` | `contracts/av_suite/TreasuryAMO.sol` | None | Automated buybacks and liquidity operations | AuToken, IERC20, DEX Router |
+| `GovernorContract` | `contracts/av_suite/GovernorContract.sol` | UUPS | DAO governance with proposal/queue/execute pipeline | AgToken, ArtifactTimelock |
+
+### 3.2 Oracle Contracts
+
+| Contract | File | Proxy Pattern | Role | Dependencies |
+|---|---|---|---|---|
+| `AvOracle` | `contracts/av_suite/AvOracle.sol` | UUPS | TWAP-primary price feed with Chainlink fallback | Aerodrome Pool, Chainlink Aggregator |
+| `OracleWrapper` | `contracts/av_suite/OracleWrapper.sol` | UUPS | Deviation validation, flash buy trigger conditions | AvOracle |
+| `OracleFlashBuy` | `contracts/av_suite/OracleFlashBuy.sol` | None | Automated below-peg buyback execution | AvOracle, TreasuryFlashBuy |
+
+### 3.3 Flash Buy Contracts
+
+| Contract | File | Proxy Pattern | Role | Dependencies |
+|---|---|---|---|---|
+| `TreasuryFlashBuy` | `contracts/av_suite/TreasuryFlashBuy.sol` | None | Treasury-initiated flash buy operations | AuToken, DEX Router, FlashLoan |
+| `FlashLoan` | `contracts/av_suite/FlashLoan.sol` | None | Flash loan facilitation for buyback capital | AuToken (ERC3156) |
+
+### 3.4 Supporting Contracts
+
+| Contract | File | Proxy Pattern | Role | Dependencies |
+|---|---|---|---|---|
+| `MockLPNFT` | `contracts/av_suite/MockLPNFT.sol` | None | Mock LP NFT for testing (replaced by Aerodrome NFT in production) | None |
+
+### 3.5 Deployment Addresses (Base Mainnet)
+
+> **Note:** Placeholder addresses. Updated upon deployment.
+
+| Contract | Proxy Address | Implementation Address |
+|---|---|---|
+| AuToken | `0x0000000000000000000000000000000000000000` | `0x0000000000000000000000000000000000000000` |
+| AgToken | `0x0000000000000000000000000000000000000000` | `0x0000000000000000000000000000000000000000` |
+| ArtifactTimelock | `0x0000000000000000000000000000000000000000` | N/A (no proxy) |
+| AVLPStaking_v2 | `0x0000000000000000000000000000000000000000` | `0x0000000000000000000000000000000000000000` |
+| PID_Emission_Controller_v2 | `0x0000000000000000000000000000000000000000` | N/A (no proxy) |
+| TreasuryAMO | `0x0000000000000000000000000000000000000000` | N/A (no proxy) |
+| GovernorContract | `0x0000000000000000000000000000000000000000` | `0x0000000000000000000000000000000000000000` |
+| AvOracle | `0x0000000000000000000000000000000000000000` | `0x0000000000000000000000000000000000000000` |
+| OracleWrapper | `0x0000000000000000000000000000000000000000` | `0x0000000000000000000000000000000000000000` |
+| OracleFlashBuy | `0x0000000000000000000000000000000000000000` | N/A (no proxy) |
+| TreasuryFlashBuy | `0x0000000000000000000000000000000000000000` | N/A (no proxy) |
+| FlashLoan | `0x0000000000000000000000000000000000000000` | N/A (no proxy) |
+
+---
+
+## 4. Data Flow
+
+### 4.1 Price Data Pipeline
 
 ```
-AuToken ◄─────────────── No dependencies
-AgToken ◄─────────────── No dependencies
-MockLPNFT ◄───────────── No dependencies
-ArtifactTimelock ◄────── No dependencies
-         │
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Aerodrome Pool  │     │  Chainlink       │     │  On-Chain        │
+│  TWAP (primary)  │     │  Price Feed      │     │  Price Cache     │
+│                  │     │  (fallback)      │     │                  │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │                       │                       │
+         ▼                       ▼                       │
+    ┌────────────────────────────────────┐              │
+    │           AvOracle                  │              │
+    │  1. Query TWAP from Aerodrome pool  │              │
+    │  2. If TWAP fails/staleness:        │              │
+    │     → Fallback to Chainlink         │              │
+    │  3. Return price + timestamp        │              │
+    └────────────────┬───────────────────┘              │
+                     │                                   │
+                     ▼                                   │
+    ┌────────────────────────────────────┐              │
+    │         OracleWrapper               │◄─────────────┘
+    │  1. Validate deviation < 5%        │   (cached price
+    │  2. Compare TWAP vs Spot            │    for comparison)
+    │  3. If deviation > threshold:       │
+    │     → Flag manipulation            │
+    │  4. If price < peg:                 │
+    │     → Trigger flash buy            │
+    └────────────────┬───────────────────┘
+                     │
+         ┌───────────┼───────────┐
+         ▼           ▼           ▼
+   ┌──────────┐ ┌──────────┐ ┌──────────────┐
+   │ Treasury  │ │ PID      │ │ OracleFlash  │
+   │ AMO       │ │ Emission │ │ Buy          │
+   │ (buyback) │ │ (TVL     │ │ (below-peg   │
+   │           │ │  check)  │ │  buyback)    │
+   └──────────┘ └──────────┘ └──────────────┘
+```
+
+### 4.2 Emission Control Flow
+
+```
+┌──────────────────┐
+│  AVLPStaking_v2   │
+│  totalStakedValue │
+│  (TVL)            │
+└────────┬─────────┘
+         │ TVL query
          ▼
-AVLPStaking_v2 ◄──────── Depends on: AuToken, AgToken, MockLPNFT
-         │
-         ▼
-PID_Emission_Controller_v2 ◄── Depends on: AgToken, AVLPStaking_v2 (for TVL)
-         │
-         ▼
-TreasuryAMO ◄─────────── Depends on: AuToken, reserveToken, DEX router
-         │
-         ▼
-GovernorContract ◄────── Depends on: AgToken, ArtifactTimelock
+┌──────────────────────────────────────────────────┐
+│          PID_Emission_Controller_v2                │
+│                                                   │
+│  error = targetTVL - currentTVL                   │
+│  P = kp × error                                   │
+│  I = (I × 99/100) + ki × error  [decay + accum]  │
+│  D = kd × (error - lastError)                     │
+│  output = P + I + D                               │
+│                                                   │
+│  if output > MAX_SINGLE_EMISSION → clamp          │
+│  if dailyEmitted ≥ MAX_DAILY → return 0           │
+│  if output ≤ 0 → return 0 (no mint)               │
+└────────────────┬─────────────────────────────────┘
+                 │ Ag mint
+                 ▼
+         ┌──────────────┐
+         │   AgToken     │
+         │   mint(to,amt)│
+         └──────────────┘
+```
+
+### 4.3 Buyback Flow
+
+```
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  Treasury Reserves│     │  Oracle Price    │     │  TWAP Validation  │
+│  (USDC, cbBTC)    │     │  (Au/USD)        │     │  (max 5% dev)     │
+└────────┬─────────┘     └────────┬─────────┘     └────────┬─────────┘
+         │                        │                        │
+         ▼                        ▼                        │
+    ┌──────────────────────────────────────┐              │
+    │         TreasuryAMO                   │◄─────────────┘
+    │                                       │
+    │  1. Check 24h cooldown                │
+    │  2. Validate TWAP (OracleWrapper)      │
+    │  3. Calculate buyback amount:          │
+    │     20% of (reserves - runway)         │
+    │  4. Apply epoch cap (5% of reserve)    │
+    │  5. Execute swap on Aerodrome          │
+    │  6. Fallback to Uniswap on failure     │
+    │  7. Slippage check (max 0.5%)          │
+    └────────────────┬─────────────────────┘
+                     │
+                     ▼
+              ┌──────────────┐
+              │   AuToken     │
+              │   Received    │
+              │   (circulating│
+              │    supply ↑)  │
+              └──────────────┘
+```
+
+### 4.4 Governance Action Flow
+
+```
+┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+│  Propose  │───►│  Voting  │───►│  Queue   │───►│ Timelock │───►│ Execute  │
+│  (1 block │    │  Period  │    │ (enter   │    │  48h     │    │ (anyone) │
+│  delay)   │    │  3 days  │    │  48h     │    │  delay)  │    │          │
+│           │    │          │    │  queue)  │    │          │    │          │
+└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+     │               │                              │                │
+     │          ┌────┴────┐                         │                │
+     │          │ Quorum?  │                         │                │
+     │          │ 66%/80%? │                         │                │
+     │          └─────────┘                         │                │
+     │                                              │                │
+     │  Requirements:                               │  Effects:      │
+     │  - 100k Ag threshold                         │  - Parameter   │
+     │  - Ag voting power                           │    changes     │
+     │  - Snapshot-based                            │  - Upgrades    │
+     │                                              │  - Transfers   │
+     └──────────────────────────────────────────────┴────────────────┘
 ```
 
 ---
 
-## 3. AuToken
+## 5. Monetary Policy Engine
 
-**File:** `contracts/av_suite/AuToken.sol`
-**Inherits:** ERC20Upgradeable, ERC20PermitUpgradeable, ERC20FlashMintUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, UUPSUpgradeable
+### 5.1 Overview
 
-### Storage Layout
+The PID (Proportional-Integral-Derivative) Emission Controller implements an algorithmic monetary policy that adjusts Ag token supply to maintain a target Total Value Locked (TVL). This mirrors how central banks adjust money supply in response to economic conditions.
 
-| Slot | Variable | Type | Description |
-|---|---|---|---|
-| 0 | `_balances` | `mapping(address => uint256)` | ERC20 balances |
-| 1 | `_allowances` | `mapping(address => mapping(address => uint256))` | ERC20 allowances |
-| 2 | `_totalSupply` | `uint256` | Total Au supply |
-| 3 | `_name` | `string` | Token name |
-| 4 | `_symbol` | `string` | Token symbol |
-| 5 | `_roles` | `mapping(bytes32 => RoleData)` | AccessControl roles |
-| 6 | `_paused` | `bool` | Pausable state |
-| 7 | `feeBasisPoints` | `uint256` | Current fee in bps (default: 9) |
-| 8 | `maxFeeBasisPoints` | `uint256` | Max fee cap in bps (default: 500) |
-| 9 | `accumulatedFees` | `uint256` | Fees collected for treasury |
-| 10 | `blockedAddresses` | `mapping(address => bool)` | Blocklist |
-| 11 | `cooldownPeriod` | `uint256` | Anti-bot sell cooldown |
-| 12 | `lastSellTimestamp` | `mapping(address => uint256)` | Last sell time per address |
-| 13 | `maxTransactionAmount` | `uint256` | 1% of supply |
-| 14 | `maxWalletAmount` | `uint256` | 1% of supply |
-| 15 | `feesEnabled` | `bool` | Fee toggle |
+### 5.2 PID Controller Mathematics
 
-### Key Functions
+The controller computes an emission amount based on the difference between target and actual TVL:
 
-```solidity
-/// @notice Initialize the AuToken proxy
-/// @param deployer The deployer address (receives MINTER_ROLE, ANTI_BOT_ROLE, DEFAULT_ADMIN_ROLE)
-function initialize(address deployer) external initializer;
+```
+e(t) = targetTVL - currentTVL(t)           [error signal]
 
-/// @notice Override transfer to apply fee logic
-function _transfer(address from, address to, uint256 amount) internal override;
+u(t) = Kp·e(t) + Ki·∫e(τ)dτ + Kd·de(t)/dt  [PID output]
 
-/// @notice Calculate flash mint fee (9 bps)
-function _flashFee(address token, uint256 amount) internal view override returns (uint256);
-
-/// @notice Execute flash mint with fee
-function flashLoan(IERC3156FlashBorrower receiver, address token, uint256 amount, bytes calldata data) external override returns (bool);
-
-/// @notice Set fee basis points (governance only, capped at maxFeeBasisPoints)
-function setFeeBasisPoints(uint256 newFeeBps) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Toggle fee on/off (admin only)
-function setFeesEnabled(bool enabled) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Block an address (anti-bot)
-function blockAddress(address account) external onlyRole(ANTI_BOT_ROLE);
-
-/// @notice Unblock an address
-function unblockAddress(address account) external onlyRole(ANTI_BOT_ROLE);
-
-/// @notice Set cooldown period (max 7 days)
-function setCooldownPeriod(uint256 period) external onlyRole(ANTI_BOT_ROLE);
-
-/// @notice Withdraw accumulated fees to treasury
-function withdrawAccumulatedFees(address to) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Emergency pause
-function pause() external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Unpause
-function unpause() external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Override _beforeTokenTransfer for blocklist, cooldown, max tx/wallet checks
-function _beforeTokenTransfer(address from, address to, uint256 amount) internal override;
-
-/// @notice On-chain SVG tokenURI
-function tokenURI(uint256 id) public view override returns (string memory);
-
-/// @notice UUPS upgrade authorization
-function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE);
+Where:
+  Kp = Proportional gain (immediate response to error)
+  Ki = Integral gain (accumulated error correction over time)
+  Kd = Derivative gain (rate-of-change dampening)
 ```
 
-### Fee Logic (in `_transfer`)
-
-```solidity
-if (feesEnabled && !isExcluded[from] && !isExcluded[to]) {
-    uint256 fee = (amount * feeBasisPoints) / 10000;
-    uint256 burnAmount = fee / 2;        // 50% burned
-    uint256 accumAmount = fee - burnAmount; // 50% accumulated
-    super._transfer(from, address(0), burnAmount);
-    accumulatedFees += accumAmount;
-    amount -= fee;
-}
-super._transfer(from, to, amount);
-```
-
----
-
-## 4. AgToken
-
-**File:** `contracts/av_suite/AgToken.sol`
-**Inherits:** ERC20Upgradeable, ERC20PermitUpgradeable, ERC20VotesUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable
-
-### Storage Layout
-
-| Slot | Variable | Type | Description |
-|---|---|---|---|
-| 0 | `_balances` | `mapping(address => uint256)` | ERC20 balances |
-| 1 | `_allowances` | `mapping(address => mapping(address => uint256))` | ERC20 allowances |
-| 2 | `_totalSupply` | `uint256` | Total Ag supply |
-| 3 | `_name` | `string` | Token name |
-| 4 | `_symbol` | `string` | Token symbol |
-| 5 | `_roles` | `mapping(bytes32 => RoleData)` | AccessControl roles |
-| 6 | `_checkpoints` | `mapping(address => Checkpoint[])` | ERC20Votes checkpoints |
-| 7 | `_delegates` | `mapping(address => address)` | Delegation mapping |
-| 8 | `_totalSupplyCheckpoints` | `Checkpoint[]` | Total supply checkpoints |
-
-### Key Functions
-
-```solidity
-/// @notice Initialize the AgToken proxy
-/// @param deployer The deployer address (receives DEFAULT_ADMIN_ROLE)
-function initialize(address deployer) external initializer;
-
-/// @notice Mint Ag tokens (restricted to MINTER_ROLE: Staking + PID only)
-function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE);
-
-/// @notice Burn Ag tokens
-function burn(address from, uint256 amount) external;
-
-/// @notice Override _mint for ERC20Votes checkpoint support
-function _mint(address to, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable);
-
-/// @notice Override _burn for ERC20Votes checkpoint support
-function _burn(address account, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable);
-
-/// @notice Override _afterTokenTransfer for ERC20Votes checkpoint support
-function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable);
-
-/// @notice Delegate voting power
-function delegate(address delegatee) external;
-
-/// @notice Delegate by signature (EIP-2612 style)
-function delegateBySig(address delegatee, uint256 nonce, uint256 expiry, uint8 v, bytes32 r, bytes32 s) external;
-
-/// @notice Get current votes for an account
-function getVotes(address account) public view override returns (uint256);
-
-/// @notice Get prior votes for an account at a block number
-function getPriorVotes(address account, uint256 blockNumber) public view override returns (uint256);
-
-/// @notice UUPS upgrade authorization
-function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE);
-```
-
----
-
-## 5. ArtifactTimelock
-
-**File:** `contracts/av_suite/TimelockController.sol`
-**Inherits:** TimelockController (OpenZeppelin)
-
-### Configuration
-
-| Parameter | Value |
-|---|---|
-| MIN_DELAY | 48 hours |
-| MAX_DELAY | 30 days |
-| GRACE_PERIOD | 14 days |
-
-### Key Functions
-
-```solidity
-/// @notice Initialize timelock
-/// @param proposer Address that can propose operations
-/// @param canceler Address that can cancel operations
-/// @param executor Address that can execute operations
-function initialize(address proposer, address canceler, address executor) external;
-
-/// @notice Schedule an operation
-function schedule(address target, uint256 value, bytes calldata data, bytes32 predecessor, bytes32 salt, uint256 delay) external;
-
-/// @notice Execute an operation (after timelock expires)
-function execute(address target, uint256 value, bytes calldata data, bytes32 predecessor, bytes32 salt) external;
-
-/// @notice Cancel a scheduled operation
-function cancel(bytes32 id) external;
-```
-
----
-
-## 6. AVLPStaking_v2
-
-**File:** `contracts/av_suite/AVLPStaking_v2.sol`
-**Inherits:** AccessControlUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, UUPSUpgradeable, IERC721ReceiverUpgradeable
-
-### Storage Layout
-
-| Slot | Variable | Type | Description |
-|---|---|---|---|
-| 0 | `auToken` | `AuToken` | Au token contract |
-| 1 | `agToken` | `AgToken` | Ag token contract |
-| 2 | `lpNFT` | `IERC721` | LP NFT contract |
-| 3 | `rewardPerWeightStored` | `uint256` | Accumulated reward per weight |
-| 4 | `auRewardRate` | `uint256` | Au reward per block (default: 0.001 Au) |
-| 5 | `agRewardRate` | `uint256` | Ag reward per block (default: 0.0001 Ag) |
-| 6 | `totalWeight` | `uint256` | Total staked weight |
-| 7 | `stakes` | `mapping(uint256 => Stake)` | TokenId → Stake info |
-| 8 | `userRewardPerWeightPaid` | `mapping(address => uint256)` | User's last reward checkpoint |
-| 9 | `pendingRewards` | `mapping(address => uint256)` | Pending reward amounts |
-| 10 | `rateChangeTimestamp` | `uint256` | When rate was last changed |
-| 11 | `pendingRateAu` | `uint256` | Pending Au rate (after timelock) |
-| 12 | `pendingRateAg` | `uint256` | Pending Ag rate (after timelock) |
-| 13 | `agThreshold` | `uint256` | Ag balance for max multiplier (5000) |
-
-### Stake Struct
-
-```solidity
-struct Stake {
-    address owner;
-    uint256 tokenId;
-    uint256 weight;
-    uint256 depositedAt;
-}
-```
-
-### Key Functions
-
-```solidity
-/// @notice Initialize staking contract
-function initialize(address auToken, address agToken, address lpNFT) external initializer;
-
-/// @notice Stake an LP NFT
-function stake(uint256 tokenId) external nonReentrant whenNotPaused;
-
-/// @notice Unstake an LP NFT
-function unstake(uint256 tokenId) external nonReentrant;
-
-/// @notice Claim pending Au + Ag rewards
-function claimRewards() external nonReentrant;
-
-/// @notice Calculate Ag-based multiplier for a staker
-/// @param staker The address to calculate multiplier for
-/// @return multiplier in basis points (10000 = 1x, 25000 = 2.5x)
-function getAgMultiplier(address staker) public view returns (uint256);
-
-/// @notice Set reward rates (48h timelock)
-function setRewardRates(uint256 auRate, uint256 agRate) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Apply pending reward rates (after 48h timelock)
-function applyRewardRates() external;
-
-/// @notice Recover stuck NFT (admin only)
-function recoverNFT(uint256 tokenId) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Calculate pending rewards for an address
-function earned(address account) public view returns (uint256 auAmount, uint256 agAmount);
-
-/// @notice UUPS upgrade authorization
-function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE);
-```
-
-### Ag Multiplier Formula
-
-```solidity
-function getAgMultiplier(address staker) public view returns (uint256) {
-    uint256 agBalance = agToken.balanceOf(staker);
-    // multiplier = 10000 + (15000 * agBalance) / threshold
-    // At threshold (5000 Ag): multiplier = 10000 + 15000 = 25000 (2.5x)
-    return 10000 + (15000 * agBalance) / agThreshold;
-}
-```
-
----
-
-## 7. PID_Emission_Controller_v2
+### 5.3 Implementation
 
 **File:** `contracts/av_suite/PID_Emission_Controller_v2.sol`
-**Inherits:** AccessControl, ReentrancyGuard, Pausable
-
-### Storage Layout
-
-| Slot | Variable | Type | Description |
-|---|---|---|---|
-| 0 | `agToken` | `AgToken` | Ag token contract |
-| 1 | `stakingContract` | `AVLPStaking_v2` | Staking contract (TVL source) |
-| 2 | `targetTVL` | `uint256` | Target TVL (default: 10,000,000) |
-| 3 | `kp` | `int256` | Proportional gain |
-| 4 | `ki` | `int256` | Integral gain |
-| 5 | `kd` | `int256` | Derivative gain |
-| 6 | `integral` | `int256` | Accumulated integral term |
-| 7 | `lastError` | `int256` | Previous error (for derivative) |
-| 8 | `lastUpdate` | `uint256` | Last update timestamp |
-| 9 | `dailyEmitted` | `uint256` | Ag emitted today |
-| 10 | `dailyResetTime` | `uint256` | When daily counter resets |
-| 11 | `emergencyStopped` | `bool` | Emergency stop flag |
-| 12 | `pendingAdmin` | `address` | Two-step admin transfer |
-| 13 | `maxIntegral` | `uint256` | Max integral value (1e24) |
-
-### Key Functions
 
 ```solidity
-/// @notice Initialize PID controller
-function initialize(address admin) external;
+struct PIDParams {
+    int256 kp;           // Proportional gain (default: 1e15)
+    int256 ki;           // Integral gain (default: 1e13)
+    int256 kd;           // Derivative gain (default: 1e14)
+    int256 integral;     // Accumulated integral term
+    int256 lastError;    // Previous error for derivative calculation
+    uint256 lastUpdate;  // Timestamp of last update
+}
 
-/// @notice Calculate and emit Ag based on PID output
-function updateEmission() external nonReentrant whenNotPaused;
-
-/// @notice Get current TVL from staking contract
-function getCurrentTVL() public view returns (uint256);
-
-/// @notice Set target TVL
-function setTargetTVL(uint256 newTarget) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Set PID parameters (bounded: 1e12 to 1e18)
-function setPIDParams(uint256 kp, uint256 ki, uint256 kd) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Set staking contract reference
-function setStakingContract(address staking) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Emergency stop toggle
-function setEmergencyStop(bool stopped) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Two-step admin transfer: initiate
-function transferAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Two-step admin transfer: accept
-function acceptAdmin() external;
-
-/// @notice Pause
-function pause() external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Unpause
-function unpause() external onlyRole(DEFAULT_ADMIN_ROLE);
+struct EmissionBounds {
+    uint256 maxSingleEmission;   // Max per-call: 10,000 Ag (10k)
+    uint256 maxDailyEmission;    // Max per-day: 100,000 Ag (100k)
+    uint256 maxIntegral;         // Max integral magnitude: 1e24
+    uint256 integralDecay;        // Decay factor: 99/100 per call
+}
 ```
 
-### PID Algorithm
+### 5.4 PID Algorithm (Detailed)
 
 ```solidity
 function _calculateEmission() internal returns (uint256) {
-    uint256 currentTVL = getCurrentTVL();
+    uint256 currentTVL = getCurrentTVL();          // From AVLPStaking
     int256 error = int256(targetTVL) - int256(currentTVL);
 
-    // Proportional
+    // === PROPORTIONAL TERM ===
+    // Immediate response: larger error → larger emission/burn
     int256 proportional = kp * error;
 
-    // Integral with decay
-    integral = (integral * 99) / 100; // Decay
+    // === INTEGRAL TERM ===
+    // Decay prevents unbounded accumulation (99% retention per call)
+    integral = (integral * integralDecay) / 100;
     integral += ki * error;
+
+    // Clamp integral to prevent windup
     if (integral > int256(maxIntegral)) integral = int256(maxIntegral);
     if (integral < -int256(maxIntegral)) integral = -int256(maxIntegral);
 
-    // Derivative
+    // === DERIVATIVE TERM ===
+    // Dampens oscillation: responds to rate of change
     int256 derivative = kd * (error - lastError);
     lastError = error;
 
-    // PID output
+    // === COMBINE ===
     int256 output = proportional + integral + derivative;
 
-    // Clamp to emission bounds
-    if (output <= 0) return 0;
-    if (output > int256(MAX_SINGLE_EMISSION)) return MAX_SINGLE_EMISSION;
+    // === BOUNDS ===
+    if (output <= 0) return 0;                    // No negative emission
+    if (output > int256(maxSingleEmission))       // Per-call cap
+        return maxSingleEmission;
 
-    // Check daily cap
-    if (dailyEmitted >= MAX_DAILY_EMISSION) return 0;
+    // === DAILY CAP ===
+    _resetDailyIfNeeded();
+    if (dailyEmitted >= maxDailyEmission) return 0;
 
     uint256 emission = uint256(output);
-    if (dailyEmitted + emission > MAX_DAILY_EMISSION) {
-        emission = MAX_DAILY_EMISSION - dailyEmitted;
-    }
+    if (dailyEmitted + emission > maxDailyEmission)
+        emission = maxDailyEmission - dailyEmitted;
 
     dailyEmitted += emission;
     return emission;
 }
 ```
 
----
+### 5.5 Monetary Policy Modes
 
-## 8. TreasuryAMO
+| Condition | PID Error | Emission | Policy Effect |
+|---|---|---|---|
+| TVL < Target | Positive | Mint Ag | Expansionary: incentivize staking |
+| TVL = Target | Zero | Minimal | Neutral: equilibrium |
+| TVL > Target | Negative | Zero | Contractionary: no new emission |
+| TVL rapidly dropping | Large positive | Max single cap | Emergency expansion |
 
-**File:** `contracts/av_suite/TreasuryAMO.sol`
-**Inherits:** AccessControl, ReentrancyGuard, Pausable
+### 5.6 Parameter Table
 
-### Storage Layout
+| Parameter | Default Value | Bounds | Governance | Description |
+|---|---|---|---|---|
+| `targetTVL` | 10,000,000e18 | > 0 | Governor | Target TVL in USD terms |
+| `kp` | 1e15 | 1e12 – 1e18 | Governor | Proportional gain |
+| `ki` | 1e13 | 1e10 – 1e16 | Governor | Integral gain |
+| `kd` | 1e14 | 1e11 – 1e17 | Governor | Derivative gain |
+| `maxSingleEmission` | 10,000e18 | ≤ 100,000e18 | Governor | Max Ag minted per call |
+| `maxDailyEmission` | 100,000e18 | ≤ 1,000,000e18 | Governor | Max Ag minted per day |
+| `integralDecay` | 99/100 | 90/100 – 99/100 | Governor | Integral decay per call |
+| `maxIntegral` | 1e24 | ≤ 1e27 | Governor | Max integral magnitude |
+
+### 5.7 Storage Layout
 
 | Slot | Variable | Type | Description |
 |---|---|---|---|
-| 0 | `auToken` | `AuToken` | Au token contract |
-| 1 | `reserveToken` | `IERC20` | Reserve token (USDC, cbBTC, etc.) |
-| 2 | `primaryRouter` | `address` | Aerodrome router |
-| 3 | `backupRouter` | `address` | Uniswap router |
-| 4 | `lastBuybackTime` | `uint256` | Last buyback timestamp |
-| 5 | `buybackCooldown` | `uint256` | 24 hours |
-| 6 | `buybackBps` | `uint256` | 20% of reserves above runway |
-| 7 | `maxSlippageBps` | `uint256` | 0.5% max slippage |
-| 8 | `twapDeviationBps` | `uint256` | 5% max TWAP deviation |
-| 9 | `epochCapBps` | `uint256` | 5% of reserve per epoch |
-| 10 | `runwayThreshold` | `uint256` | Minimum reserve to maintain |
+| 0 | `agToken` | `AgToken` | Ag token contract reference |
+| 1 | `stakingContract` | `AVLPStaking_v2` | Staking contract (TVL source) |
+| 2 | `targetTVL` | `uint256` | Target TVL in USD (18 decimals) |
+| 3 | `kp` | `int256` | Proportional gain |
+| 4 | `ki` | `int256` | Integral gain |
+| 5 | `kd` | `int256` | Derivative gain |
+| 6 | `integral` | `int256` | Accumulated integral term |
+| 7 | `lastError` | `int256` | Previous error value |
+| 8 | `lastUpdate` | `uint256` | Last update timestamp |
+| 9 | `dailyEmitted` | `uint256` | Ag emitted today |
+| 10 | `dailyResetTime` | `uint256` | Daily counter reset timestamp |
+| 11 | `emergencyStopped` | `bool` | Emergency stop flag |
+| 12 | `pendingAdmin` | `address` | Two-step admin transfer |
+| 13 | `maxIntegral` | `uint256` | Max integral value |
 
-### Key Functions
+---
 
-```solidity
-/// @notice Initialize TreasuryAMO
-function initialize(address auToken, address reserveToken, address primaryRouter, address backupRouter) external;
+## 6. AMO Module
 
-/// @notice Execute automated buyback
-function executeBuyback() external nonReentrant whenNotPaused;
+### 6.1 Overview
 
-/// @notice Get buyback amount (20% of reserves above runway)
-function getBuybackAmount() public view returns (uint256);
+The **TreasuryAMO** (Automated Market Operations) module implements central bank-style open market operations. It manages treasury reserves to:
 
-/// @notice Validate TWAP price (max 5% deviation)
-function validateTWAP() public view returns (bool);
+1. **Execute buybacks** — Purchase Au from DEX liquidity using accumulated reserves
+2. **Provide liquidity** — Deploy reserves into Au/reserveToken liquidity pools
+3. **Maintain price bands** — Intervene when Au price deviates beyond acceptable range
+4. **Manage runway** — Ensure minimum operational reserves are always available
 
-/// @notice Emergency withdraw (when paused)
-function emergencyWithdraw(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE);
+### 6.2 Architecture
 
-/// @notice Set buyback parameters
-function setBuybackParams(uint256 bps, uint256 cooldown, uint256 slippage, uint256 twapDev, uint256 epochCap) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Set reserve token
-function setReserveToken(address token) external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Pause
-function pause() external onlyRole(DEFAULT_ADMIN_ROLE);
-
-/// @notice Unpause
-function unpause() external onlyRole(DEFAULT_ADMIN_ROLE);
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        TreasuryAMO                                │
+│                                                                   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │  Reserve     │  │  Buyback    │  │  Liquidity              │  │
+│  │  Manager     │  │  Engine     │  │  Provider               │  │
+│  │             │  │             │  │                         │  │
+│  │  - USDC     │  │  - 20% of   │  │  - Add/remove liquidity │  │
+│  │  - cbBTC    │  │    excess    │  │  - Concentrated ranges  │  │
+│  │  - Au       │  │  - 24h       │  │  - Fee collection       │  │
+│  │             │  │    cooldown  │  │                         │  │
+│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────────┘  │
+│         │                │                     │                  │
+│         └────────────────┼─────────────────────┘                  │
+│                          │                                        │
+│                ┌─────────▼─────────┐                              │
+│                │  DEX Router        │                              │
+│                │  (Aerodrome /      │                              │
+│                │   Uniswap)         │                              │
+│                └───────────────────┘                              │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### Buyback Logic
+### 6.3 Core Functions
 
 ```solidity
-function executeBuyback() external nonReentrant whenNotPaused {
-    require(block.timestamp >= lastBuybackTime + buybackCooldown, "Cooldown active");
-    require(validateTWAP(), "TWAP deviation too high");
+/// @notice Execute automated buyback using treasury reserves
+/// @dev Called by keeper or governance. Validates TWAP before execution.
+/// @return buybackAmount The amount of reserve tokens spent
+/// @return auReceived The amount of Au received from the swap
+function executeBuyback() external nonReentrant whenNotPaused
+    returns (uint256 buybackAmount, uint256 auReceived);
 
-    uint256 buybackAmount = getBuybackAmount();
-    require(buybackAmount > 0, "Nothing to buyback");
+/// @notice Calculate the available buyback amount
+/// @return amount The reserve tokens available for buyback this epoch
+function getBuybackAmount() public view returns (uint256 amount);
 
-    // Check epoch cap
-    uint256 epochCap = (reserveBalance() * epochCapBps) / 10000;
-    if (buybackAmount > epochCap) buybackAmount = epochCap;
+/// @notice Validate TWAP price against spot price
+/// @return valid True if deviation is within acceptable bounds
+function validateTWAP() public view returns (bool valid);
 
-    // Execute swap on primary router (Aerodrome)
-    // Slippage check: max 0.5%
-    // On failure, try backup router (Uniswap)
+/// @notice Add liquidity to Au/reserveToken pool
+/// @param reserveAmount Amount of reserve tokens to add
+/// @param auAmount Amount of Au to add
+function addLiquidity(uint256 reserveAmount, uint256 auAmount) external onlyRole(DEFAULT_ADMIN_ROLE);
 
-    lastBuybackTime = block.timestamp;
-}
+/// @notice Remove liquidity from Au/reserveToken pool
+/// @param lpAmount LP tokens to burn
+function removeLiquidity(uint256 lpAmount) external onlyRole(DEFAULT_ADMIN_ROLE);
+
+/// @notice Emergency withdraw tokens (only when paused)
+function emergencyWithdraw(address token, address to, uint256 amount)
+    external onlyRole(DEFAULT_ADMIN_ROLE);
+```
+
+### 6.4 Buyback Mechanics
+
+```
+Buyback Amount = min(
+    20% × (totalReserves - runwayReserve),    // Sustainable amount
+    5% × totalReserves,                         // Per-epoch cap
+    availableReserves                           // Cannot exceed balance
+)
+
+Where:
+  runwayReserve = minimum operational reserve (governance-set)
+  20% = buybackBps / 10000
+  5% = epochCapBps / 10000
+```
+
+### 6.5 Parameter Table
+
+| Parameter | Default | Bounds | Description |
+|---|---|---|---|
+| `buybackBps` | 2000 (20%) | 0 – 5000 | % of excess reserves for buyback |
+| `buybackCooldown` | 24 hours | 1h – 7 days | Time between buyback executions |
+| `epochCapBps` | 500 (5%) | 0 – 10000 | Max % of reserves per buyback epoch |
+| `slippageTolerance` | 50 (0.5%) | 0 – 500 | Max slippage on DEX swaps |
+| `runwayReserve` | 100,000e6 | ≥ 0 | Minimum reserve balance maintained |
+| `priceBandUpper` | 105e16 (105%) | > 100% | Upper intervention threshold |
+| `priceBandLower` | 95e16 (95%) | < 100% | Lower intervention threshold |
+
+### 6.6 Reserve Management Strategy
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Reserve Allocation                         │
+│                                                              │
+│  Total Reserves = USDC + cbBTC + Au (in USD terms)          │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Runway Reserve (untouchable)                        │    │
+│  │  → Ensures operational continuity                    │    │
+│  └─────────────────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Active Reserves (deployable)                        │    │
+│  │  → Buybacks, liquidity provision, yield generation   │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+│  Allocation:                                                 │
+│  - 20% of excess → Buybacks (Au purchase)                   │
+│  - Remaining → Liquidity provision / yield                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 6.7 DEX Interaction Flow
+
+```
+TreasuryAMO.executeBuyback()
+    │
+    ├── 1. Check: block.timestamp >= lastBuyback + buybackCooldown
+    ├── 2. Check: !paused && !emergencyStopped
+    ├── 3. OracleWrapper.validateTWAP() → must be true
+    ├── 4. Calculate buyback amount (getBuybackAmount)
+    ├── 5. Approve DEX router for reserveToken spend
+    ├── 6. Swap on Aerodrome (primary)
+    │       ├── Success → continue
+    │       └── Failure → fallback to Uniswap V3
+    ├── 7. Slippage check: auReceived >= minAmountOut
+    ├── 8. Update lastBuyback timestamp
+    └── 9. Emit BuybackExecuted(reserveSpent, auReceived)
 ```
 
 ---
 
-## 9. GovernorContract
+## 7. Oracle Module
 
-**File:** `contracts/av_suite/GovernorContract.sol`
-**Inherits:** Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl
+### 7.1 Architecture Overview
 
-### Configuration
+The oracle system implements a **three-layer architecture** for price data:
 
-| Parameter | Value |
-|---|---|
-| Voting Token | AgToken (ERC20Votes) |
-| Voting Delay | 1 block |
-| Voting Period | 216,000 blocks (~3 days at 12s/block) |
-| Proposal Threshold | 100,000 Ag |
-| Quorum | 4% of total supply |
-| Standard Approval | 66% |
-| Critical Approval | 80% |
-| Timelock | 48 hours (via ArtifactTimelock) |
+1. **AvOracle** — Primary price feed (TWAP) with fallback (Chainlink)
+2. **OracleWrapper** — Validation layer with deviation checks and trigger conditions
+3. **OracleFlashBuy** — Automated action layer for below-peg buybacks
 
-### Key Functions
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                         ORACLE ARCHITECTURE                           │
+│                                                                       │
+│  Layer 1: AvOracle                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │  Source A: Aerodrome TWAP (primary)                           │    │
+│  │  Source B: Chainlink Price Feed (fallback)                    │    │
+│  │  Logic: TWAP if fresh & valid, else Chainlink                │    │
+│  │  Output: price (uint256, 18 decimals), timestamp              │    │
+│  └──────────────────────────────────────────────────────────────┘    │
+│                              │                                        │
+│  Layer 2: OracleWrapper                                               │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │  Deviation Check: |TWAP - Spot| / Spot < maxDeviation       │    │
+│  │  Staleness Check: block.timestamp - timestamp < maxStaleness │    │
+│  │  Trigger: price < pegThreshold → signal flash buy            │    │
+│  └──────────────────────────────────────────────────────────────┘    │
+│                              │                                        │
+│  Layer 3: OracleFlashBuy                                              │
+│  ┌──────────────────────────────────────────────────────────────┐    │
+│  │  Listens for trigger signal from OracleWrapper                │    │
+│  │  Executes buyback via TreasuryFlashBuy                        │    │
+│  │  Validates price improvement after execution                  │    │
+│  └──────────────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 AvOracle
+
+**File:** `contracts/av_suite/AvOracle.sol`
 
 ```solidity
-/// @notice Initialize governor
-function initialize(address agToken, address timelock) external initializer;
+struct OracleConfig {
+    address pool;                  // Aerodrome pool address
+    address token0;                // Token0 in pool
+    address token1;                // Token1 in pool
+    uint32 twapDuration;           // TWAP window (default: 1800s = 30min)
+    address chainlinkAggregator;   // Chainlink price feed
+    uint256 maxDeviation;          // Max TWAP/spot deviation (default: 500 = 5%)
+    uint256 maxStaleness;          // Max staleness in seconds (default: 3600)
+}
 
-/// @notice Create a proposal
+/// @notice Get the current Au price in USD
+/// @return price The price with 18 decimal precision
+/// @return timestamp The timestamp of the price data
+function getPrice() external view returns (uint256 price, uint256 timestamp);
+
+/// @notice Get TWAP price from Aerodrome pool
+/// @return twapPrice The TWAP price over configured duration
+function getTWAP() public view returns (uint256 twapPrice);
+
+/// @notice Get Chainlink fallback price
+/// @return chainlinkPrice The Chainlink reported price
+function getChainlinkPrice() public view returns (uint256 chainlinkPrice);
+```
+
+**Price Resolution Logic:**
+```
+1. Query Aerodrome pool TWAP for configured duration
+2. If TWAP succeeds AND (block.timestamp - twapTimestamp) < maxStaleness:
+     → Return TWAP price
+3. Else:
+     → Query Chainlink aggregator.latestRoundData()
+     → Validate round completeness
+     → Return Chainlink price
+4. If both fail:
+     → Revert with OracleUnavailable()
+```
+
+### 7.3 OracleWrapper
+
+**File:** `contracts/av_suite/OracleWrapper.sol`
+
+```solidity
+struct WrapperConfig {
+    uint256 maxDeviationBps;        // Max deviation between TWAP and spot (500 = 5%)
+    uint256 pegThresholdBps;       // Below-peg trigger threshold (9800 = 98%)
+    uint256 flashBuyThresholdBps;  // Flash buy trigger threshold (9700 = 97%)
+    uint256 cooldown;              // Min time between flash buy triggers
+}
+
+/// @notice Validate price data integrity
+/// @return valid True if all checks pass
+function validatePrice() external view returns (bool valid);
+
+/// @notice Check if flash buy should be triggered
+/// @return shouldTrigger True if conditions met
+function checkFlashBuyTrigger() external view returns (bool shouldTrigger);
+
+/// @notice Get validated price for consumption by other contracts
+/// @return price Validated USD price (18 decimals)
+function getValidatedPrice() external view returns (uint256 price);
+```
+
+**Deviation Check:**
+```
+deviation = |twapPrice - spotPrice| × 10000 / spotPrice
+if deviation > maxDeviationBps:
+    → Return invalid (potential manipulation)
+else:
+    → Return valid
+```
+
+### 7.4 OracleFlashBuy
+
+**File:** `contracts/av_suite/OracleFlashBuy.sol`
+
+```solidity
+/// @notice Execute automated below-peg buyback
+/// @dev Called when OracleWrapper signals trigger condition
+/// @return success True if buyback executed successfully
+function executeFlashBuy() external nonReentrant returns (bool success);
+
+/// @notice Check if conditions warrant a flash buy
+/// @return eligible True if all preconditions met
+function isEligible() external view returns (bool eligible);
+
+/// @notice Calculate optimal flash buy amount
+/// @return amount Reserve tokens to spend
+function getOptimalAmount() external view returns (uint256 amount);
+```
+
+### 7.5 Oracle Parameter Table
+
+| Parameter | Default | Bounds | Contract | Description |
+|---|---|---|---|---|
+| `twapDuration` | 1800s (30min) | 60s – 7200s | AvOracle | TWAP window |
+| `maxDeviation` | 500 (5%) | 100 – 2000 | AvOracle | Max TWAP/spot deviation |
+| `maxStaleness` | 3600s (1hr) | 300s – 86400s | AvOracle | Max price staleness |
+| `pegThreshold` | 9800 (98%) | 9000 – 10000 | OracleWrapper | Below-peg trigger |
+| `flashBuyThreshold` | 9700 (97%) | 9000 – 9900 | OracleWrapper | Flash buy trigger |
+| `flashBuyCooldown` | 1 hours | 15min – 24h | OracleWrapper | Min time between triggers |
+| `maxPriceAge` | 300s (5min) | 60s – 3600s | OracleWrapper | Max age for price consumption |
+
+---
+
+## 8. Governance Module
+
+### 8.1 Architecture
+
+The governance pipeline follows a **three-stage delayed execution** pattern:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                     GOVERNANCE PIPELINE                                  │
+│                                                                         │
+│  Stage 1: GovernorContract (OpenZeppelin Governor)                      │
+│  ┌────────────────────────────────────────────────────────────────┐    │
+│  │  - Proposal submission (100k Ag threshold)                     │    │
+│  │  - Voting period: 216k blocks (~3 days)                        │    │
+│  │  - Quorum: 4% of total supply                                  │    │
+│  │  - Approval threshold: 66% (normal) / 80% (critical)          │    │
+│  │  - Voting delay: 1 block                                       │    │
+│  │  - ERC20Votes for snapshot-based voting power                  │    │
+│  └────────────────────────────────────────────────────────────────┘    │
+│                              │                                          │
+│                              ▼ (if vote succeeds)                       │
+│  Stage 2: ArtifactTimelock (TimelockController)                         │
+│  ┌────────────────────────────────────────────────────────────────┐    │
+│  │  - MIN_DELAY: 48 hours                                         │    │
+│  │  - MAX_DELAY: 30 days                                          │    │
+│  │  - GRACE_PERIOD: 14 days                                       │    │
+│  │  - PROPOSER role: GovernorContract                             │    │
+│  │  - EXECUTOR role: GovernorContract                             │    │
+│  │  - CANCELLER role: GovernorContract + multisig                  │    │
+│  └────────────────────────────────────────────────────────────────┘    │
+│                              │                                          │
+│                              ▼ (after timelock expires)                 │
+│  Stage 3: Treasury Safe                                                │
+│  ┌────────────────────────────────────────────────────────────────┐    │
+│  │  - Receives queued operations                                  │    │
+│  │  - Executes parameter changes, upgrades, transfers             │    │
+│  │  - All state changes take effect                               │    │
+│  └────────────────────────────────────────────────────────────────┘    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 8.2 GovernorContract
+
+**File:** `contracts/av_suite/GovernorContract.sol`
+
+```solidity
+// Inherits from OpenZeppelin Governor + GovernorVotes + GovernorTimelockControl
+
+struct GovernanceParams {
+    uint256 votingDelay;            // Blocks before voting starts: 1
+    uint256 votingPeriod;           // Blocks for voting: 216000 (~3 days)
+    uint256 quorumNumerator;        // Quorum: 4% (400/10000)
+    uint256 proposalThreshold;      // Min Ag to propose: 100,000e18
+    uint256 quorumNumeratorNormal;  // Normal approval: 66% (6600/10000)
+    uint256 quorumNumeratorCritical;// Critical approval: 80% (8000/10000)
+}
+
+/// @notice Submit a proposal for governance vote
+/// @param targets Target addresses for calls
+/// @param values ETH values for calls
+/// @param calldatas Calldata for each call
+/// @param description Human-readable description
+/// @return proposalId The unique proposal identifier
 function propose(
     address[] memory targets,
     uint256[] memory values,
@@ -567,342 +834,968 @@ function propose(
     string memory description
 ) public override returns (uint256 proposalId);
 
-/// @notice Cast vote on a proposal
-function vote(uint256 proposalId, bool support) external;
-
-/// @notice Cast vote with reason
-function voteWithReason(uint256 proposalId, bool support, string calldata reason) external;
-
-/// @notice Queue a passed proposal (enters timelock)
+/// @notice Queue a successful proposal for timelock
 function queue(
     address[] memory targets,
     uint256[] memory values,
     bytes[] memory calldatas,
     bytes32 descriptionHash
-) public override returns (uint256 proposalId);
+) public override returns (uint256 operationId);
 
-/// @notice Execute a queued proposal (after timelock)
+/// @notice Execute a queued proposal after timelock
 function execute(
     address[] memory targets,
     uint256[] memory values,
     bytes[] memory calldatas,
     bytes32 descriptionHash
-) public payable override returns (uint256 proposalId);
-
-/// @notice Cancel a proposal
-function cancel(
-    address[] memory targets,
-    uint256[] memory values,
-    bytes[] memory calldatas,
-    bytes32 descriptionHash
-) public override returns (uint256 proposalId);
-
-/// @notice Get proposal state
-function state(uint256 proposalId) public view override returns (ProposalState);
-
-/// @notice Check if proposal has quorum
-function quorumReached(uint256 proposalId) public view override returns (bool);
-
-/// @notice Check if proposal has sufficient votes
-function voteSucceeded(uint256 proposalId) public view override returns (bool);
+) public payable override returns (uint256);
 ```
 
-### Proposal States
+### 8.3 ArtifactTimelock
 
-```
-Pending → Active → Canceled
-                   → Defeated
-                   → Succeeded → Queued → Executed
-                                         → Expired
-```
-
----
-
-## 10. MockLPNFT
-
-**File:** `contracts/av_suite/MockLPNFT.sol`
-**Inherits:** ERC721, ERC721Enumerable, Ownable
-
-### Key Functions
+**File:** `contracts/av_suite/TimelockController.sol`
 
 ```solidity
-/// @notice Mint a mock LP NFT (owner only, for testing)
-function mint(address to, uint256 tokenId) external onlyOwner;
+struct TimelockConfig {
+    uint256 minDelay;          // Minimum delay: 172800 (48 hours)
+    uint256 maxDelay;          // Maximum delay: 2592000 (30 days)
+    uint256 gracePeriod;       // Grace period: 1209600 (14 days)
+}
 
-/// @notice Batch mint for bootstrapping
-function batchMint(address to, uint256[] calldata tokenIds) external onlyOwner;
+/// @notice Schedule an operation with timelock delay
+/// @param target Address to call
+/// @param value ETH to send
+/// @param data Calldata
+/// @param predecessor Predecessor operation (bytes32(0) if none)
+/// @param salt Unique salt for operation ID
+/// @return operationId Unique operation identifier
+function schedule(
+    address target,
+    uint256 value,
+    bytes calldata data,
+    bytes32 predecessor,
+    bytes32 salt
+) external onlyRole(PROPOSER_ROLE) returns (bytes32 operationId);
 
-/// @notice Burn a token
-function burn(uint256 tokenId) external;
+/// @notice Execute a scheduled operation after delay
+function execute(
+    address target,
+    uint256 value,
+    bytes calldata data,
+    bytes32 predecessor,
+    bytes32 salt
+) external payable onlyRole(EXECUTOR_ROLE);
+
+/// @notice Cancel a pending operation
+function cancel(bytes32 id) external onlyRole(CANCELLER_ROLE);
 ```
 
-**Note:** In production, this is replaced by real Aerodrome LP NFTs.
+### 8.4 Proposal Lifecycle
+
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│  PENDING │────►│ ACTIVE  │────►│ DEFEATED│     │QUEUED   │────►│EXECUTED │
+│          │     │         │     │         │     │         │     │         │
+│ voting   │     │ voting  │     │ quorum  │     │ in      │     │ after    │
+│ delay    │     │ period  │     │ not met │     │ timelock│     │ delay    │
+│ (1 block)│     │ (3 days)│     │ or      │     │         │     │          │
+│          │     │         │     │ against │     │         │     │          │
+└─────────┘     └────┬────┘     └─────────┘     └────┬────┘     └─────────┘
+                     │                                │
+                     │ (quorum met + majority yes)    │
+                     ▼                                │
+                ┌─────────┐                           │
+                │SUCCEEDED│───────────────────────────┘
+                │         │    (queue called)
+                └─────────┘
+                     │
+                     │ (if cancelled)
+                     ▼
+                ┌─────────┐
+                │CANCELLED│
+                └─────────┘
+```
+
+### 8.5 Governance Parameter Table
+
+| Parameter | Value | Description |
+|---|---|---|
+| `votingDelay` | 1 block | Delay before voting begins |
+| `votingPeriod` | 216,000 blocks (~3 days) | Duration of voting |
+| `quorumNumerator` | 400 (4%) | Minimum participation for valid vote |
+| `proposalThreshold` | 100,000 Ag | Minimum Ag to submit proposal |
+| `approvalThresholdNormal` | 66% | Yes votes needed for normal proposals |
+| `approvalThresholdCritical` | 80% | Yes votes needed for critical proposals |
+| `timelockMinDelay` | 48 hours | Minimum timelock delay |
+| `timelockMaxDelay` | 30 days | Maximum timelock delay |
+| `timelockGracePeriod` | 14 days | Window to execute after delay |
+
+### 8.6 Critical vs Normal Proposals
+
+| Type | Approval Threshold | Examples |
+|---|---|---|
+| **Normal** | 66% | Parameter adjustments, minor upgrades, fee changes |
+| **Critical** | 80% | Timelock parameter changes, contract replacements, emergency powers |
 
 ---
 
-## 11. Access Control Matrix
+## 9. Token Module
 
-| Role | Contract | Holders | Capability |
+### 9.1 AuToken — Utility Token
+
+**File:** `contracts/av_suite/AuToken.sol`
+
+```solidity
+contract AuToken is ERC20, ERC20Permit, ERC3156FlashMintable, UUPSUpgradeable {
+    // === Fee Configuration ===
+    uint256 public constant FEE_BPS = 9;           // 9 basis points
+    uint256 public constant BURN_SHARE = 50;       // 50% of fee burned
+    uint256 public constant TREASURY_SHARE = 50;   // 50% to treasury
+
+    // === Anti-Bot Protection ===
+    uint256 public cooldownDuration;               // Min time between sells
+    uint256 public maxTransactionAmount;           // Max tx size
+    uint256 public maxWalletAmount;                // Max wallet balance
+    mapping(address => bool) public blocklisted;   // Blocklist
+    mapping(address => uint256) public lastSellTime; // Sell cooldown tracker
+
+    // === Core Functions ===
+    function transfer(address to, uint256 amount) public override returns (bool);
+    function transferFrom(address from, address to, uint256 amount) public override returns (bool);
+    function flashLoan(
+        address receiver,
+        address token,
+        uint256 amount,
+        bytes calldata data
+    ) external returns (bool);
+}
+```
+
+### 9.2 AuToken Fee Mechanics
+
+```
+Transfer Amount: X
+Fee = X × 9 / 10000 = X × 0.0009
+
+Distribution:
+  ├── Burn: Fee × 50% = X × 0.00045 (sent to address(0))
+  └── Treasury: Fee × 50% = X × 0.00045 (sent to Treasury Safe)
+
+Net received by recipient: X - Fee = X × 0.9991
+```
+
+### 9.3 AuToken Anti-Bot Configuration
+
+| Parameter | Default | Bounds | Description |
 |---|---|---|---|
-| `DEFAULT_ADMIN_ROLE` | AuToken | Deployer → DAO | Full admin, fee config, pause |
-| `MINTER_ROLE` | AuToken | Deployer (renounced) | Mint Au (disabled after setup) |
-| `ANTI_BOT_ROLE` | AuToken | Deployer → DAO | Blocklist, cooldown, max tx/wallet |
-| `DEFAULT_ADMIN_ROLE` | AgToken | Deployer → DAO | Full admin, role management |
-| `MINTER_ROLE` | AgToken | Staking + PID | Mint Ag (algorithmic only) |
-| `UPGRADER_ROLE` | AgToken | DAO (Governor) | Execute upgrades |
-| `PROPOSER_ROLE` | Timelock | GovernorContract | Schedule proposals |
-| `EXECUTOR_ROLE` | Timelock | GovernorContract | Execute after timelock |
-| `CANCELER_ROLE` | Timelock | Deployer → DAO | Cancel scheduled ops |
-| `DEFAULT_ADMIN_ROLE` | Staking | Deployer → DAO | Rate changes, recovery |
-| `DEFAULT_ADMIN_ROLE` | PID | Deployer → DAO | Params, emergency stop |
-| `DEFAULT_ADMIN_ROLE` | TreasuryAMO | Deployer → DAO | Buyback params, emergency withdraw |
-| `UPGRADER_ROLE` | Staking | DAO (Governor) | Execute upgrades |
+| `cooldownDuration` | 60s | 0 – 3600s | Minimum time between sells |
+| `maxTransactionAmount` | 1% of supply | 0 – 10% | Max tokens per transaction |
+| `maxWalletAmount` | 2% of supply | 0 – 10% | Max tokens per wallet |
+| `blocklisted` | dynamic | N/A | Addresses blocked from trading |
 
-### Role Separation Invariants
+### 9.4 AgToken — Governance Token
 
-1. No single role can both mint and burn Au
-2. No single role can both pause and unpause without timelock
-3. Ag minting is restricted to algorithmic contracts only (Staking + PID)
-4. Upgrade authority is held by DAO, not deployer (after transfer)
-5. Two-step admin transfer for PID controller prevents single-tx compromise
+**File:** `contracts/av_suite/AgToken.sol`
+
+```solidity
+contract AgToken is ERC20, ERC20Permit, ERC20Votes, UUPSUpgradeable {
+    // === Emission Control ===
+    address public emissionController;  // PID_Emission_Controller_v2
+
+    // === Constraints ===
+    uint256 public constant MAX_SUPPLY = 1_000_000 * 1e18;  // 1M hard cap (soft)
+    // Note: No genesis mint. All supply created via PID emission.
+
+    // === Core Functions ===
+    function mint(address to, uint256 amount) external onlyEmissionController;
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override;
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal override;
+}
+```
+
+### 9.5 AgToken Emission Flow
+
+```
+PID_Emission_Controller_v2
+    │
+    ├── calculateEmission() → returns amount
+    │
+    ├── Check: amount > 0
+    ├── Check: dailyEmitted + amount ≤ maxDailyEmission
+    │
+    └── AgToken.mint(treasury, amount)
+            │
+            └── Tokens sent to Treasury Safe
+                └── Distributed to stakers as rewards
+```
+
+### 9.6 Cross-Token Staking Mechanism
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    CROSS-TOKEN STAKING FLOW                        │
+│                                                                   │
+│  User provides liquidity on Aerodrome (Au/USDC pool)             │
+│       │                                                           │
+│       ▼                                                           │
+│  Receives LP NFT (representing share of pool)                     │
+│       │                                                           │
+│       ▼                                                           │
+│  AVLPStaking_v2.stake(lpNFT)                                      │
+│       │                                                           │
+│       ▼                                                           │
+│  Earns:                                                           │
+│  ├── Au rewards (from treasury fees)                             │
+│  ├── Ag rewards (from PID emission)                              │
+│  └── Ag multiplier boosts Au reward rate (1x → 2.5x)             │
+│       │                                                           │
+│       ▼                                                           │
+│  Ag tokens also grant governance voting power                     │
+│  (ERC20Votes: snapshot-based, delegatable)                        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 9.7 Token Parameter Table
+
+| Parameter | AuToken | AgToken | Description |
+|---|---|---|---|
+| `name` | "AV Au" | "AV Ag" | Token name |
+| `symbol` | "Au" | "Ag" | Token symbol |
+| `decimals` | 18 | 18 | Token decimals |
+| `initialSupply` | 0 (fair launch) | 0 (no genesis) | Initial mint |
+| `maxSupply` | Unlimited | 1,000,000 (soft) | Supply cap |
+| `transferFee` | 9 bps | 0 | Transfer fee |
+| `feeSplit` | 50% burn / 50% treasury | N/A | Fee distribution |
+| `votingPower` | None | ERC20Votes | Governance power |
+| `permit` | ERC20Permit | ERC20Permit | Gasless approvals |
+| `flashMint` | ERC3156 | None | Flash loan support |
 
 ---
 
-## 12. Upgrade Flow
+## 10. Flash Buy Module
 
-All upgradeable contracts use the UUPS (Universal Upgradeable Proxy Standard) pattern.
+### 10.1 Overview
 
-### Upgrade Process
+The Flash Buy system implements **automated below-peg buybacks** that activate when Au price falls below a configured threshold. This mechanism mirrors a central bank defending a currency peg by purchasing its own currency from the open market.
+
+### 10.2 Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                       FLASH BUY SYSTEM                                  │
+│                                                                         │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐  │
+│  │  OracleFlashBuy   │    │ TreasuryFlashBuy  │    │    FlashLoan     │  │
+│  │                   │    │                   │    │                  │  │
+│  │  - Monitors price │    │  - Treasury-init  │    │  - ERC3156       │  │
+│  │  - Auto-triggers  │    │  - Manual trigger │    │  - Flash borrow  │  │
+│  │  - Optimal amount │    │  - Reserve-based  │    │  - Same-tx repay │  │
+│  │  - Price improve  │    │  - Cooldown-based  │    │  - Arbitrage     │  │
+│  └────────┬──────────┘    └────────┬──────────┘    └────────┬─────────┘ │
+│           │                        │                        │           │
+│           └────────────────────────┼────────────────────────┘           │
+│                                    │                                    │
+│                          ┌─────────▼─────────┐                          │
+│                          │    DEX Router      │                          │
+│                          │  (Aerodrome)       │                          │
+│                          └───────────────────┘                          │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 10.3 Flash Buy Types
+
+#### 10.3.1 OracleFlashBuy (Automated)
+
+```solidity
+/// @notice Execute automated flash buy when below peg
+/// @dev Called by keeper or anyone when conditions are met
+function executeFlashBuy() external nonReentrant returns (bool success) {
+    // 1. Verify price is below peg threshold
+    (uint256 price, ) = avOracle.getPrice();
+    require(price < pegThreshold, "Price above peg");
+
+    // 2. Verify cooldown has elapsed
+    require(
+        block.timestamp >= lastFlashBuy + flashBuyCooldown,
+        "Cooldown active"
+    );
+
+    // 3. Calculate optimal buyback amount
+    uint256 amount = getOptimalAmount();
+
+    // 4. Execute buyback via TreasuryFlashBuy
+    bool success = treasuryFlashBuy.executeBuyback(amount);
+
+    // 5. Verify price improvement
+    if (success) {
+        (uint256 newPrice, ) = avOracle.getPrice();
+        require(newPrice >= price, "Price not improved");
+        lastFlashBuy = block.timestamp;
+    }
+
+    return success;
+}
+```
+
+#### 10.3.2 TreasuryFlashBuy (Manual/Semi-Automated)
+
+```solidity
+/// @notice Execute treasury-funded buyback
+/// @param amount Reserve tokens to spend
+function executeBuyback(uint256 amount) external onlyRole(OPERATOR_ROLE)
+    returns (uint256 auReceived) {
+    // 1. Transfer reserve tokens from Treasury Safe
+    IERC20(reserveToken).transferFrom(treasury, address(this), amount);
+
+    // 2. Approve DEX router
+    IERC20(reserveToken).approve(router, amount);
+
+    // 3. Execute swap
+    auReceived = router.swapExactTokensForTokens(
+        amount,
+        minAmountOut,
+        path,
+        address(this),
+        block.timestamp + 300
+    );
+
+    // 4. Transfer Au to Treasury Safe
+    auToken.transfer(treasury, auReceived);
+}
+```
+
+#### 10.3.3 FlashLoan (Capital-Efficient)
+
+```solidity
+/// @notice Execute flash buy using borrowed capital
+/// @dev Uses ERC3156 flash loans for same-tx capital
+function executeFlashBuy() external nonReentrant {
+    // 1. Request flash loan of reserve tokens
+    auToken.flashLoan(
+        address(this),
+        address(reserveToken),
+        borrowAmount,
+        ""
+    );
+    // Note: flashLoan triggers onFlashLoan() callback
+}
+
+/// @notice ERC3156 flash loan callback
+function onFlashLoan(
+    address initiator,
+    address token,
+    uint256 amount,
+    uint256 fee,
+    bytes calldata data
+) external returns (bytes32) {
+    // 1. Swap borrowed reserves for Au on DEX
+    uint256 auReceived = router.swapExactTokensForTokens(
+        amount, minAmountOut, path, address(this), block.timestamp + 300
+    );
+
+    // 2. Repay flash loan: amount + fee
+    uint256 repayAmount = amount + fee;
+    uint256 profit = auReceived - repayAmount;
+
+    // 3. Transfer Au profit to Treasury Safe
+    auToken.transfer(treasury, auReceived);
+
+    // 4. Approve flash loan repayment
+    IERC20(token).approve(address(auToken), repayAmount);
+
+    return keccak256("ERC3156FlashBorrower.onFlashLoan");
+}
+```
+
+### 10.4 Flash Buy Parameter Table
+
+| Parameter | Default | Bounds | Description |
+|---|---|---|---|
+| `pegThreshold` | 98e16 (98 cents) | 90e16 – 100e16 | Price trigger threshold |
+| `flashBuyCooldown` | 1 hour | 15min – 24h | Min time between flash buys |
+| `maxFlashBuyAmount` | 50,000e6 | ≤ 500,000e6 | Max reserve tokens per flash buy |
+| `minPriceImprovement` | 0.1% | 0.01% – 5% | Required price improvement post-buy |
+| `flashLoanFee` | Protocol-defined | N/A | ERC3156 flash loan fee |
+
+### 10.5 Flash Buy Execution Flow
+
+```
+OracleFlashBuy.executeFlashBuy()
+    │
+    ├── 1. CHECK: price < pegThreshold
+    │       └── OracleWrapper.getValidatedPrice()
+    │
+    ├── 2. CHECK: block.timestamp ≥ lastFlashBuy + cooldown
+    │
+    ├── 3. CALCULATE: optimal buyback amount
+    │       └── getOptimalAmount() based on deviation magnitude
+    │
+    ├── 4. EXECUTE: TreasuryFlashBuy.executeBuyback(amount)
+    │       ├── Transfer reserves from Treasury
+    │       ├── Swap on Aerodrome
+    │       └── Transfer Au to Treasury
+    │
+    ├── 5. VALIDATE: price improved post-execution
+    │       └── newPrice ≥ oldPrice + minImprovement
+    │
+    └── 6. EMIT: FlashBuyExecuted(amount, auReceived, newPrice)
+```
+
+---
+
+## 11. Staking Module
+
+### 11.1 Overview
+
+**AVLPStaking_v2** is the LP NFT staking contract that incentivizes liquidity provision. Users deposit Aerodrome LP NFTs and earn Au + Ag rewards, with Ag holders receiving a boosted reward multiplier.
+
+### 11.2 Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      AVLPStaking_v2 ARCHITECTURE                        │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  STAKING LAYER                                                    │  │
+│  │  - Accepts LP NFTs (ERC721)                                       │  │
+│  │  - Tracks staked value per user                                    │  │
+│  │  - Calculates TVL for PID controller                               │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  REWARD ENGINE                                                    │  │
+│  │  - Au rewards: from treasury fee accumulation                     │  │
+│  │  - Ag rewards: from PID emission controller                       │  │
+│  │  - Reward rate: proportional to staked share                      │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │  Ag MULTIPLIER                                                     │  │
+│  │  - Base multiplier: 1.0x                                          │  │
+│  │  - Max multiplier: 2.5x                                           │  │
+│  │  - Based on user's Ag balance / staked value ratio                │  │
+│  │  - Formula: 1.0 + 1.5 × min(AgValue / StakedValue, 1.0)          │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 11.3 Core Interface
+
+```solidity
+contract AVLPStaking_v2 is IERC721Receiver, UUPSUpgradeable {
+    struct StakeInfo {
+        address owner;           // NFT owner
+        uint256 tokenId;         // LP NFT token ID
+        uint256 stakedAt;        // Stake timestamp
+        uint256 stakedValueUSD;  // USD value at time of staking
+    }
+
+    struct RewardState {
+        uint256 rewardPerShare;  // Accumulated reward per share (1e18 precision)
+        uint256 lastUpdateTime;  // Last reward distribution timestamp
+        uint256 totalStakedValue; // Total USD value staked (TVL)
+    }
+
+    // === Staking Functions ===
+    function stake(uint256 tokenId) external;
+    function unstake(uint256 tokenId) external;
+    function emergencyUnstake(uint256 tokenId) external; // Skip rewards, no cooldown
+
+    // === Reward Functions ===
+    function claimRewards(uint256 tokenId) external;
+    function claimAllRewards() external;
+    function pendingRewards(address user) external view returns (uint256 auReward, uint256 agReward);
+
+    // === Multiplier Functions ===
+    function getMultiplier(address user) public view returns (uint256 multiplier);
+    function getEffectiveStakeValue(address user) external view returns (uint256 effectiveValue);
+
+    // === View Functions ===
+    function getUserStakes(address user) external view returns (StakeInfo[] memory);
+    function getTVL() external view returns (uint256 totalValue);
+    function getRewardRate() external view returns (uint256 auRate, uint256 agRate);
+}
+```
+
+### 11.4 Ag Multiplier Mechanics
+
+```
+Multiplier = 1.0 + 1.5 × min(AgBalance / StakedValueUSD, 1.0)
+
+Where:
+  AgBalance = user's Ag token balance (in USD terms)
+  StakedValueUSD = user's total staked LP value in USD
+
+Examples:
+  No Ag held:     multiplier = 1.0x
+  25% Ag ratio:   multiplier = 1.375x
+  50% Ag ratio:   multiplier = 1.75x
+  100% Ag ratio:  multiplier = 2.5x (max)
+```
+
+### 11.5 Reward Distribution
+
+```
+Au Reward Pool:
+  Source: 4.5 bps of every Au transfer goes to staking pool
+  Distribution: Proportional to effective stake value (staked × multiplier)
+
+Ag Reward Pool:
+  Source: PID_Emission_Controller_v2 mints Ag for staking rewards
+  Distribution: Proportional to effective stake value (staked × multiplier)
+
+Reward Calculation per epoch:
+  rewardPerShare += rewardAmount × 1e18 / totalEffectiveStake
+  userReward = (userEffectiveStake × rewardPerShare) / 1e18 - userDebt
+```
+
+### 11.6 Staking Parameter Table
+
+| Parameter | Default | Bounds | Description |
+|---|---|---|---|
+| `minStakeDuration` | 0 blocks | 0 – 7 days | Minimum stake duration |
+| `maxMultiplier` | 2.5x | 1x – 5x | Maximum Ag multiplier |
+| `multiplierAgRatio` | 1.0 (100%) | 0 – 2.0 | Ag/staked ratio for max multiplier |
+| `rewardDuration` | 7 days | 1 – 30 days | Reward distribution period |
+| `auRewardRate` | Dynamic | Set by governance | Au tokens per second |
+| `agRewardRate` | Dynamic | Set by PID | Ag tokens per second |
+
+### 11.7 LP NFT Flow
+
+```
+Aerodrome Swap
+    │
+    ├── User provides Au + USDC to Au/USDC pool
+    ├── Receives LP NFT (ERC721 representing pool share)
+    │
+    └── AVLPStaking_v2.stake(tokenId)
+            │
+            ├── NFT transferred to staking contract
+            ├── StakeInfo recorded (owner, tokenId, value)
+            ├── TVL updated
+            └── Rewards begin accruing
+```
+
+---
+
+## 12. Security Architecture
+
+### 12.1 Access Control Matrix
+
+| Contract | Role | Target | Capabilities |
+|---|---|---|---|
+| `AuToken` | `DEFAULT_ADMIN_ROLE` | Governance | Configure fees, anti-bot params |
+| `AuToken` | `FLASH_MINTER_ROLE` | FlashLoan contract | Execute flash loans |
+| `AgToken` | `MINTER_ROLE` | PID_Emission_Controller_v2 | Mint Ag tokens |
+| `AgToken` | `DEFAULT_ADMIN_ROLE` | Governance | Set emission controller |
+| `PID_Emission_Controller_v2` | `DEFAULT_ADMIN_ROLE` | Governance | Set parameters, emergency stop |
+| `TreasuryAMO` | `DEFAULT_ADMIN_ROLE` | Governance | Configure buyback params |
+| `TreasuryAMO` | `OPERATOR_ROLE` | Keeper/Guardian | Execute buybacks |
+| `AVLPStaking_v2` | `DEFAULT_ADMIN_ROLE` | Governance | Set reward rates, rescue tokens |
+| `GovernorContract` | `PROPOSER_ROLE` | Governance | Queue timelock operations |
+| `GovernorContract` | `EXECUTOR_ROLE` | Governance | Execute timelock operations |
+| `ArtifactTimelock` | `CANCELLER_ROLE` | Multisig/Governance | Cancel pending operations |
+
+### 12.2 Timelock Hierarchy
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Timelock Levels                                                     │
+│                                                                      │
+│  Level 0: Instant                                                    │
+│  ├── Emergency pause (multisig or guardian)                          │
+│  └── Critical bug patches (requires 80% governance vote)            │
+│                                                                      │
+│  Level 1: 24 hours                                                   │
+│  ├── Routine parameter adjustments                                   │
+│  └── Keeper function authorizations                                  │
+│                                                                      │
+│  Level 2: 48 hours (default timelock)                                │
+│  ├── Standard governance proposals                                   │
+│  ├── Treasury allocation changes                                     │
+│  └── AMO parameter changes                                           │
+│                                                                      │
+│  Level 3: 7 days                                                     │
+│  ├── Contract upgrades (UUPS)                                        │
+│  ├── Timelock parameter changes                                      │
+│  └── Critical system modifications                                   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 12.3 Circuit Breakers
+
+```solidity
+/// @notice Emergency pause mechanism
+/// @dev Can be triggered by guardian multisig or governance
+function pause() external onlyRole(GUARDIAN_ROLE);
+
+/// @notice Emergency stop for PID controller
+/// @dev Immediately halts all Ag minting
+function emergencyStop() external onlyRole(GUARDIAN_ROLE);
+
+/// @notice Circuit breaker for excessive buyback frequency
+/// @dev If > 3 buybacks in 24h, cooldown increases
+function checkBuybackFrequency() internal returns (bool withinBounds);
+
+/// @notice Max emission circuit breaker
+/// @dev If Ag price drops > 20% in 1h, halt emission
+function checkEmissionSafety() internal returns (bool safe);
+```
+
+### 12.4 Emergency Procedures
+
+| Scenario | Response | Trigger | Effect |
+|---|---|---|---|
+| Oracle manipulation | Pause buybacks | Guardian multisig | All AMO operations halted |
+| Excessive emission | Emergency stop PID | Guardian multisig | Ag minting halted |
+| Price crash (>20%) | Auto-flash buy | OracleFlashBuy | Automatic buyback execution |
+| Governance attack | Timelock delay | Built-in timelock | 48h window to cancel malicious ops |
+| Contract vulnerability | Emergency pause | Guardian multisig | All token transfers paused |
+| Reserve depletion | Stop buybacks | TreasuryAMO | Buyback cooldown extended |
+
+### 12.5 Invariant Checks
+
+```
+1. Ag totalSupply() ≤ MAX_SUPPLY (1,000,000e18)
+2. PID dailyEmitted ≤ maxDailyEmission (100,000e18)
+3. Treasury buyback amount ≤ 5% of reserves per epoch
+4. TWAP deviation ≤ 5% (else reject price)
+5. Slippage on all DEX swaps ≤ 0.5%
+6. Treasury reserves ≥ runwayReserve (100,000 USDC)
+7. No single address holds > 10% of Ag supply (soft limit)
+```
+
+### 12.6 Audit & Formal Verification Targets
+
+| Component | Priority | Status | Focus Area |
+|---|---|---|---|
+| PID_Emission_Controller_v2 | Critical | Pending | Overflow, precision, manipulation |
+| TreasuryAMO | Critical | Pending | Slippage, reentrancy, price manipulation |
+| AuToken | High | Pending | Fee calculation, anti-bot bypass |
+| Oracle System | High | Pending | Staleness, deviation, flash loan attacks |
+| AVLPStaking_v2 | Medium | Pending | Reward calculation, reentrancy |
+| GovernorContract | Medium | Pending | Proposal threshold, voting power |
+
+---
+
+## 13. Upgradeability
+
+### 13.1 Proxy Pattern
+
+The system uses **UUPS (Universal Upgradeable Proxy Standard)** for upgradeable contracts:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  UUPS Architecture                                                   │
+│                                                                      │
+│  Proxy Contract (deployed, immutable)                                │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  - Holds all state (balances, allowances, staking data)       │   │
+│  │  - delegatecall to implementation contract                    │   │
+│  │  - Contains fallback() → delegates to implementation           │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                              │                                       │
+│                              │ delegatecall                          │
+│                              ▼                                       │
+│  Implementation Contract (replaceable)                                │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │  - Contains logic only (no state)                             │   │
+│  │  - Can be replaced via upgradeTo() in proxy                   │   │
+│  │  - Authorized upgrader: ArtifactTimelock (48h delay)          │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 13.2 Upgradeable Contracts
+
+| Contract | Proxy Pattern | Upgrader | Storage Critical |
+|---|---|---|---|
+| `AuToken` | UUPS | ArtifactTimelock | Balances, allowances, fee config |
+| `AgToken` | UUPS | ArtifactTimelock | Balances, voting power, delegates |
+| `AVLPStaking_v2` | UUPS | ArtifactTimelock | Staked NFTs, reward state |
+| `GovernorContract` | UUPS | ArtifactTimelock | Proposal state, timelock ref |
+| `AvOracle` | UUPS | ArtifactTimelock | Oracle config, pool refs |
+| `OracleWrapper` | UUPS | ArtifactTimelock | Wrapper config |
+
+### 13.3 Non-Upgradeable Contracts
+
+| Contract | Reason |
+|---|---|
+| `ArtifactTimelock` | Security: timelock must not be replaceable |
+| `PID_Emission_Controller_v2` | Re-deploy for parameter changes |
+| `TreasuryAMO` | Re-deploy for strategy changes |
+| `OracleFlashBuy` | Stateless execution layer |
+| `TreasuryFlashBuy` | Stateless execution layer |
+| `FlashLoan` | Stateless execution layer |
+
+### 13.4 Upgrade Process
 
 ```
 1. Deploy new implementation contract
-2. Submit upgrade proposal via GovernorContract
-3. Proposal enters 48h timelock (ArtifactTimelock)
-4. After timelock, UPGRADER_ROLE calls proxy.upgradeTo(newImpl)
-5. New implementation is active
+2. Verify on BaseScan
+3. Submit governance proposal: "Upgrade X to implementation 0x..."
+4. Proposal passes (66% or 80% threshold)
+5. Queue in ArtifactTimelock (48h delay)
+6. After 48h, execute upgrade
+7. Proxy now points to new implementation
+8. Verify storage compatibility
 ```
 
-### Storage Layout Preservation
+### 13.5 Storage Layout Safety
 
-When upgrading, the new implementation MUST preserve the storage layout of the existing contract:
+```
+AuToken Storage (Proxy):
+  Slot 0: _initialized (bool)
+  Slot 1: _initializedVersion (uint8)
+  Slot 2: _gap[50] (reserved for future variables)
+  Slot 52: _balances (mapping)
+  Slot 53: _allowances (mapping)
+  Slot 54: _totalSupply (uint256)
+  Slot 55: _name (string)
+  Slot 56: _symbol (string)
+  Slot 57: feeBps, burnShare, treasuryShare
+  Slot 58: cooldown, maxTx, maxWallet
+  Slot 59: blocklisted mapping
+  Slot 60: lastSellTime mapping
+  ... (additional slots for new variables must append only)
+```
 
-- New variables can only be appended at the end
-- Existing variable types and order cannot change
-- Gap slots should be reserved for future additions
+---
 
-### Upgrade Authorization
+## 14. Gas Architecture
+
+### 14.1 Gas Optimization Strategies
+
+| Strategy | Implementation | Savings |
+|---|---|---|
+| **Custom errors** | `revert CustomError()` instead of `require(string)` | ~50 gas per call |
+| **Calldata over memory** | Use `calldata` for external function arrays | Avoids memory copy |
+| **Storage packing** | Pack related variables into single slots | ~20,000 gas per slot write |
+| **Immutable values** | Use `immutable` for addresses set at construction | ~2,100 gas per read |
+| **Short-circuit evaluation** | Order conditions by likelihood | Variable |
+| **Batch operations** | Multi-call patterns for related operations | Amortized overhead |
+| **Minimal proxy** | UUPS over Transparent Proxy | ~40% deployment savings |
+
+### 14.2 Storage Packing
+
+```
+Before Packing (4 slots = 80,000 gas):
+  Slot 0: address owner        // 20 bytes
+  Slot 1: uint256 targetTVL    // 32 bytes
+  Slot 2: bool paused          // 1 byte
+  Slot 3: uint256 lastUpdate   // 32 bytes
+
+After Packing (3 slots = 60,000 gas):
+  Slot 0: address owner + uint96 targetTVL_hi  // 20 + 12 bytes
+  Slot 1: uint256 targetTVL_lo                // 32 bytes
+  Slot 2: bool paused + uint96 lastUpdate     // 1 + 12 bytes
+  // (remaining 20 bytes available for new vars)
+```
+
+### 14.3 Estimated Gas Costs
+
+| Operation | Estimated Gas | Notes |
+|---|---|---|
+| `AuToken.transfer()` | ~65,000 | Includes fee calculation + split |
+| `AuToken.transferFrom()` | ~85,000 | Includes allowance check |
+| `AVLPStaking_v2.stake()` | ~180,000 | NFT transfer + state update |
+| `AVLPStaking_v2.claimRewards()` | ~120,000 | Reward calculation + transfer |
+| `TreasuryAMO.executeBuyback()` | ~250,000 | Oracle check + DEX swap |
+| `PID_Emission_Controller_v2.calculateEmission()` | ~150,000 | TVL query + PID math + mint |
+| `GovernorContract.propose()` | ~200,000 | State storage + event emission |
+| `OracleFlashBuy.executeFlashBuy()` | ~300,000 | Full flash buy pipeline |
+| `ArtifactTimelock.schedule()` | ~100,000 | Operation scheduling |
+| `ArtifactTimelock.execute()` | ~150,000 | Operation execution |
+
+### 14.4 L2-Specific Optimizations (Base)
+
+| Optimization | Description | Impact |
+|---|---|---|
+| **Blob transactions** | Use blob posting for large calldata | Reduced L1 data costs |
+| **Fast precompiles** | Leverage L2 precompiles for EC operations | Cheaper signature verification |
+| **Batched calls** | Group multiple operations in single tx | Amortized base fee |
+| **Warm storage** | Pre-warm frequently accessed storage slots | Reduced cold read costs |
+
+---
+
+## 15. Integration Points
+
+### 15.1 External Protocol Dependencies
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                    EXTERNAL INTEGRATION MAP                              │
+│                                                                         │
+│  ┌──────────────────┐                                                   │
+│  │   Aerodrome       │ ← DEX: TWAP oracle, LP NFTs, swap execution     │
+│  │   (Base DEX)      │                                                   │
+│  └──────────────────┘                                                   │
+│           │                                                             │
+│  ┌──────────────────┐                                                   │
+│  │   Chainlink       │ ← Oracle: Fallback price feed (Au/USD)          │
+│  │   Price Feeds     │                                                   │
+│  └──────────────────┘                                                   │
+│           │                                                             │
+│  ┌──────────────────┐                                                   │
+│  │   Uniswap V3      │ ← DEX: Fallback router for buybacks             │
+│  │   (Base)          │                                                   │
+│  └──────────────────┘                                                   │
+│           │                                                             │
+│  ┌──────────────────┐                                                   │
+│  │   Base L2         │ ← Chain: Sequencer, blob posting, gas market    │
+│  │   Infrastructure  │                                                   │
+│  └──────────────────┘                                                   │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 15.2 Aerodrome Integration
+
+| Component | Interface | Usage |
+|---|---|---|
+| `IPool` | TWAP query | Primary price feed (`consult()`) |
+| `IPool` | Swap execution | Buyback and liquidity operations |
+| `IPool` | LP NFT (ERC721) | Staking collateral |
+| `IRouter` | Swap routing | Multi-hop swaps for buybacks |
 
 ```solidity
-function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE);
+interface IAerodromePool {
+    function observe(uint32[] calldata secondsAgos) external view returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);
+    function swap(address recipient, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, bytes calldata data) external returns (int256 amount0, int256 amount1);
+}
 ```
 
-Only the `UPGRADER_ROLE` (held by the DAO/GovernorContract) can authorize upgrades.
+### 15.3 Chainlink Integration
 
----
-
-## 13. Deployment Order & Wiring
-
-### Deploy Order
-
-```
-Step 1: AuToken          (no dependencies)
-Step 2: AgToken          (no dependencies)
-Step 3: MockLPNFT        (no dependencies)
-Step 4: ArtifactTimelock (configure proposer, canceler, executor)
-Step 5: AVLPStaking_v2   (wire Au, Ag, NFT)
-Step 6: PID_Emission     (set admin)
-Step 7: TreasuryAMO      (wire Au, reserveToken, router)
-Step 8: GovernorContract (wire Ag, Timelock)
-```
-
-### Wiring Steps
+| Feed | Pair | Purpose | Staleness |
+|---|---|---|---|
+| Au/USD | Primary | Fallback price | 1 hour |
+| Ag/USD | Secondary | Safety check | 1 hour |
 
 ```solidity
-// 1. Deploy AuToken
-AuToken auToken = new AuToken();
-auToken.initialize(deployer);
+interface AggregatorV3Interface {
+    function latestRoundData() external view returns (
+        uint80 roundId,
+        int256 answer,
+        uint256 startedAt,
+        uint256 updatedAt,
+        uint80 answeredInRound
+    );
+}
+```
 
-// 2. Deploy AgToken
-AgToken agToken = new AgToken();
-agToken.initialize(deployer);
+### 15.4 Uniswap V3 Fallback
 
-// 3. Deploy MockLPNFT
-MockLPNFT nft = new MockLPNFT();
+```solidity
+/// @notice Fallback router for buyback execution
+/// @dev Used when Aerodrome swap fails or returns suboptimal output
+function executeFallbackBuyback(
+    uint256 reserveAmount,
+    uint256 minAuOut,
+    address[] calldata path
+) external returns (uint256 amountOut) {
+    // Execute on Uniswap V3 with 0.05% fee tier
+    amountOut = swapRouter.exactInputSingle(
+        ISwapRouter.ExactInputSingleParams({
+            tokenIn: reserveToken,
+            tokenOut: address(auToken),
+            fee: 500,  // 0.05%
+            recipient: address(this),
+            deadline: block.timestamp + 300,
+            amountIn: reserveAmount,
+            amountOutMinimum: minAuOut,
+            sqrtPriceLimitX96: 0
+        })
+    );
+}
+```
 
-// 4. Deploy Timelock
-ArtifactTimelock timelock = new ArtifactTimelock();
-timelock.initialize(deployer, deployer, deployer);
+### 15.5 Integration Risk Matrix
 
-// 5. Deploy Staking
-AVLPStaking_v2 staking = new AVLPStaking_v2();
-staking.initialize(address(auToken), address(agToken), address(nft));
+| Dependency | Risk | Mitigation |
+|---|---|---|
+| Aerodrome downtime | High | Uniswap V3 fallback router |
+| Chainlink staleness | Medium | TWAP primary, Chainlink fallback |
+| Uniswap V3 liquidity | Low | Multi-hop routing, slippage checks |
+| Base sequencer down | High | Graceful degradation, pause mode |
+| Aerodrome TWAP manipulation | Medium | OracleWrapper deviation check (5%) |
 
-// 6. Deploy PID Controller
-PID_Emission_Controller_v2 pid = new PID_Emission_Controller_v2();
-pid.initialize(deployer);
+### 15.6 Contract Interaction Summary
 
-// 7. Deploy TreasuryAMO
-TreasuryAMO amo = new TreasuryAMO();
-amo.initialize(address(auToken), reserveToken, aerodromeRouter, uniswapRouter);
+```
+AuToken
+  ├── Receives: Transfer fees (9 bps)
+  ├── Sends: 50% to burn, 50% to Treasury
+  ├── FlashMint: ERC3156 interface for FlashLoan contract
+  └── Anti-bot: Cooldown, max tx, blocklist
 
-// 8. Deploy Governor
-GovernorContract governor = new GovernorContract();
-governor.initialize(address(agToken), address(timelock));
+AgToken
+  ├── Minted by: PID_Emission_Controller_v2 only
+  ├── Voting: ERC20Votes (snapshot-based, delegatable)
+  └── Used for: Governance, staking multiplier
 
-// === WIRING ===
+TreasuryAMO
+  ├── Reads: AvOracle (price), OracleWrapper (validation)
+  ├── Writes: Au balance (buyback received)
+  └── Interacts: Aerodrome (swap), Uniswap V3 (fallback)
 
-// Grant MINTER_ROLE on AgToken to Staking and PID
-agToken.grantRole(MINTER_ROLE, address(staking));
-agToken.grantRole(MINTER_ROLE, address(pid));
+PID_Emission_Controller_v2
+  ├── Reads: AVLPStaking_v2 (TVL)
+  ├── Writes: AgToken.mint()
+  └── Controlled by: GovernorContract → ArtifactTimelock
 
-// Grant PROPOSER + EXECUTOR roles on Timelock to Governor
-timelock.grantRole(PROPOSER_ROLE, address(governor));
-timelock.grantRole(EXECUTOR_ROLE, address(governor));
+GovernorContract
+  ├── Proposes: Any governance action
+  ├── Queues: ArtifactTimelock
+  └── Executes: After 48h delay
 
-// Set PID references
-pid.setAuToken(address(auToken));
-pid.setAgToken(address(agToken));
-pid.setStakingContract(address(staking));
-pid.setTargetTVL(10_000_000e18);
-
-// Set initial staking reward rates
-staking.setRewardRates(0.001e18, 0.0001e18);
-
-// Transfer admin roles to DAO (after governance is live)
-auToken.grantRole(DEFAULT_ADMIN_ROLE, address(governor));
-agToken.grantRole(DEFAULT_ADMIN_ROLE, address(governor));
+AVLPStaking_v2
+  ├── Holds: LP NFTs (ERC721)
+  ├── Distributes: Au + Ag rewards
+  ├── Calculates: Ag multiplier (1x → 2.5x)
+  └── Provides: TVL data to PID controller
 ```
 
 ---
 
-## 14. Gas Considerations
+## Appendix A: Glossary
 
-### Gas Optimization Strategies
-
-| Strategy | Application |
+| Term | Definition |
 |---|---|
-| UUPS proxy | Cheaper than Transparent proxy (no admin overhead per call) |
-| Custom errors | Used instead of require strings (saves ~50 gas per revert) |
-| Unchecked math | Used where overflow is impossible (saves ~30 gas per op) |
-| Calldata params | External functions use `calldata` instead of `memory` |
-| Batch operations | Where possible, batch state changes in single tx |
-| Optimizer runs | 200 runs (optimized for average call frequency) |
+| **AMO** | Automated Market Operations — central bank-style open market operations |
+| **TWAP** | Time-Weighted Average Price — manipulation-resistant price feed |
+| **PID** | Proportional-Integral-Derivative — control loop for emission adjustment |
+| **TVL** | Total Value Locked — aggregate USD value of staked LP positions |
+| **UUPS** | Universal Upgradeable Proxy Standard — upgradeable contract pattern |
+| **Flash Buy** | Automated below-peg buyback using treasury or flash loan capital |
+| **Au** | Utility token with fee-on-transfer mechanics |
+| **Ag** | Governance token with algorithmic emission and voting power |
+| **LP NFT** | ERC721 token representing share of a liquidity pool |
+| **Runway** | Minimum treasury reserves to ensure operational continuity |
 
-### Estimated Gas Costs
+## Appendix B: Parameter Quick Reference
 
-| Operation | Estimated Gas |
-|---|---|
-| Au transfer (with fee) | ~55,000 |
-| Au transfer (excluded) | ~45,000 |
-| Ag transfer | ~50,000 |
-| Stake LP NFT | ~150,000 |
-| Unstake LP NFT | ~120,000 |
-| Claim rewards | ~80,000 |
-| Propose (Governor) | ~200,000 |
-| Vote | ~60,000 |
-| Queue | ~80,000 |
-| Execute | ~100,000+ (depends on proposal) |
-| PID updateEmission | ~120,000 |
-| TreasuryAMO buyback | ~200,000+ (depends on DEX swap) |
-
-### Block Gas Limit Considerations
-
-- Base L2 has a 30M gas per block limit
-- Buyback operations should be split across multiple blocks if complex
-- PID emission updates are designed to fit within a single block
-- Governance operations (propose, vote, queue, execute) are each separate transactions
-
----
-
-## 15. Wiring Diagram (ASCII)
-
-```
-                    ┌──────────────────────┐
-                    │    GovernorContract   │
-                    │  (OZ Governor +       │
-                    │   TimelockControl)    │
-                    └──────────┬───────────┘
-                               │ PROPOSER_ROLE
-                               │ EXECUTOR_ROLE
-                               ▼
-                    ┌──────────────────────┐
-                    │  ArtifactTimelock     │
-                    │  MIN_DELAY: 48h       │
-                    │  MAX_DELAY: 30d       │
-                    │  GRACE: 14d           │
-                    └──────────────────────┘
-
-┌─────────────┐    ┌─────────────┐    ┌──────────────────┐
-│   AuToken    │    │   AgToken    │    │   MockLPNFT      │
-│  ERC20+Permit│    │  ERC20+Votes │    │   ERC721         │
-│  +FlashMint  │    │              │    │                  │
-│  9bps fee    │    │  No genesis  │    │  (testing only)  │
-│  burn+accum  │    │  PID mint    │    └────────┬─────────┘
-└──────┬───────┘    └──────┬───────┘             │
-       │                   │                     │
-       │                   │ MINTER_ROLE         │
-       │                   │                     │
-       │            ┌──────┴─────────────────────┴──┐
-       │            │      AVLPStaking_v2            │
-       │            │  Stake LP NFTs                 │
-       │            │  Earn Au + Ag per block        │
-       │            │  Ag multiplier: 1x → 2.5x     │
-       │            │  48h rate change timelock      │
-       │            └──────┬─────────────────────────┘
-       │                   │
-       │                   │ TVL data
-       │                   │
-       │            ┌──────┴──────────────┐
-       │            │ PID_Emission_v2      │
-       │            │ kp, ki, kd           │
-       │            │ target TVL           │
-       │            │ daily cap: 100k Ag   │
-       │            │ single cap: 10k Ag   │
-       │            └──────┬──────────────┘
-       │                   │
-       │                   │ mints Ag
-       │                   │
-       ▼                   ▼
-┌──────────────────────────────────────────┐
-│              TreasuryAMO                  │
-│  Automated buybacks                      │
-│  20% of reserves above runway            │
-│  24h cooldown                            │
-│  TWAP validation (5% max deviation)      │
-│  Slippage protection (0.5%)              │
-│  Per-epoch cap (5% of reserve)           │
-│  Dual DEX: Aerodrome + Uniswap          │
-└──────────────────────────────────────────┘
-
-        VALUE FLOW (Flywheel):
-
-   Au transfer → 9bps fee
-       ├── 4.5bps → BURNED (Au ↓)
-       └── 4.5bps → Treasury
-            │
-            ▼
-       TreasuryAMO buyback
-       Reserve → DEX → Au
-            │
-            ▼
-       Stakers earn Au + Ag
-       Ag multiplier boosts yield
-            │
-            ▼
-       PID adjusts Ag emission
-       based on TVL vs target
-            │
-            ▼
-       Ag holders govern
-       Propose → Vote → Timelock → Execute
-            │
-            ▼
-       System grows → More usage → More fees
-            │
-            ▼
-       ══════ LOOP CLOSES ══════
-```
+| Parameter | Value | Contract |
+|---|---|---|
+| Au transfer fee | 9 bps | AuToken |
+| Fee split | 50% burn / 50% treasury | AuToken |
+| Ag max supply | 1,000,000 | AgToken |
+| PID kp | 1e15 | PID_Emission_Controller_v2 |
+| PID ki | 1e13 | PID_Emission_Controller_v2 |
+| PID kd | 1e14 | PID_Emission_Controller_v2 |
+| Max daily emission | 100,000 Ag | PID_Emission_Controller_v2 |
+| Max single emission | 10,000 Ag | PID_Emission_Controller_v2 |
+| Buyback % of excess | 20% | TreasuryAMO |
+| Buyback cooldown | 24 hours | TreasuryAMO |
+| Epoch cap | 5% of reserves | TreasuryAMO |
+| TWAP duration | 30 minutes | AvOracle |
+| Max deviation | 5% | OracleWrapper |
+| Flash buy threshold | 97% of peg | OracleFlashBuy |
+| Staking max multiplier | 2.5x | AVLPStaking_v2 |
+| Governance voting period | 3 days | GovernorContract |
+| Governance quorum | 4% | GovernorContract |
+| Timelock delay | 48 hours | ArtifactTimelock |
+| Timelock grace period | 14 days | ArtifactTimelock |
 
 ---
 
-*This document is the definitive technical reference for the AV Treasury system. For economic analysis, see TOKENOMICS.md. For security analysis, see SECURITY.md. For mathematical formalization, see research/FLYWHEEL_ANALYSIS.md.*
+*Document version: 2.0.0 | Last updated: 2026-06-28 | Author: AV Treasury Core Team*

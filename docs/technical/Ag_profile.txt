@@ -1,0 +1,170 @@
+================================================================================
+                    AG (Artifact Governance) — Token Profile
+================================================================================
+
+Symbol:             AG
+Name:               Artifact Governance
+Type:               ERC-20, Elastic Supply (Mint/Burn by PID Controller)
+Standard:           OpenZeppelin ERC20 + AccessControl (MINTER_ROLE, BURNER_ROLE)
+                    GovernorContract (OpenZeppelin GovernorCompatibilityBravo)
+
+--------------------------------------------------------------------------------
+1. ROLE IN THE SYSTEM
+--------------------------------------------------------------------------------
+
+AG is the **governance and staking reward token** of the AV Treasury system.
+
+It has NO peg, NO collateral backing, and NO oracle dependency. Its value is
+purely market-determined by trading activity and emission schedule.
+
+Its functions are:
+  (a) **Governance power** — Holding AG grants voting power in the DAO
+  (b) **Staking rewards** — PID Controller mints Ag to stakers of AVLP NFTs
+  (c) **Staking multiplier** — Holding AG boosts LP staking yields (up to 2.5x)
+  (d) **Delegation** — AG holders can delegate voting power to delegates
+
+--------------------------------------------------------------------------------
+2. SUPPLY MECHANICS
+--------------------------------------------------------------------------------
+
+Initial Supply:     0 (all minted by PID Emission Controller)
+Max Supply:         No hard cap (supply expands/contracts based on policy)
+
+Minting:            Only PID_Emission_Controller_v2 has MINTER_ROLE
+                    Mints happen during epochEmission() — once per day (24h epochs)
+
+Burning:            Only PID_Emission_Controller_v2 has BURNER_ROLE
+                    Burns happen during _rebalance() when TVL < targetTVL * rebalanceRatio
+
+Emission Logic (PID Controller):
+  - Each epoch, PID reads total NFT count from AVLPStaking_v2 as TVL proxy
+  - Compares actual TVL vs targetTVL
+  - Applies PID formula: emission = Kp*error + Ki*integral + Kd*derivative
+  - Error = targetTVL - actualTVL
+  - Positive error → mint Ag (expansion)
+  - Negative error → burn Ag (contraction)
+  - If reserves > 120% of Au supply value → expansion phase
+  - If reserves < 100% → contraction phase, higher emissions to attract LPs
+
+--------------------------------------------------------------------------------
+3. GOVERNANCE MECHANICS
+--------------------------------------------------------------------------------
+
+Governor:           GovernorContract (OpenZeppelin GovernorCompatibilityBravo fork)
+Timelock:           ArtifactTimelock (48h delay on Base, 24h on L2s)
+Proposer:           Addresses with threshold proposal power (delegated AG balance)
+
+Governance Flow:
+  1. Any address with enough delegated AG creates a proposal
+  2. Proposal enters voting period (configurable duration)
+  3. AG holders vote For/Against/Abstain (1 AG = 1 vote, checkpointed)
+  4. If quorum reached AND majority For → proposal enters Timelock
+  5. After Timelock delay → anyone can execute the queued transaction
+  6. Timelock can route through Governor for DAO-controlled parameters
+
+Proposal Types:
+  - Treasury parameter changes (PID targets, spreads, fees)
+  - Contract upgrades (proxy patterns)
+  - Treasury allocation (reserves, grants, buybacks)
+  - Oracle configuration (add/remove tokens, change sources)
+
+Quorum:            Configurable (default: 4% of total AG supply)
+Voting Period:      Configurable (default: 7200 blocks ≈ 24h on Base)
+Threshold:          Configurable (default: proposal must have delegated AG > threshold)
+
+--------------------------------------------------------------------------------
+4. STAKING MULTIPLIER MECHANICS
+--------------------------------------------------------------------------------
+
+AVLPStaking_v2 tracks a "staking multiplier" based on AG balance:
+
+  multiplier = min(2.5, 1.0 + (userAgBalance / userLpBalance) * factor)
+
+This means:
+  - Pure LP staking → 1.0x multiplier (base yield)
+  - LP + proportional AG holding → up to 2.5x multiplier (boosted yield)
+  - More AG held relative to LP → higher multiplier (capped at 2.5x)
+
+The multiplier incentivizes:
+  - Long-term alignment (holding AG boosts yield on LP positions)
+  - AG demand (LPs want higher yields → buy AG)
+  - Governance participation (only AG holders get boosted yields)
+
+--------------------------------------------------------------------------------
+5. GOVERNANCE POWER DISTRIBUTION
+--------------------------------------------------------------------------------
+
+Voting power is checkpointed (like COMP/UNI style):
+
+  - balanceOfAt(address, block) → historical balance for vote counting
+  - delegatee tracking: users delegate → delegatee accumulates voting power
+  - Delegation is one-at-a-time (delegating to X removes power from Y)
+
+Power concentration considerations:
+  - PID emissions to stakers → power flows to active LPs
+  - Staking multiplier → AG holders get more power per AG held
+  - Timelock → prevents flash loan governance attacks
+  - 48h delay → gives community time to review and react
+
+--------------------------------------------------------------------------------
+6. PARAMETERS GOVERNED BY AG DAO
+--------------------------------------------------------------------------------
+
+Parameter                  | Contract                  | Type
+---------------------------|---------------------------|------------------
+targetTVL                  | PID_Emission_Configurator | uint256
+reserveRatioExpansion      | PID_Emission_Configurator | uint256 (basis points)
+reserveRatioContraction    | PID_Emission_Configurator | uint256 (basis points)
+epochDuration              | PID_Emission_Configurator | uint256 (seconds)
+maxEmission                | PID_Emission_Configurator | uint256
+minEmission                | PID_Emission_Configurator | uint256
+pidKp / pidKi / pidKd     | PID_Emission_Configurator | uint256
+rebalanceRatio             | PID_Emission_Configurator | uint256 (basis points)
+stakingMultiplierFactor    | AVLPStaking_v2            | uint256
+stakingRewardRate          | AVLPStaking_v2            | uint256
+amoSpread                  | TreasuryAMO               | uint256 (basis points)
+amoBidAskSpread            | TreasuryAMO               | uint256 (basis points)
+amoMaxPriceDeviation       | TreasuryAMO               | uint256 (basis points)
+flashBuyThreshold          | TreasuryFlashBuy          | uint256 (basis points)
+flashBuyBonus              | TreasuryFlashBuy          | uint256 (basis points)
+oraclePriceStaleThreshold  | AvOracle                  | uint256 (seconds)
+oracleAddToken / configure | AvOracle                  | governance only
+timelockDelay              | ArtifactTimelock          | uint256 (seconds)
+proposalThreshold          | GovernorContract          | uint256
+quorumNumerator            | GovernorContract          | uint256
+votingPeriod               | GovernorContract          | uint256 (blocks)
+votingDelay                | GovernorContract          | uint256 (blocks)
+
+--------------------------------------------------------------------------------
+7. SECURITY MODEL
+--------------------------------------------------------------------------------
+
+- MINTER_ROLE and BURNER_ROLE: Only PID_Emission_Controller_v2
+- PID Controller: Only callable by Safe (multi-sig) for parameter changes
+- Timelock: 48h delay prevents flash loan attacks and gives exit window
+- Governor: Proposal threshold prevents spam
+- Quorum: 4% prevents low-participation governance
+- Checkpointing: Prevents flash loan voting and double-voting across blocks
+- The DAO can revoke MINTER_ROLE from old PID versions when upgrading
+
+--------------------------------------------------------------------------------
+8. AG ECONOMIC FLYWHEEL
+--------------------------------------------------------------------------------
+
+  Stake LP → Earn Ag emissions
+       ↓
+  Hold AG → Get staking multiplier (up to 2.5x)
+       ↓
+  Higher multiplier → Higher effective yield → More LP demand
+       ↓
+  More LP → More fees → Higher Treasury reserves
+       ↓
+  Higher reserves → PID mints more Ag → More staking rewards
+       ↓
+  More AG demand (for multiplier) → AG market price supported
+       ↓
+  AG price → Governance value → Active DAO participation
+       ↓
+  Active DAO → Better parameter optimization → System growth
+
+================================================================================

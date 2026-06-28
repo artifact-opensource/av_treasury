@@ -3,27 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AV Treasury — Au | Ag Documentation</title>
+<title>AV Treasury — Technical Documentation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ═══ NAVIGATION ═══ -->
-<nav id="nav">
+<!-- ═══ NAV ═══ -->
+<nav class="nav">
   <div class="nav-inner">
-    <div class="nav-brand">
-      <span class="logo-glyph">◈</span>
-      <span class="logo-text">AV TREASURY</span>
-    </div>
+    <div class="nav-brand">AV TREASURY</div>
     <div class="nav-links">
-      <a href="#hero" class="nav-link active">Home</a>
+      <a href="#overview" class="nav-link active">Overview</a>
       <a href="#architecture" class="nav-link">Architecture</a>
       <a href="#tokens" class="nav-link">Tokens</a>
-      <a href="#flywheel" class="nav-link">Flywheel</a>
       <a href="#pid" class="nav-link">PID</a>
       <a href="#governance" class="nav-link">Governance</a>
       <a href="#contracts" class="nav-link">Contracts</a>
@@ -31,379 +27,496 @@
       <a href="#glossary" class="nav-link">Glossary</a>
     </div>
     <div class="nav-status">
-      <span class="status-pulse"></span>
-      <span>LIVE ON BASE</span>
+      <span class="status-dot"></span>
+      <span class="status-text">MAINNET</span>
     </div>
   </div>
 </nav>
 
 <!-- ═══ HERO ═══ -->
 <section id="hero">
-  <canvas id="hero-bg"></canvas>
-  <div class="hero-overlay"></div>
   <div class="hero-content">
-    <div class="hero-badge">ARC SUBSYSTEMS</div>
-    <h1 class="hero-title">
-      <span class="line-1">AV Treasury</span>
-    </h1>
-    <p class="hero-sub">Dual-Token Ecosystem on Base Mainnet</p>
+    <div class="hero-label">ARC SUBSYSTEMS</div>
+    <h1 class="hero-title">AV Treasury</h1>
+    <p class="hero-subtitle">Artifact Utility (Au) | Artifact Governance (Ag) — Dual-token system on Base</p>
     <div class="hero-stats">
-      <div class="stat-card"><div class="stat-num">11</div><div class="stat-name">Core Contracts</div></div>
-      <div class="stat-card"><div class="stat-num">2</div><div class="stat-name">Tokens · Au / Ag</div></div>
-      <div class="stat-card"><div class="stat-num">v5</div><div class="stat-name">Oracle Version</div></div>
-      <div class="stat-card"><div class="stat-num">PID</div><div class="stat-name">Emission Engine</div></div>
-    </div>
-    <div class="hero-actions">
-      <a href="#architecture" class="btn-primary">Explore System ↓</a>
-      <a href="#contracts" class="btn-ghost">Contract Map</a>
+      <div class="stat"><span class="stat-val">9</span><span class="stat-key">Contracts</span></div>
+      <div class="stat"><span class="stat-val">PID</span><span class="stat-key">Emission Engine</span></div>
+      <div class="stat"><span class="stat-val">48h</span><span class="stat-key">Timelock</span></div>
+      <div class="stat"><span class="stat-val">4%</span><span class="stat-key">Quorum</span></div>
     </div>
   </div>
-  <div class="scroll-indicator">
-    <span>Scroll to explore</span>
-    <div class="scroll-line"></div>
+</section>
+
+<!-- ═══ OVERVIEW ═══ -->
+<section id="overview" class="section">
+  <div class="container">
+    <div class="sec-num">01</div>
+    <h2 class="sec-title">Overview</h2>
+    <p class="sec-lead">AV Treasury is a decentralized central banking system on Base (Ethereum L2). It manages a dual-token economy: Artifact Utility (Au) as the reserve-backed medium of exchange, and Artifact Governance (Ag) as the PID-minted incentive and voting token. The system operates autonomously — monetary policy is enforced by code, not committees.</p>
+
+    <div class="overview-grid">
+      <div class="ov-card">
+        <div class="ov-icon"><span class="material-icons-outlined">account_balance</span></div>
+        <h3>Reserve-Backed</h3>
+        <p>Every Au is backed by protocol-held reserves. The TreasuryAMO manages liquidity via Slipstream concentrated positions.</p>
+      </div>
+      <div class="ov-card">
+        <div class="ov-icon"><span class="material-icons-outlined">tune</span></div>
+        <h3>PID-Governed Emissions</h3>
+        <p>Ag supply expands and contracts based on a PID controller targeting a governance-set TVL. No human intervention required.</p>
+      </div>
+      <div class="ov-card">
+        <div class="ov-icon"><span class="material-icons-outlined">gavel</span></div>
+        <h3>DAO Controlled</h3>
+        <p>Ag holders govern via GovernorContract with 48h timelock. All parameters upgradeable through proposal flow.</p>
+      </div>
+      <div class="ov-card">
+        <div class="ov-icon"><span class="material-icons-outlined">verified</span></div>
+        <h3>Verified on Basescan</h3>
+        <p>All contracts deployed and verified on Base Mainnet. Full transparency, no proxies without documentation.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ═══ ARCHITECTURE ═══ -->
-<section id="architecture" class="section">
-  <div class="sec-label">01</div>
-  <h2 class="sec-title">System Architecture</h2>
-  <p class="sec-desc">Every component of the Artifact Virtual ecosystem. Interconnected. Verified on Basescan.</p>
+<section id="architecture" class="section section-alt">
+  <div class="container">
+    <div class="sec-num">02</div>
+    <h2 class="sec-title">Architecture</h2>
+    <p class="sec-lead">Five interconnected subsystems. TreasuryAMO at the center — all value flows through it.</p>
 
-  <div class="arch-3d-wrap">
-    <canvas id="arch-3d"></canvas>
-    <div class="arch-hint">Drag to rotate · Scroll to zoom</div>
-  </div>
+    <div class="arch-diagram">
+      <div class="arch-layer arch-core">
+        <div class="arch-layer-label">CORE</div>
+        <div class="arch-node">
+          <div class="an-name">TreasuryAMO</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0x56653245f4718fe105b95C8424947B31b84b5188" target="_blank">0x5665...5188</a></div>
+          <div class="an-desc">Reserve management, AMO operations, Slipstream liquidity</div>
+        </div>
+      </div>
 
-  <div class="arch-cards">
-    <div class="arch-card" style="--accent: #FFD700">
-      <div class="ac-icon"><span class="material-icons-outlined">account_balance</span></div>
-      <h3>TreasuryAMO</h3>
-      <p>Central vault holding all protocol reserves. Manages AMO operations via Slipstream.</p>
-      <a href="https://basescan.org/address/0x56653245f4718fe105b95C8424947B31b84b5188" target="_blank" class="ac-addr">0x5665...5188</a>
-    </div>
-    <div class="arch-card" style="--accent: #C0C0C0">
-      <div class="ac-icon"><span class="material-icons-outlined">workspace_premium</span></div>
-      <h3>Au Token</h3>
-      <p>Fixed-supply reserve token. 9bps transfer tax: half burned, half to Treasury.</p>
-      <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="ac-addr">0x0c5A...2f08</a>
-    </div>
-    <div class="arch-card" style="--accent: #C0C0C0">
-      <div class="ac-icon"><span class="material-icons-outlined">military_tech</span></div>
-      <h3>Ag Token</h3>
-      <p>Elastic supply reward token. PID-governed emissions, 100M max supply.</p>
-      <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="ac-addr">0x1D31...3674</a>
-    </div>
-    <div class="arch-card" style="--accent: #00D4FF">
-      <div class="ac-icon"><span class="material-icons-outlined">calculate</span></div>
-      <h3>PID Controller</h3>
-      <p>Proportional-Integral-Derivative. Computes Ag emissions from TVL gap.</p>
-      <a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank" class="ac-addr">0x9911...7f70</a>
-    </div>
-    <div class="arch-card" style="--accent: #A855F7">
-      <div class="ac-icon"><span class="material-icons-outlined">psychology</span></div>
-      <h3>AvOracle v5</h3>
-      <p>Multi-source price feeds with TWAP manipulation resistance.</p>
-      <a href="https://basescan.org/address/0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB" target="_blank" class="ac-addr">0xb479...2bdB</a>
-    </div>
-    <div class="arch-card" style="--accent: #FF6B35">
-      <div class="ac-icon"><span class="material-icons-outlined">account_balance</span></div>
-      <h3>Governor</h3>
-      <p>DAO governance with timelock. 100K threshold, 30-day voting, 4% quorum.</p>
-      <a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank" class="ac-addr">0x259c...6385</a>
-    </div>
-    <div class="arch-card" style="--accent: #FF6B35">
-      <div class="ac-icon"><span class="material-icons-outlined">timer</span></div>
-      <h3>Timelock</h3>
-      <p>Delayed execution for governance. Transparency and exit rights.</p>
-      <a href="https://basescan.org/address/0x662321CC63700865838aB08378061BE499344714" target="_blank" class="ac-addr">0x6623...4714</a>
+      <div class="arch-layer arch-tokens">
+        <div class="arch-layer-label">TOKENS</div>
+        <div class="arch-node">
+          <div class="an-name">Artifact Utility (Au)</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank">0x0c5A...2f08</a></div>
+          <div class="an-desc">ERC-20, 9bps transfer tax, 1B max supply</div>
+        </div>
+        <div class="arch-node">
+          <div class="an-name">Artifact Governance (Ag)</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank">0x1D31...3674</a></div>
+          <div class="an-desc">ERC-20, PID-minted, 100M max, governance rights</div>
+        </div>
+        <div class="arch-node">
+          <div class="an-name">RSBT</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank">0xfd04...47CD</a></div>
+          <div class="an-desc">Soulbound receipt token, non-transferable</div>
+        </div>
+      </div>
+
+      <div class="arch-layer arch-policy">
+        <div class="arch-layer-label">POLICY</div>
+        <div class="arch-node">
+          <div class="an-name">PID Controller</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank">0x9911...7f70</a></div>
+          <div class="an-desc">Computes Ag emissions from TVL gap</div>
+        </div>
+        <div class="arch-node">
+          <div class="an-name">AvOracle v5</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB" target="_blank">0xb479...2bdB</a></div>
+          <div class="an-desc">Multi-source TWAP price feeds</div>
+        </div>
+      </div>
+
+      <div class="arch-layer arch-gov">
+        <div class="arch-layer-label">GOVERNANCE</div>
+        <div class="arch-node">
+          <div class="an-name">GovernorContract</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank">0x259c...6385</a></div>
+          <div class="an-desc">Proposal creation, voting, execution routing</div>
+        </div>
+        <div class="arch-node">
+          <div class="an-name">ArtifactTimelock</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0x662321CC63700865838aB08378061BE499344714" target="_blank">0x6623...4714</a></div>
+          <div class="an-desc">48h delayed execution for governance security</div>
+        </div>
+      </div>
+
+      <div class="arch-layer arch-mech">
+        <div class="arch-layer-label">MECHANISMS</div>
+        <div class="arch-node">
+          <div class="an-name">TreasuryFlashBuy v2</div>
+          <div class="an-addr"><a href="https://basescan.org/address/0xf6383860837E6cb983F9Af8Def92fc08F15Be65b" target="_blank">0xf638...e65b</a></div>
+          <div class="an-desc">Buyback engine using oracle price data</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ═══ TOKENS ═══ -->
-<section id="tokens" class="section section-dark">
-  <div class="sec-label">02</div>
-  <h2 class="sec-title">Dual-Token System</h2>
-  <p class="sec-desc">Au and Ag — two tokens, one symbiotic economy. Reserve-backed stability meets algorithmic emissions.</p>
+<section id="tokens" class="section">
+  <div class="container">
+    <div class="sec-num">03</div>
+    <h2 class="sec-title">Tokens</h2>
 
-  <div class="tokens-split">
-    <div class="token-panel au-panel">
-      <div class="tp-header">
-        <div class="tp-symbol au-gold">Au</div>
-        <div class="tp-info"><div class="tp-name">Artifact Gold</div><div class="tp-type">Reserve-Backed Token</div></div>
-      </div>
-      <div class="tp-body">
-        <p class="tp-desc">The system's anchor. Each Au is backed by a basket of assets held in the Treasury. Redeemable, stable, governance-controlled.</p>
-        <div class="tp-props">
-          <div class="tp-prop"><span>Backing</span><span>Treasury Reserves</span></div>
-          <div class="tp-prop"><span>Redeemable</span><span>Yes — via AMO</span></div>
-          <div class="tp-prop"><span>Minting</span><span>Deposit-based</span></div>
-          <div class="tp-prop"><span>Role</span><span>Reserve / Exchange</span></div>
+    <div class="tokens-grid">
+      <!-- Au -->
+      <div class="token-card">
+        <div class="tc-header">
+          <div class="tc-name">Artifact Utility</div>
+          <div class="tc-symbol">Au</div>
         </div>
-        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="tp-addr">0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08</a>
-      </div>
-    </div>
-
-    <div class="token-panel ag-panel">
-      <div class="tp-header">
-        <div class="tp-symbol ag-silver">Ag</div>
-        <div class="tp-info"><div class="tp-name">Artifact Silver</div><div class="tp-type">Emission / Reward Token</div></div>
-      </div>
-      <div class="tp-body">
-        <p class="tp-desc">The incentive layer. Minted by the PID controller and distributed to stakers. Mathematically governed — responsive to protocol health.</p>
-        <div class="tp-props">
-          <div class="tp-prop"><span>Minting</span><span>PID-Controlled</span></div>
-          <div class="tp-prop"><span>Distribution</span><span>Staking Rewards</span></div>
-          <div class="tp-prop"><span>Max/Epoch</span><span>50,000 Ag</span></div>
-          <div class="tp-prop"><span>Role</span><span>Incentive / Demand</span></div>
+        <div class="tc-body">
+          <div class="tc-row"><span>Address</span><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="tc-addr">0x0c5A...2f08</a></div>
+          <div class="tc-row"><span>Standard</span><span>ERC-20 with EIP-2612 permit</span></div>
+          <div class="tc-row"><span>Max Supply</span><span>1,000,000,000 Au</span></div>
+          <div class="tc-row"><span>Transfer Tax</span><span>9 bps (0.09%)</span></div>
+          <div class="tc-row"><span>Tax Split</span><span>50% burned, 50% to Treasury</span></div>
+          <div class="tc-row"><span>Minting</span><span>Deposit-based via TreasuryAMO</span></div>
+          <div class="tc-row"><span>Redeemable</span><span>Yes — via AMO</span></div>
+          <div class="tc-row"><span>Role</span><span>Reserve-backed medium of exchange</span></div>
         </div>
-        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="tp-addr">0x1D31719389Bd8b17277Ba367c26b830aE34D3674</a>
       </div>
-    </div>
-  </div>
 
-  <div class="flow-section">
-    <h3 class="flow-heading">Token Lifecycle — How Value Flows</h3>
-    <div class="flow-row">
-      <div class="flow-box"><div class="fb-emoji"><span class="material-icons-outlined">payments</span></div><div class="fb-label">Deposit</div><div class="fb-sub">ETH / stables</div></div>
-      <div class="flow-conn">→</div>
-      <div class="flow-box"><div class="fb-emoji"><span class="material-icons-outlined">account_balance</span></div><div class="fb-label">Treasury</div><div class="fb-sub">Holds reserves</div></div>
-      <div class="flow-conn">→</div>
-      <div class="flow-box"><div class="fb-emoji"><span class="material-icons-outlined">bolt</span></div><div class="fb-label">Mint Au</div><div class="fb-sub">1:1 backed</div></div>
-      <div class="flow-conn">→</div>
-      <div class="flow-box"><div class="fb-emoji"><span class="material-icons-outlined">lock</span></div><div class="fb-label">Stake</div><div class="fb-sub">Lock Au</div></div>
-      <div class="flow-conn">→</div>
-      <div class="flow-box"><div class="fb-emoji"><span class="material-icons-outlined">military_tech</span></div><div class="fb-label">Earn Ag</div><div class="fb-sub">PID-controlled</div></div>
-      <div class="flow-conn">→</div>
-      <div class="flow-box"><div class="fb-emoji"><span class="material-icons-outlined">trending_up</span></div><div class="fb-label">Demand</div><div class="fb-sub">Buy pressure</div></div>
+      <!-- Ag -->
+      <div class="token-card">
+        <div class="tc-header">
+          <div class="tc-name">Artifact Governance</div>
+          <div class="tc-symbol">Ag</div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-row"><span>Address</span><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="tc-addr">0x1D31...3674</a></div>
+          <div class="tc-row"><span>Standard</span><span>ERC-20 (OpenZeppelin GovernorVotes)</span></div>
+          <div class="tc-row"><span>Max Supply</span><span>100,000,000 Ag</span></div>
+          <div class="tc-row"><span>Transfer Tax</span><span>None</span></div>
+          <div class="tc-row"><span>Minting</span><span>PID Controller (emission-based)</span></div>
+          <div class="tc-row"><span>Burning</span><span>None (fixed emission schedule)</span></div>
+          <div class="tc-row"><span>Voting Power</span><span>1 Ag = 1 vote (delegatable)</span></div>
+          <div class="tc-row"><span>Role</span><span>Governance rights, staking rewards</span></div>
+        </div>
+      </div>
+
+      <!-- RSBT -->
+      <div class="token-card">
+        <div class="tc-header">
+          <div class="tc-name">Soulbound Receipt Token</div>
+          <div class="tc-symbol">RSBT</div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-row"><span>Address</span><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank" class="tc-addr">0xfd04...47CD</a></div>
+          <div class="tc-row"><span>Standard</span><span>ERC-721 (soulbound)</span></div>
+          <div class="tc-row"><span>Transferable</span><span>No</span></div>
+          <div class="tc-row"><span>Role</span><span>Staking position receipt, multiplier</span></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ═══ FLYWHEEL ═══ -->
-<section id="flywheel" class="section">
-  <div class="sec-label">03</div>
-  <h2 class="sec-title">The Flywheel</h2>
-  <p class="sec-desc">A self-reinforcing economic spiral. Each cycle strengthens the next.</p>
+<section id="flywheel" class="section section-alt">
+  <div class="container">
+    <div class="sec-num">04</div>
+    <h2 class="sec-title">Economic Flywheel</h2>
+    <p class="sec-lead">The self-reinforcing cycle that drives protocol growth.</p>
 
-  <div class="fw-wrapper">
-    <div class="fw-visual">
-      <div class="fw-center-core">
-        <div class="fw-core-label">TVL</div>
-        <div class="fw-core-sub">Total Value Locked</div>
+    <div class="flywheel-static">
+      <div class="fw-step">
+        <div class="fw-num">1</div>
+        <div class="fw-body">
+          <h4>TVL Grows</h4>
+          <p>Deposits flow into the protocol. TreasuryAMO manages liquidity. Total Value Locked increases toward the PID target.</p>
+        </div>
       </div>
-      <div class="fw-orbit-node fw-n1" data-step="1"><div class="on-icon"><span class="material-icons-outlined">bar_chart</span></div><div class="on-text">TVL Grows</div></div>
-      <div class="fw-orbit-node fw-n2" data-step="2"><div class="on-icon"><span class="material-icons-outlined">calculate</span></div><div class="on-text">PID Mints Ag</div></div>
-      <div class="fw-orbit-node fw-n3" data-step="3"><div class="on-icon"><span class="material-icons-outlined">lock</span></div><div class="on-text">Higher APY</div></div>
-      <div class="fw-orbit-node fw-n4" data-step="4"><div class="on-icon"><span class="material-icons-outlined">diamond</span></div><div class="on-text">Ag Demand</div></div>
-      <div class="fw-orbit-node fw-n5" data-step="5"><div class="on-icon"><span class="material-icons-outlined">waves</span></div><div class="on-text">More Liquidity</div></div>
-      <svg class="fw-svg" viewBox="0 0 500 500">
-        <circle cx="250" cy="250" r="180" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-        <circle cx="250" cy="250" r="120" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-      </svg>
-    </div>
-    <div class="fw-detail" id="fw-detail">
-      <div class="fw-step-label">Step <span id="fw-step-num">1</span></div>
-      <div class="fw-step-title" id="fw-step-title">TVL Grows</div>
-      <div class="fw-step-desc" id="fw-step-desc">More deposits flow into the protocol. The Treasury swells. Total Value Locked increases toward the target.</div>
-    </div>
-    <div class="fw-controls">
-      <button class="btn-primary" id="fw-play">▶ Animate Cycle</button>
-      <button class="btn-ghost" id="fw-stop">↺ Reset</button>
+      <div class="fw-step">
+        <div class="fw-num">2</div>
+        <div class="fw-body">
+          <h4>PID Detects Gap</h4>
+          <p>The PID controller computes the difference between current TVL and target TVL. Error signal drives emission rate.</p>
+        </div>
+      </div>
+      <div class="fw-step">
+        <div class="fw-num">3</div>
+        <div class="fw-body">
+          <h4>Ag Emitted</h4>
+          <p>New Ag is minted and distributed to stakers. Higher emissions = higher staking APY.</p>
+        </div>
+      </div>
+      <div class="fw-step">
+        <div class="fw-num">4</div>
+        <div class="fw-body">
+          <h4>Staking Demand Rises</h4>
+          <p>Higher APY attracts capital. More Au deposited, more Ag staked. TVL increases further.</p>
+        </div>
+      </div>
+      <div class="fw-step">
+        <div class="fw-num">5</div>
+        <div class="fw-body">
+          <h4>Flywheel Reinforces</h4>
+          <p>Higher TVL narrows the gap. PID reduces emissions. System converges to equilibrium at target TVL.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ PID SIMULATOR ═══ -->
-<section id="pid" class="section section-dark">
-  <div class="sec-label">04</div>
-  <h2 class="sec-title">PID Controller</h2>
-  <p class="sec-desc">The mathematical heart. Adjust parameters and watch emissions respond in real-time.</p>
+<!-- ═══ PID ═══ -->
+<section id="pid" class="section">
+  <div class="container">
+    <div class="sec-num">05</div>
+    <h2 class="sec-title">PID Controller</h2>
+    <p class="sec-lead">Proportional-Integral-Derivative controller. Computes Ag emissions from the TVL gap.</p>
 
-  <div class="pid-formula-bar">
-    <div class="pf-term"><span class="pf-label">Emission</span></div>
-    <div class="pf-term">=</div>
-    <div class="pf-term kp"><span class="pf-var">Kp</span><span class="pf-desc">× e(t)</span></div>
-    <div class="pf-term">+</div>
-    <div class="pf-term ki"><span class="pf-var">Ki</span><span class="pf-desc">× ∫e(t)dt</span></div>
-    <div class="pf-term">+</div>
-    <div class="pf-term kd"><span class="pf-var">Kd</span><span class="pf-desc">× de/dt</span></div>
-    <div class="pf-result" id="pid-live-output">= 0 Ag/epoch</div>
-  </div>
+    <div class="pid-layout">
+      <div class="pid-formula-block">
+        <div class="pf-label">Emission Formula</div>
+        <div class="pf-formula">E(t) = K<sub>p</sub>·e(t) + K<sub>i</sub>·∫e(τ)dτ + K<sub>d</sub>·de(t)/dt</div>
+        <div class="pf-terms">
+          <div class="pf-term">
+            <span class="pt-coeff">K<sub>p</sub> · e(t)</span>
+            <span class="pt-name">Proportional</span>
+            <span class="pt-desc">Reacts to current gap. Larger gap = more emissions.</span>
+          </div>
+          <div class="pf-term">
+            <span class="pt-coeff">K<sub>i</sub> · ∫e(τ)dτ</span>
+            <span class="pt-name">Integral</span>
+            <span class="pt-desc">Accumulates past error. Eliminates steady-state offset.</span>
+          </div>
+          <div class="pf-term">
+            <span class="pt-coeff">K<sub>d</sub> · de(t)/dt</span>
+            <span class="pt-name">Derivative</span>
+            <span class="pt-desc">Predicts future error. Dampens oscillation.</span>
+          </div>
+        </div>
+      </div>
 
-  <div class="pid-layout">
-    <div class="pid-sliders">
-      <div class="slider-group">
-        <div class="sg-header"><span class="sg-name kp-color">Kp — Proportional</span><span class="sg-val" id="sg-kp">0.50</span></div>
-        <input type="range" class="slider kp-slider" min="0" max="2" step="0.01" value="0.5" id="sl-kp">
-        <div class="sg-hint">Reacts to current TVL gap. Stronger = faster response.</div>
+      <div class="pid-params-block">
+        <div class="pf-label">Live Parameters</div>
+        <div class="pp-row"><span>K<sub>p</sub> (Proportional)</span><span class="pp-val">0.15</span></div>
+        <div class="pp-row"><span>K<sub>i</sub> (Integral)</span><span class="pp-val">0.00005</span></div>
+        <div class="pp-row"><span>K<sub>d</sub> (Derivative)</span><span class="pp-val">0.00</span></div>
+        <div class="pp-row"><span>Emission Cap / Epoch</span><span class="pp-val">50,000 Ag</span></div>
+        <div class="pp-row"><span>Epoch Duration</span><span class="pp-val">5 days</span></div>
+        <div class="pp-row"><span>Target TVL</span><span class="pp-val">Governance-set</span></div>
+        <div class="pp-row"><span>Oracle Source</span><span class="pp-val">AvOracle v5 (TWAP)</span></div>
+        <div class="pp-row"><span>Reserve Ratio</span><span class="pp-val">60% minimum</span></div>
       </div>
-      <div class="slider-group">
-        <div class="sg-header"><span class="sg-name ki-color">Ki — Integral</span><span class="sg-val" id="sg-ki">0.10</span></div>
-        <input type="range" class="slider ki-slider" min="0" max="1" step="0.01" value="0.1" id="sl-ki">
-        <div class="sg-hint">Accumulates past errors. Eliminates steady-state offset.</div>
-      </div>
-      <div class="slider-group">
-        <div class="sg-header"><span class="sg-name kd-color">Kd — Derivative</span><span class="sg-val" id="sg-kd">0.05</span></div>
-        <input type="range" class="slider kd-slider" min="0" max="1" step="0.01" value="0.05" id="sl-kd">
-        <div class="sg-hint">Predicts trends. Dampens overshoot and oscillation.</div>
-      </div>
-      <div class="slider-divider"></div>
-      <div class="slider-group">
-        <div class="sg-header"><span class="sg-name">Target TVL ($)</span><span class="sg-val" id="sg-target">$1,000,000</span></div>
-        <input type="range" class="slider" min="100000" max="10000000" step="100000" value="1000000" id="sl-target">
-      </div>
-      <div class="slider-group">
-        <div class="sg-header"><span class="sg-name">Current TVL ($)</span><span class="sg-val" id="sg-current">$200,000</span></div>
-        <input type="range" class="slider" min="0" max="10000000" step="50000" value="200000" id="sl-current">
-      </div>
-    </div>
-    <div class="pid-chart-wrap">
-      <canvas id="pid-chart"></canvas>
     </div>
   </div>
 </section>
 
 <!-- ═══ GOVERNANCE ═══ -->
-<section id="governance" class="section">
-  <div class="sec-label">05</div>
-  <h2 class="sec-title">Governance</h2>
-  <p class="sec-desc">DAO-controlled. Every parameter, every upgrade — decided by the community.</p>
+<section id="governance" class="section section-alt">
+  <div class="container">
+    <div class="sec-num">06</div>
+    <h2 class="sec-title">Governance</h2>
+    <p class="sec-lead">Ag holders propose and vote. GovernorContract routes through ArtifactTimelock before execution.</p>
 
-  <div class="gov-pipeline-visual">
-    <div class="gov-step-card">
-      <div class="gs-num">01</div>
-      <div class="gs-icon"><span class="material-icons-outlined">description</span></div>
-      <h4>Propose</h4>
-      <p>100,000+ Ag holders submit on-chain proposals.</p>
-      <div class="gs-param">Threshold: 100K Ag</div>
+    <div class="gov-flow">
+      <div class="gf-step">
+        <div class="gf-num">1</div>
+        <h4>Propose</h4>
+        <p>Ag holder with ≥100K delegated submits proposal to GovernorContract.</p>
+      </div>
+      <div class="gf-arrow">→</div>
+      <div class="gf-step">
+        <div class="gf-num">2</div>
+        <h4>Vote</h4>
+        <p>3-day voting period. Quorum: 4% of total Ag supply.</p>
+      </div>
+      <div class="gf-arrow">→</div>
+      <div class="gf-step">
+        <div class="gf-num">3</div>
+        <h4>Queue</h4>
+        <p>Successful proposals enter ArtifactTimelock. 48h delay begins.</p>
+      </div>
+      <div class="gf-arrow">→</div>
+      <div class="gf-step">
+        <div class="gf-num">4</div>
+        <h4>Execute</h4>
+        <p>After timelock expires, anyone can trigger execution on-target contracts.</p>
+      </div>
     </div>
-    <div class="gs-arrow">→</div>
-    <div class="gov-step-card">
-      <div class="gs-num">02</div>
-      <div class="gs-icon"><span class="material-icons-outlined">how_to_vote</span></div>
-      <h4>Vote</h4>
-      <p>30-day voting period. Token-weighted. 4% quorum.</p>
-      <div class="gs-param">Period: 30 days</div>
-    </div>
-    <div class="gs-arrow">→</div>
-    <div class="gov-step-card">
-      <div class="gs-num">03</div>
-      <div class="gs-icon"><span class="material-icons-outlined">timer</span></div>
-      <h4>Timelock</h4>
-      <p>Passed proposals enter mandatory delay.</p>
-      <div class="gs-param">Enforced delay</div>
-    </div>
-    <div class="gs-arrow">→</div>
-    <div class="gov-step-card">
-      <div class="gs-num">04</div>
-      <div class="gs-icon"><span class="material-icons-outlined">bolt</span></div>
-      <h4>Execute</h4>
-      <p>Permissionless execution after timelock expires.</p>
-      <div class="gs-param">Trustless</div>
-    </div>
-  </div>
 
-  <div class="gov-param-grid">
-    <div class="gp-card"><div class="gp-key">Governor</div><a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank" class="gp-val-link">0x259c...6385</a></div>
-    <div class="gp-card"><div class="gp-key">Timelock</div><a href="https://basescan.org/address/0x662321CC63700865838aB08378061BE499344714" target="_blank" class="gp-val-link">0x6623...4714</a></div>
-    <div class="gp-card"><div class="gp-key">RSBT</div><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank" class="gp-val-link">0xfd04...47CD</a></div>
-    <div class="gp-card"><div class="gp-key">AcousticVault</div><a href="https://basescan.org/address/0xf6383860837E6cb983F9Af8Def92fc08F15Be65b" target="_blank" class="gp-val-link">0xf638...e65b</a></div>
+    <div class="gov-params">
+      <div class="gp-row"><span>Governor</span><a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank" class="gp-addr">0x259c...6385</a></div>
+      <div class="gp-row"><span>Timelock</span><a href="https://basescan.org/address/0x662321CC63700865838aB08378061BE499344714" target="_blank" class="gp-addr">0x6623...4714</a></div>
+      <div class="gp-row"><span>Proposal Threshold</span><span>100,000 Ag delegated</span></div>
+      <div class="gp-row"><span>Voting Period</span><span>3 days (259,200 blocks)</span></div>
+      <div class="gp-row"><span>Quorum</span><span>4% of total Ag supply</span></div>
+      <div class="gp-row"><span>Timelock Delay</span><span>48 hours</span></div>
+      <div class="gp-row"><span>Voting Token</span><span>Artifact Governance (Ag)</span></div>
+    </div>
   </div>
 </section>
 
 <!-- ═══ CONTRACTS ═══ -->
-<section id="contracts" class="section section-dark">
-  <div class="sec-label">06</div>
-  <h2 class="sec-title">Contract Map</h2>
-  <p class="sec-desc">Every deployed contract. Verified on Basescan.</p>
+<section id="contracts" class="section">
+  <div class="container">
+    <div class="sec-num">07</div>
+    <h2 class="sec-title">Contracts</h2>
+    <p class="sec-lead">All deployed contracts on Base Mainnet. Click any address for Basescan.</p>
 
-  <div class="filter-bar">
-    <button class="filter-chip active" data-filter="all">All</button>
-    <button class="filter-chip" data-filter="core">Core</button>
-    <button class="filter-chip" data-filter="token">Tokens</button>
-    <button class="filter-chip" data-filter="gov">Governance</button>
-    <button class="filter-chip" data-filter="oracle">Oracle</button>
-    <button class="filter-chip" data-filter="amo">AMO</button>
+    <div class="filter-bar">
+      <button class="filter-chip active" data-filter="all">All</button>
+      <button class="filter-chip" data-filter="token">Tokens</button>
+      <button class="filter-chip" data-filter="core">Core</button>
+      <button class="filter-chip" data-filter="policy">Policy</button>
+      <button class="filter-chip" data-filter="gov">Governance</button>
+      <button class="filter-chip" data-filter="mech">Mechanisms</button>
+    </div>
+
+    <div id="contracts-list" class="contracts-list"></div>
   </div>
-
-  <div class="contracts-list" id="contracts-list"></div>
 </section>
 
 <!-- ═══ CALCULATOR ═══ -->
-<section id="calculator" class="section">
-  <div class="sec-label">07</div>
-  <h2 class="sec-title">Emission Calculator</h2>
-  <p class="sec-desc">Project Ag emissions based on protocol TVL and PID parameters.</p>
+<section id="calculator" class="section section-alt">
+  <div class="container">
+    <div class="sec-num">08</div>
+    <h2 class="sec-title">Emission Calculator</h2>
+    <p class="sec-lead">Simulate Ag emissions based on PID parameters and TVL inputs.</p>
 
-  <div class="calc-layout">
-    <div class="calc-inputs">
-      <div class="ci-group"><label>Target TVL ($)</label><input type="number" id="ci-target" value="1000000" min="0" step="100000"></div>
-      <div class="ci-group"><label>Current TVL ($)</label><input type="number" id="ci-current" value="200000" min="0" step="50000"></div>
-      <div class="ci-group"><label>Kp</label><input type="number" id="ci-kp" value="0.5" min="0" max="2" step="0.01"></div>
-      <div class="ci-group"><label>Ki</label><input type="number" id="ci-ki" value="0.1" min="0" max="1" step="0.01"></div>
-      <div class="ci-group"><label>Epoch</label><select id="ci-epoch"><option value="604800">1 week</option><option value="86400">1 day</option><option value="3600">1 hour</option></select></div>
+    <div class="calc-layout">
+      <div class="calc-inputs">
+        <div class="ci-group">
+          <label>Target TVL ($)</label>
+          <input type="number" id="ci-target" value="10000000" step="1000000">
+        </div>
+        <div class="ci-group">
+          <label>Current TVL ($)</label>
+          <input type="number" id="ci-current" value="5000000" step="100000">
+        </div>
+        <div class="ci-group">
+          <label>K<sub>p</sub> (Proportional)</label>
+          <input type="number" id="ci-kp" value="0.15" step="0.01" min="0" max="1">
+        </div>
+        <div class="ci-group">
+          <label>K<sub>i</sub> (Integral)</label>
+          <input type="number" id="ci-ki" value="0.00005" step="0.00001" min="0" max="0.01">
+        </div>
+        <div class="ci-group">
+          <label>Epoch Duration (seconds)</label>
+          <input type="number" id="ci-epoch" value="432000" step="86400">
+        </div>
+      </div>
+
+      <div class="calc-results">
+        <div class="cr-row"><span>TVL Gap</span><span id="co-gap" class="cr-val">$5,000,000</span></div>
+        <div class="cr-row"><span>P-Term Output</span><span id="co-pterm" class="cr-val">750,000</span></div>
+        <div class="cr-row"><span>Raw Emission</span><span id="co-emission" class="cr-val">750,000 Ag</span></div>
+        <div class="cr-row highlight"><span>Capped Emission</span><span id="co-capped" class="cr-val">50,000 Ag</span></div>
+        <div class="cr-row"><span>Est. APY</span><span id="co-apy" class="cr-val">—</span></div>
+      </div>
     </div>
-    <div class="calc-outputs">
-      <div class="co-card"><div class="co-key">TVL Gap</div><div class="co-val" id="co-gap">$800,000</div></div>
-      <div class="co-card"><div class="co-key">P-Term</div><div class="co-val" id="co-pterm">400,000</div></div>
-      <div class="co-card co-highlight"><div class="co-key">Emission / Epoch</div><div class="co-val" id="co-emission">400,000 Ag</div></div>
-      <div class="co-card"><div class="co-key">After Max Cap</div><div class="co-val" id="co-capped">50,000 Ag ⬆</div></div>
-      <div class="co-card"><div class="co-key">Est. APY</div><div class="co-val" id="co-apy">—</div></div>
+
+    <div class="calc-chart-wrap">
+      <canvas id="calc-chart"></canvas>
     </div>
   </div>
-  <div class="calc-chart-wrap"><canvas id="calc-chart"></canvas></div>
 </section>
 
 <!-- ═══ GLOSSARY ═══ -->
-<section id="glossary" class="section section-dark">
-  <div class="sec-label">08</div>
-  <h2 class="sec-title">Glossary</h2>
-  <p class="sec-desc">Every term in the ecosystem, defined.</p>
+<section id="glossary" class="section">
+  <div class="container">
+    <div class="sec-num">09</div>
+    <h2 class="sec-title">Glossary</h2>
 
-  <div class="glossary-list">
-    <div class="gl-item"><div class="gl-term">Au (Artifact Gold)</div><div class="gl-def">Reserve-backed token. Each Au is backed by Treasury assets. Redeemable, stable, governance-controlled.</div></div>
-    <div class="gl-item"><div class="gl-term">Ag (Artifact Silver)</div><div class="gl-def">Emission/reward token. Minted by PID, distributed to stakers. Drives demand and growth.</div></div>
-    <div class="gl-item"><div class="gl-term">Treasury</div><div class="gl-def">Central vault holding all protocol reserves. Backing for Au tokens.</div></div>
-    <div class="gl-item"><div class="gl-term">TreasuryAMO</div><div class="gl-def">Automated Market Operations. Deposits, withdrawals, liquidity via Slipstream.</div></div>
-    <div class="gl-item"><div class="gl-term">PID Controller</div><div class="gl-def">Proportional-Integral-Derivative. Computes Ag emissions from TVL gap. The policy engine.</div></div>
-    <div class="gl-item"><div class="gl-term">Governor</div><div class="gl-def">DAO governance contract. Propose, vote, execute. Includes timelock.</div></div>
-    <div class="gl-item"><div class="gl-term">Timelock</div><div class="gl-def">Delay between proposal approval and execution. Ensures transparency.</div></div>
-    <div class="gl-item"><div class="gl-term">AvOracle v5</div><div class="gl-def">Multi-source price feed with manipulation resistance. Provides Au/USD pricing.</div></div>
-    <div class="gl-item"><div class="gl-term">RSBT</div><div class="gl-def">Rebasing Soulbound Token. Represents staked Au. Non-transferable. Rebases for rewards.</div></div>
-    <div class="gl-item"><div class="gl-term">Epoch</div><div class="gl-def">Fixed time period for PID emission calculations. Controller distributes Ag once per epoch.</div></div>
-    <div class="gl-item"><div class="gl-term">Slipstream</div><div class="gl-def">Concentrated liquidity AMM on Base. Used by TreasuryAMO for swaps.</div></div>
-    <div class="gl-item"><div class="gl-term">TVL</div><div class="gl-def">Total Value Locked. USD value of assets in the protocol. Primary PID input.</div></div>
-    <div class="gl-item"><div class="gl-term">Flywheel</div><div class="gl-def">Self-reinforcing cycle: TVL → PID → Ag → APY → demand → liquidity → TVL.</div></div>
-    <div class="gl-item"><div class="gl-term">Base</div><div class="gl-def">Layer 2 blockchain (Coinbase L2). All contracts deployed here. Low fees, fast finality.</div></div>
+    <div class="glossary-grid">
+      <div class="gl-item">
+        <div class="gl-term">AMO</div>
+        <div class="gl-def">Autonomous Market Operations. Protocol-controlled liquidity management without human intervention.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Artifact Utility (Au)</div>
+        <div class="gl-def">Reserve-backed ERC-20 token with 9bps transfer tax. Medium of exchange in the AV ecosystem.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-def">Governance ERC-20 token. PID-minted, 100M cap. Grants voting rights in GovernorContract.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Artifact Governance (Ag)</div>
+        <div class="gl-def">Governance ERC-20 token. PID-minted, 100M cap. Grants voting rights in GovernorContract.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">PID Controller</div>
+        <div class="gl-def">Proportional-Integral-Derivative. Control system that computes Ag emissions based on TVL gap from target.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">TVL</div>
+        <div class="gl-def">Total Value Locked. The aggregate value of all assets deposited in protocol contracts.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Epoch</div>
+        <div class="gl-def">Fixed time window (5 days) over which PID emissions are computed and distributed.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">TWAP</div>
+        <div class="gl-def">Time-Weighted Average Price. Oracle manipulation resistance mechanism used by AvOracle v5.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Slipstream</div>
+        <div class="gl-def">Base-native concentrated liquidity AMM. TreasuryAMO uses it for reserve management.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">RSBT</div>
+        <div class="gl-def">Soulbound Receipt Token. Non-transferable ERC-721 representing a staked position.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">FlashBuy</div>
+        <div class="gl-def">Buyback mechanism. Purchases Au from market when price falls below oracle, using protocol reserves.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Timelock</div>
+        <div class="gl-def">48-hour delay between proposal approval and execution. Ensures transparency and exit rights.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Quorum</div>
+        <div class="gl-def">Minimum participation threshold. 4% of total Ag supply must vote for a proposal to pass.</div>
+      </div>
+      <div class="gl-item">
+        <div class="gl-term">Reserve Ratio</div>
+        <div class="gl-def">Minimum 60% of Au supply must be backed by protocol reserves at all times.</div>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ═══ FOOTER ═══ -->
-<footer class="site-footer">
-  <div class="footer-inner">
-    <div class="footer-logo">
-      <span class="logo-glyph">◈</span>
-      <span class="logo-text">AV TREASURY</span>
-    </div>
-    <p class="footer-quote">Resilience is not something you buy off the shelf. It's forged — through incidents, recoveries, and the quiet decision to keep building.</p>
-    <div class="footer-links">
-      <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank">Treasury</a>
-      <a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank">Governor</a>
-      <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank">Au</a>
-      <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank">Ag</a>
-      <a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank">PID</a>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-label">Treasury</div>
+        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank">0x1082...9F9e</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-label">Governor</div>
+        <a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank">0x259c...6385</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-label">Artifact Utility (Au)</div>
+        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank">0x0c5A...2f08</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-label">Artifact Governance (Ag)</div>
+        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank">0x1D31...3674</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-label">PID Controller</div>
+        <a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank">0x9911...7f70</a>
+      </div>
     </div>
     <div class="footer-bottom">
-      <span>v3.2 — Oracle + Governance Update — 2026-06-28</span>
-      <span>Production on Base Mainnet</span>
+      <span>AV Treasury v3.2 — Base Mainnet</span>
+      <span>All contracts verified on Basescan</span>
     </div>
   </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

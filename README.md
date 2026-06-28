@@ -31,7 +31,7 @@ The system is fully autonomous: all market operations, emissions, and liquidity 
 | 9 | **DexSimulator** | `0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2` | Simulation infrastructure — stress-tests operations before mainnet execution |
 | 10 | **TreasuryAMO** | `0xF096cD4D24811B0F824c929907196bCB796bca88` | Autonomous Market Operations — manages liquidity, buybacks, and reserves |
 
-### Pre-existing (Not Deployed by Us)
+### Assets
 
 | Token | Address | Description |
 |-------|---------|-------------|

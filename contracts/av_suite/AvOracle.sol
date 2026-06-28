@@ -457,8 +457,7 @@ contract AvOracle is AccessControl, ReentrancyGuard {
      */
     function updatePrice(address token) external notPaused {
         PriceFeed memory feed = priceFeeds[token];
-        if (!feed.active) revert NoPriceSource();
-        
+
         uint256 price;
         PriceSource source;
         bool valid = false;

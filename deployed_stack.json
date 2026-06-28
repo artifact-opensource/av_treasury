@@ -39,7 +39,7 @@
   "AvOracle": {
     "proxy": "0xbAe5FA893A23330Cb4608d58bBCf52918dA5E60A",
     "impl": "0xbAe5FA893A23330Cb4608d58bBCf52918dA5E60A",
-    "verified": false
+    "verified": true
   },
   "DexSimulator": {
     "proxy": "0x2C1bD0e498cEA315dA7486a41FB3Dd991DA302B2",

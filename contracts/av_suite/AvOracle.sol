@@ -639,11 +639,11 @@ contract AvOracle is AccessControl, ReentrancyGuard {
         // Use the Q64.96 fixed-point math from Uniswap V3
         uint160 sqrtPriceX96 = _getSqrtPriceX96(tick);
         // sqrtPriceX96 is in Q64.96, so price = (sqrtPriceX96)^2 * 1e18 / 2^192
+        // This gives us token1/token0 in 1e18 fixed point
         price = (uint256(sqrtPriceX96) * uint256(sqrtPriceX96) * 1e18) / 2**192;
-        if (token0IsTarget) {
-            // token0 is the target, price should be in terms of token1
-            // sqrtPriceX96 = sqrt(token1/token0) * 2^96
-            // So price(token0 in terms of token1) = 1 / (token1/token0) = token0/token1
+        if (!token0IsTarget) {
+            // token1 is the target, price should be in terms of token0
+            // Raw price is token1/token0, invert to get token0/token1
             price = (1e18 * 1e18) / price;
         }
     }

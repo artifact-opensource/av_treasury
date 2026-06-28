@@ -36,8 +36,8 @@ ArtifactTimelock:  0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77
 GovernorContract:  0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03
 FlashLoan:         0x4DDD1873964E5C2E3BE6712E199812903E6696B9  (v2 — fixed treasury=SAFE)
 TreasuryFlashBuy:  0xCE73711EE793AF348837C09B729680B12DF6D8C0  (v2 — fixed token order)
-AvOracle (active): 0x85509218F94e185E1522c9D8bB96BecDCD918fb4  (v4 — TWAP-primary, AU price live, ACTIVE)
-AvOracle (backup): 0xe3B21cb61B0bE3486BE34C7f370c47409F949d22  (v4 — TWAP-primary, same code, backup)
+AvOracle (active): 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD  (v5 — TWAP-primary, AU=0.008515 USDC, ACTIVE)
+AvOracle (backup): 0x85509218F94e185E1522c9D8bB96BecDCD918fb4  (v4 — deprecated, wrong pool)
 AvOracle (old):    0xaE0D8aF68f4D610654c0517aA856335f6d92Ff8D  (deprecated, V3)
 AvOracle (v2):      0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19  (deprecated, V2-only)
 DexSimulator:      0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2  (v2 — fixed token order)
@@ -59,3 +59,4 @@ Slipstream Router: 0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43
 - DexSimulator has no admin (permissionless)
 - Deployer reimbursed for 100K Au LP deposit ✅ (2026-06-28)
 - Token swap bug fixed: Staking, FlashBuy, Oracle, DexSim, FlashLoan redeployed with correct param order (2026-06-28)
+- Oracle v5 deployed: TWAP-primary pricing (no Chainlink feed needed), AU/USDC Aerodrome pool 0x5E1aA37C..., AU price = 0.008515 USDC (2026-06-28)

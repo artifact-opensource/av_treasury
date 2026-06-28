@@ -5,17 +5,15 @@
 
 // ═══ CONTRACT DATA ═══
 const CONTRACTS = [
-  { name: "Treasury", role: "Holds all protocol reserves. Backing for Au.", cat: "core", addr: "0x1D31719389Bd8b17277Ba367c26b830aE34D3674" },
-  { name: "TreasuryAMO", role: "Automated Market Operations. Deposits, withdrawals, liquidity.", cat: "amo", addr: "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" },
-  { name: "PID Controller", role: "Computes Ag emissions from TVL gap. Policy engine.", cat: "core", addr: "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" },
-  { name: "Oracle Wrapper", role: "AvOracle v5. Multi-source price feeds.", cat: "oracle", addr: "0x662321CC63700865838aB08378061BE499344714" },
+  { name: "Au Token", role: "Fixed-supply reserve token. 9bps transfer tax.", cat: "token", addr: "0x1D31719389Bd8b17277Ba367c26b830aE34D3674" },
+  { name: "Ag Token", role: "Elastic supply reward token. PID-governed, 100M cap.", cat: "token", addr: "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" },
+  { name: "TreasuryAMO", role: "Holds protocol reserves. AMO operations via Slipstream.", cat: "core", addr: "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" },
+  { name: "PID Controller", role: "Computes Ag emissions from TVL gap. Policy engine.", cat: "core", addr: "0x662321CC63700865838aB08378061BE499344714" },
+  { name: "AvOracle v5", role: "Multi-source TWAP price feeds. Manipulation resistant.", cat: "oracle", addr: "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB" },
   { name: "Governor", role: "DAO governance. 100K threshold, 30-day voting, 4% quorum.", cat: "gov", addr: "0x991138923880773D67c01392c31A255e770F7f70" },
-  { name: "Timelock", role: "Delayed execution for governance proposals.", cat: "gov", addr: "0xD96D502B20474308521958573E3Fa68DbB041685" },
-  { name: "Au Token", role: "Reserve-backed token. Artifact Gold.", cat: "token", addr: "0x56653245f4718fe105b95C8424947B31b84b5188" },
-  { name: "Ag Token", role: "Emission/reward token. Artifact Silver.", cat: "token", addr: "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB" },
-  { name: "Staking Au", role: "Au staking pool. Earns Ag rewards.", cat: "core", addr: "0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc" },
-  { name: "Staking Ag", role: "Ag staking pool. Earns Ag rewards.", cat: "core", addr: "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b" },
-  { name: "RSBT", role: "Rebasing Soulbound Token. Represents staked position.", cat: "token", addr: "0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" },
+  { name: "Timelock", role: "48h delayed execution for governance security.", cat: "gov", addr: "0xD96D502B20474308521958573E3Fa68DbB041685" },
+  { name: "RSBT", role: "Soulbound Receipt Token. Non-transferable staking multiplier.", cat: "token", addr: "0x56653245f4718fe105b95C8424947B31b84b5188" },
+  { name: "AcousticVault", role: "Reserve backing vault. Protocol security layer.", cat: "core", addr: "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b" },
 ];
 
 // ═══ NAV ACTIVE STATE ═══

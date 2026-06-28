@@ -1,39 +1,29 @@
 {
-  "network": "base",
   "chainId": 8453,
-  "deployer": "0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E",
-  "lastUpdated": "2026-06-26T22:36:00.047Z",
+  "network": "base-mainnet",
+  "updated": "2026-06-28",
   "contracts": {
-    "QuasiCrystalSVG": "0xB9fAf1B965A3D5A357Af66EF6F87EeF6687f03D6",
-    "AgToken": "0xF74808dc4f93AF6E0f1dEE4aFAF1c674aA20D8E0",
-    "AgTokenImpl": "0x0E752f5B4c02B6Ac8Fa8E7273c5E49a9247898EE",
-    "AuToken": "0xd680724362455593C32f31094255fC5149EB39Eb",
-    "AuTokenImpl": "0x137050e00eBed972E9da0F5B53E0eb1bA8c2a4dA",
-    "QuasiCrystalLPNFT": "0x6D0aff5ca9C3352188699dC468550fdA6ec0687b",
-    "AvOracle": "0x93dC5A848b6Dd149EFB92099A8e0701895d0F99B",
-    "PIDController": "0xa903c7Da5A9071d1Aa23311289Cf7Ab026535d5d",
-    "TreasuryAMO": "0xca37D135D95EdDAe37def8403fAA32365744Ee15",
-    "Staking": "0x9b758EFd22c56e6B243a062d3acFE7d2526F051B",
-    "StakingImpl": "0x1EF8aE04D658780Ac46Aa02Baf8a89Bee6a88ECd"
+    "AuToken": "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
+    "AgToken": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
+    "TreasuryAMO": "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385",
+    "PIDController": "0x662321CC63700865838aB08378061BE499344714",
+    "AvOracleV5": "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB",
+    "Governor": "0x991138923880773D67c01392c31A255e770F7f70",
+    "Timelock": "0xD96D502B20474308521958573E3Fa68DbB041685",
+    "RSBT": "0x56653245f4718fe105b95C8424947B31b84b5188",
+    "AcousticVault": "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b"
   },
-  "archivedDeployments": {
-    "anvil_v1": {
-      "network": "anvil",
-      "chainId": 1337,
-      "timestamp": "2026-06-25T14:57:40.610Z",
-      "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      "contracts": {
-        "AuToken": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-        "AgToken": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-        "DexSimulator": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-        "LpToken": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-        "Staking": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-        "PIDController": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-        "TreasuryAMO": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-        "Governor": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-        "FlashLoan": "0x71a0b8A2245A9770A4D887cE1E4eCc6C1d4FF28c",
-        "TreasuryFlashBuy": "0xb185E9f6531BA9877741022C92CE858cDCc5760E"
-      }
-    }
+  "parameters": {
+    "pidTargetTVL": 50000,
+    "reserveRatio": 0.6,
+    "agEmissionCap": 10000000,
+    "agEmissionWindow": "5 days",
+    "auFloor": 1.0,
+    "governanceQuorum": 0.04,
+    "votingPeriod": "30 days",
+    "proposalThreshold": 100000,
+    "timelockDelay": "48 hours",
+    "auTransferTax": "9bps",
+    "agMaxSupply": 100000000
   }
 }

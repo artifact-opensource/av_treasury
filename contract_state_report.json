@@ -1,0 +1,120 @@
+[
+  {
+    "name": "QuasiCrystalLPNFT",
+    "addr": "0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8",
+    "state": {
+      "name": "Aerodrome LP NFT",
+      "symbol": "auLP",
+      "totalSupply": "0"
+    },
+    "errors": [
+      "ownerOf: missing argument: passed to contract (count=0, expectedCount=1, code=MISSING_ARG"
+    ]
+  },
+  {
+    "name": "AVLPStaking_v2",
+    "addr": "0xd81Ca2F4E2c29d5d92fb6a224767c011c769b1E3",
+    "state": {
+      "auToken": "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
+      "agToken": "0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8",
+      "lpNFT": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e"
+    },
+    "errors": [
+      "totalStaked: missing revert data in call exception; Transaction reverted without a reason str",
+      "rewardRates: missing revert data in call exception; Transaction reverted without a reason str",
+      "pidController: missing revert data in call exception; Transaction reverted without a reason str"
+    ]
+  },
+  {
+    "name": "PID_Emission_Ctrl",
+    "addr": "0xB8F240870DBc1cD5F9262F8180350A29ea404268",
+    "state": {
+      "targetTVL": "10000000000000000000000000"
+    },
+    "errors": [
+      "treasuryAMO: missing revert data in call exception; Transaction reverted without a reason str",
+      "stakingContract: missing revert data in call exception; Transaction reverted without a reason str",
+      "bootstrapActive: missing revert data in call exception; Transaction reverted without a reason str"
+    ]
+  },
+  {
+    "name": "ArtifactTimelock",
+    "addr": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+    "state": {
+      "getMinDelay": "172800",
+      "PROPOSER_ROLE": "0xb09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc1",
+      "EXECUTOR_ROLE": "0xd8aa0f3194971a2a116679f7c2090f6939c8d4e01a2a8d7e41d55e5351469e63"
+    },
+    "errors": []
+  },
+  {
+    "name": "GovernorContract",
+    "addr": "0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03",
+    "state": {
+      "executorAddress": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+      "votingDelay": "1",
+      "votingPeriod": "216000",
+      "quorumNumerator": "4",
+      "proposalThreshold": "100000000000000000000000"
+    },
+    "errors": []
+  },
+  {
+    "name": "FlashLoan",
+    "addr": "0x8DE65Bf42802EFBCbbdaaA89041FE7cd9C9858FA",
+    "state": {
+      "treasury": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e",
+      "dex": "0x9bD062f6E0270601D044c3f0A1B4636F384d7A37"
+    },
+    "errors": []
+  },
+  {
+    "name": "TreasuryFlashBuy",
+    "addr": "0xaff7261f8CACA80d292A58E3fAEf72F0268F8053",
+    "state": {
+      "treasury": "0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e"
+    },
+    "errors": [
+      "flashLoan: missing revert data in call exception; Transaction reverted without a reason str",
+      "oracle: missing revert data in call exception; Transaction reverted without a reason str",
+      "dexSimulator: missing revert data in call exception; Transaction reverted without a reason str"
+    ]
+  },
+  {
+    "name": "AvOracle",
+    "addr": "0x39E7A01da3fD73df7eED92a52F82237a381A01FE",
+    "state": {
+      "auToken": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08"
+    },
+    "errors": [
+      "latestAnswer: missing revert data in call exception; Transaction reverted without a reason str",
+      "latestRoundData: missing revert data in call exception; Transaction reverted without a reason str",
+      "weth: missing revert data in call exception; Transaction reverted without a reason str"
+    ]
+  },
+  {
+    "name": "DexSimulator",
+    "addr": "0xED29f07E7b6F017619D83FD55DA673eE648c613c",
+    "state": {},
+    "errors": [
+      "auToken: missing revert data in call exception; Transaction reverted without a reason str",
+      "agToken: missing revert data in call exception; Transaction reverted without a reason str"
+    ]
+  },
+  {
+    "name": "TreasuryAMO",
+    "addr": "0xF096cD4D24811B0F824c929907196bCB796bca88",
+    "state": {
+      "auToken": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
+      "reserveToken": "0x4200000000000000000000000000000000000006",
+      "aerodromeRouter": "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43"
+    },
+    "errors": [
+      "staking: missing revert data in call exception; Transaction reverted without a reason str",
+      "flashLoan: missing revert data in call exception; Transaction reverted without a reason str",
+      "flashBuy: missing revert data in call exception; Transaction reverted without a reason str",
+      "pidController: missing revert data in call exception; Transaction reverted without a reason str",
+      "treasury: missing revert data in call exception; Transaction reverted without a reason str"
+    ]
+  }
+]

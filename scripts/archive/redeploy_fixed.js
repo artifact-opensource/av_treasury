@@ -31,7 +31,7 @@ async function main() {
   // 1. Staking (redeploy implementation + proxy)
   // ═══════════════════════════════════════════════════
   console.log("\n═══ 1/5: AVLPStaking_v2 (redeploy) ═══");
-  const StakingImpl = await ethers.getContractFactory("AVLPStaking_v2");
+  const StakingImpl = await ethers.getContractFactory("contracts/av_suite/AVLPStaking_v2.sol:AVLPStaking_v2");
   const stakingImpl = await StakingImpl.deploy();
   await stakingImpl.deployed();
   console.log("  Impl:", stakingImpl.address);
@@ -54,7 +54,7 @@ async function main() {
   // Constructor: (dex, treasury, agToken, auToken)
   // ═══════════════════════════════════════════════════
   console.log("\n═══ 2/5: TreasuryFlashBuy (redeploy) ═══");
-  const FlashBuy = await ethers.getContractFactory("TreasuryFlashBuy");
+  const FlashBuy = await ethers.getContractFactory("contracts/av_suite/TreasuryFlashBuy.sol:TreasuryFlashBuy");
   const flashBuy = await FlashBuy.deploy(ROUTER, SAFE, AG, AU);
   await flashBuy.deployed();
   console.log("  FlashBuy:", flashBuy.address);
@@ -71,7 +71,7 @@ async function main() {
   // Constructor: (_auToken, _agToken, _admin, _governor)
   // ═══════════════════════════════════════════════════
   console.log("\n═══ 3/5: AvOracle (redeploy) ═══");
-  const Oracle = await ethers.getContractFactory("AvOracle");
+  const Oracle = await ethers.getContractFactory("contracts/av_suite/AvOracle.sol:AvOracle");
   const oracle = await Oracle.deploy(AU, AG, SAFE, GOVERNOR);
   await oracle.deployed();
   console.log("  Oracle:", oracle.address);
@@ -87,7 +87,7 @@ async function main() {
   // Constructor: (_tokenA, _tokenB)
   // ═══════════════════════════════════════════════════
   console.log("\n═══ 4/5: DexSimulator (redeploy) ═══");
-  const DexSim = await ethers.getContractFactory("DexSimulator");
+  const DexSim = await ethers.getContractFactory("contracts/av_suite/DexSimulator.sol:DexSimulator");
   const dexSim = await DexSim.deploy(AU, AG);
   await dexSim.deployed();
   console.log("  DexSimulator:", dexSim.address);
@@ -103,7 +103,7 @@ async function main() {
   // Constructor: (dex, auToken, agToken, treasury)
   // ═══════════════════════════════════════════════════
   console.log("\n═══ 5/5: FlashLoan (redeploy) ═══");
-  const FlashLoan = await ethers.getContractFactory("FlashLoan");
+  const FlashLoan = await ethers.getContractFactory("contracts/av_suite/FlashLoan.sol:FlashLoan");
   const flashLoan = await FlashLoan.deploy(ROUTER, AU, AG, SAFE);
   await flashLoan.deployed();
   console.log("  FlashLoan:", flashLoan.address);

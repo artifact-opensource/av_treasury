@@ -1,4 +1,6 @@
-# Artifact Virtual Treasury — Au/Ag Ecosystem v3.1
+# Artifact Virtual Treasury 
+> ARC Subsystems v3.1 <br>
+> Au/Ag dual_token Flywheel Ecosystem
 
 > **Production deployment on Base Mainnet — verified on Etherscan v2**
 > **Status: 🟢 LIVE — All contracts deployed, verified, and operational**

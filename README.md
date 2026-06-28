@@ -2,8 +2,8 @@
 > ARC Subsystems v3.1 <br>
 > Au/Ag dual_token Flywheel Ecosystem
 
-> **Production deployment on Base Mainnet — verified on Etherscan v2**
-> **Status: 🟢 LIVE — All contracts deployed, verified, and operational**
+> **Production deployment on Base Mainnet <br> verified on Etherscan v2**
+> **Status: 🟢 LIVE <br> All contracts deployed, verified, and operational**
 
 ---
 

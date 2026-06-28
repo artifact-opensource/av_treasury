@@ -1,0 +1,45 @@
+const { ethers } = require("hardhat");
+
+async function main() {
+  const ORACLE = "0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19";
+  const AU = "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08";
+  const POOL_ADDR = "0xA41aB59dDDE5bA9b561f838d0B23268ADB863665";
+  
+  const oracleAbi = [
+    "function getTwapPrice(address token, uint256 customDuration) view returns (uint256)",
+    "function twapPools(address) view returns (tuple(address pool, address token0, address token1, uint256 twapDuration, bool token0IsTarget))",
+  ];
+  const oracle = new ethers.Contract(ORACLE, oracleAbi, ethers.provider);
+  
+  const poolInfo = await oracle.twapPools(AU);
+  console.log("Pool:", poolInfo.pool);
+  console.log("token0:", poolInfo.token0);
+  console.log("token1:", poolInfo.token1);
+  console.log("Configured twapDuration:", poolInfo.twapDuration.toString());
+  console.log("token0IsTarget:", poolInfo.token0IsTarget);
+  
+  // Try getTwapPrice with the configured duration
+  for (const dur of [60, 300, 600, 1800]) {
+    try {
+      const price = await oracle.getTwapPrice(AU, dur);
+      console.log(`\n✅ getTwapPrice(AU, ${dur}s):`, price.toString());
+      console.log("   $", parseFloat(ethers.utils.formatUnits(price, 18)).toFixed(6));
+    } catch(e) {
+      console.log(`\n❌ getTwapPrice(AU, ${dur}s):`, e.reason || e.message.slice(0, 100));
+    }
+  }
+  
+  // Test the pool's observe directly
+  const poolAbi = ["function observe(uint32[] secondsAgos) view returns (int56[] tickCumulatives, uint160[] secondsPerLiquidityCumulativeX128s)"];
+  const aeroPool = new ethers.Contract(POOL_ADDR, poolAbi, ethers.provider);
+  
+  try {
+    const result = await aeroPool.observe([60, 600, 1800]);
+    console.log("\n=== Pool observe() raw data ===");
+    console.log("tickCumulatives:", result[0].map(r => r.toString()));
+    console.log("secondsPerLiquidity:", result[1].map(r => r.toString()));
+  } catch(e) {
+    console.log("\nPool observe() failed:", e.message.slice(0, 100));
+  }
+}
+main().then(() => process.exit(0)).catch(e => { console.error(e.message.split('\n')[0]); process.exit(1); });

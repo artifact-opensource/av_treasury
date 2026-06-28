@@ -27,7 +27,7 @@ The system is fully autonomous: all market operations, emissions, and liquidity 
 | 5 | **GovernorContract** | `0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03` | Governance contract — proposals, voting, and execution |
 | 6 | **FlashLoan** | `0x4DDD1873964E5C2E3BE6712E199812903E6696B9` | Flash loan facilitator — enables zero-collateral Au/Ag flash swaps |
 | 7 | **TreasuryFlashBuy** | `0xCE73711EE793AF348837C09B729680B12DF6D8C0` | On-chain buyback engine — executes large Au buybacks from the treasury |
-| 8 | **AvOracle** | `0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19` | Decentralized oracle — Au/Ag price feeds with Chainlink primary + TWAP fallback |
+| 8 | **AvOracle** | `0xaE0D8aF68f4D610654c0517aA856335f6d92Ff8D` | Decentralized oracle — V3 native TWAP (Aerodrome Slipstream). AU price live. |
 | 9 | **DexSimulator** | `0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2` | Simulation infrastructure — stress-tests operations before mainnet execution |
 | 10 | **TreasuryAMO** | `0xF096cD4D24811B0F824c929907196bCB796bca88` | Autonomous Market Operations — manages liquidity, buybacks, and reserves |
 

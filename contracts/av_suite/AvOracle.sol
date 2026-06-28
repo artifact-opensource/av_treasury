@@ -97,6 +97,18 @@ contract AvOracle is AccessControl, ReentrancyGuard {
     uint256 public twatvl;
     uint256 public twatvlLastUpdate;
     uint256 public constant TWATVL_DECAY = 990_000; // 0.99 * 1e6 — 1% decay per block
+
+    // TWAP initialization timestamps per token (separate from TWATVL)
+    mapping(address => uint256) public twapInitTime;
+
+    /**
+     * @notice Initialize TWAP timestamp for a token (must be called before first getTwapPrice)
+     * @dev Sets twapInitTime so that first TWAP observation uses pool.twapDuration
+     * @param token The token to initialize TWAP for
+     */
+    function initializeTwap(address token) external onlyAdmin {
+        twapInitTime[token] = block.timestamp;
+    }
     
     // Parameters
     uint256 public constant PRICE_PRECISION = 1e18;
@@ -287,9 +299,15 @@ contract AvOracle is AccessControl, ReentrancyGuard {
             }
         }
         
-        // Fallback: try to return whatever we have if it's not too old
-        if (block.timestamp - data.timestamp <= feed.heartbeat * 2) {
+        // Fallback: return cached price if not too old (even without Chainlink)
+        if (block.timestamp - data.timestamp <= 1 hours) {
             return (data.price, data.source);
+        }
+        
+        // If cache is stale, try live TWAP
+        TwapPool memory pool = twapPools[token];
+        if (pool.pool != address(0)) {
+            return (getTwapPrice(token), PriceSource.TWAP);
         }
         
         revert PriceStale();
@@ -336,23 +354,22 @@ contract AvOracle is AccessControl, ReentrancyGuard {
     function getTwapPrice(address token) public view returns (uint256 price) {
         TwapPool memory pool = twapPools[token];
         if (pool.pool == address(0)) revert NoPriceSource();
-        
-        // Read cumulative prices from DEX pool (Uniswap V2/V3 compatible)
-        (uint256 cumulative0, uint256 cumulative1) = getCumulativePrices(pool.pool);
-        
-        // Calculate TWAP
-        uint256 timeElapsed = block.timestamp - twatvlLastUpdate;
-        if (timeElapsed == 0) timeElapsed = 1;
-        
-        uint256 price0 = (cumulative0 - getLastCumulative0(pool.pool)) / timeElapsed;
-        uint256 price1 = (cumulative1 - getLastCumulative1(pool.pool)) / timeElapsed;
-        
-        // Return the price of our target token
-        if (pool.token0IsTarget) {
-            price = price0;
-        } else {
-            price = price1;
-        }
+
+        // Use V3 observe() to get tick cumulatives for TWAP
+        uint256 twapDuration_ = pool.twapDuration;
+        if (twapDuration_ == 0) twapDuration_ = 600; // default 10min
+
+        // Get tick cumulatives: [older, current]
+        int56[] memory tickCumulatives = _observePool(pool.pool, twapDuration_);
+
+        // tickCumulatives[1] - tickCumulatives[0] = tick * seconds
+        // avgTick = (cumulativeDelta) / twapDuration
+        int256 delta = int256(tickCumulatives[1]) - int256(tickCumulatives[0]);
+        int256 avgTick256 = delta / int256(uint256(twapDuration_));
+        int24 avgTick = int24(avgTick256);
+
+        // Convert tick to price
+        price = _tickToPrice(avgTick, pool.token0IsTarget);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -592,10 +609,88 @@ contract AvOracle is AccessControl, ReentrancyGuard {
      * @notice Get cumulative prices from DEX pool
      * @dev Uniswap V2 compatible
      */
-    function getCumulativePrices(address pool) internal view returns (uint256, uint256) {
-        (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(pool).getReserves();
-        return (reserve0, reserve1); // Simplified — real TWAP needs cumulative price tracking
+    // ============ V3 TWAP Helpers ============
+
+    /**
+     * @notice Call observe() on a V3 pool to get tick cumulatives
+     * @param pool The V3 pool address
+     * @param secondsAgo How far back to look
+     * @return tickCumulatives The tick cumulative values [older, current]
+     */
+    function _observePool(address pool, uint256 secondsAgo) internal view returns (int56[] memory tickCumulatives) {
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = uint32(secondsAgo);
+        secondsAgos[1] = 0;
+        // Use raw staticcall to avoid interface-level revert issues
+        // observe(bytes) selector: 0x883bdbfd
+        bytes memory data = abi.encodeWithSignature("observe(uint32[])", secondsAgos);
+        (bool success, bytes memory result) = pool.staticcall(data);
+        if (!success || result.length < 64) revert NoPriceSource();
+        tickCumulatives = abi.decode(result, (int56[]));
     }
+
+    /**
+     * @notice Convert a tick to a price with 18 decimals
+     * @param tick The average tick
+     * @param token0IsTarget Whether token0 is the target token (price in terms of token1)
+     * @return price The price (18 decimals)
+     */
+    function _tickToPrice(int24 tick, bool token0IsTarget) internal pure returns (uint256 price) {
+        // price = 1.0001^tick
+        // Use the Q64.96 fixed-point math from Uniswap V3
+        uint160 sqrtPriceX96 = _getSqrtPriceX96(tick);
+        // sqrtPriceX96 is in Q64.96, so price = (sqrtPriceX96)^2 * 1e18 / 2^192
+        price = (uint256(sqrtPriceX96) * uint256(sqrtPriceX96) * 1e18) / 2**192;
+        if (token0IsTarget) {
+            // token0 is the target, price should be in terms of token1
+            // sqrtPriceX96 = sqrt(token1/token0) * 2^96
+            // So price(token0 in terms of token1) = 1 / (token1/token0) = token0/token1
+            price = (1e18 * 1e18) / price;
+        }
+    }
+
+    /**
+     * @notice Compute sqrtPriceX96 from a tick (Uniswap V3 math)
+     * @param tick The tick
+     * @return sqrtPriceX96 as uint160
+     */
+    function _getSqrtPriceX96(int24 tick) internal pure returns (uint160 sqrtPriceX96) {
+        // Uniswap V3 tick to sqrtPriceX96
+        uint256 absTick = tick < 0 ? uint256(int256(-tick)) : uint256(int256(tick));
+        require(absTick <= uint256(int256(MAX_TICK)), "T");
+
+        uint256 ratio = (absTick & 0x1 != 0) ? 0xfffcb933bd6fad37aa2d162d1a594001 : 0x100000000000000000000000000000000;
+        if (absTick & 0x2 != 0) ratio = (ratio * 0xfff97272373d413259a46990580e213a) >> 128;
+        if (absTick & 0x4 != 0) ratio = (ratio * 0xfff2e50f5f656932ef12357cf3c7fdcc) >> 128;
+        if (absTick & 0x8 != 0) ratio = (ratio * 0xffe5caca7e10e4e4696a64df82d93090) >> 128;
+        if (absTick & 0x10 != 0) ratio = (ratio * 0xffcb9843d60f6159c9db58835c926644) >> 128;
+        if (absTick & 0x20 != 0) ratio = (ratio * 0xff973b41fa98c081472e6896dfb254c0) >> 128;
+        if (absTick & 0x40 != 0) ratio = (ratio * 0xff2ea16466c96a3843ec78b326b52861) >> 128;
+        if (absTick & 0x80 != 0) ratio = (ratio * 0xfe5dee046a99a2a811c461e19c9c9bc0) >> 128;
+        if (absTick & 0x100 != 0) ratio = (ratio * 0xfcbe86c7900a88aed631dfd25f95193) >> 128;
+        if (absTick & 0x200 != 0) ratio = (ratio * 0xf987a7253ac413176f2b074cf7815e54) >> 128;
+        if (absTick & 0x400 != 0) ratio = (ratio * 0xf3392b0828729923d5c327fd19c01da) >> 128;
+        if (absTick & 0x800 != 0) ratio = (ratio * 0xe7159475a2c29b7443b29c7fa6e787fe) >> 128;
+        if (absTick & 0x1000 != 0) ratio = (ratio * 0xd097f3bdfd2022b8845ad8f79285ae5) >> 128;
+        if (absTick & 0x2000 != 0) ratio = (ratio * 0xa9f746462d870fdf8a65dc1f90e669e) >> 128;
+        if (absTick & 0x4000 != 0) ratio = (ratio * 0x70d869a156d2a1b890bb3df62baf32f7) >> 128;
+        if (absTick & 0x8000 != 0) ratio = (ratio * 0x31be135f97d08fd9812317055b1f8c7) >> 128;
+        if (absTick & 0x10000 != 0) ratio = (ratio * 0x9aa5071b4b8a3e607caad06d7c58553) >> 128;
+        if (absTick & 0x20000 != 0) ratio = (ratio * 0x5d6af88d8e84b09cb367527d4682bea4) >> 128;
+        if (absTick & 0x40000 != 0) ratio = (ratio * 0x2216e584f5fa1ea92641fdbee695a06a) >> 128;
+        if (absTick & 0x80000 != 0) ratio = (ratio * 0x46a4f930c1dfebf7e9c3e22d835aca0d) >> 128;
+        if (absTick & 0x100000 != 0) ratio = (ratio * 0x90689d0585b95a3a2b89f51772e8e7c) >> 128;
+        if (absTick & 0x200000 != 0) ratio = (ratio * 0x1499e8f803d873c8ba8d927f5afd0e80) >> 128;
+
+        if (tick > 0) {
+            ratio = type(uint256).max / ratio;
+        }
+
+        sqrtPriceX96 = uint160((ratio >> 32) + (ratio % (1 << 32) == 0 ? 0 : 1));
+    }
+
+    /// @notice Maximum tick for Uniswap V3 (sqrt(MAX_UINT160 / 1e18) ≈ 887272)
+    int24 internal constant MAX_TICK = 887272;
 
     function getLastCumulative0(address) internal pure returns (uint256) { return 0; }
     function getLastCumulative1(address) internal pure returns (uint256) { return 0; }
@@ -620,6 +715,7 @@ interface ITvlSource {
     function getTvl() external view returns (uint256);
 }
 
-interface IUniswapV2Pair {
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+interface IUniswapV3PoolMinimal {
+    function observe(uint32[] calldata secondsAgos) external view returns (int56[] calldata tickCumulatives, uint160[] calldata secondsPerLiquidityCumulativeX128s);
+    function slot0() external view returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked);
 }

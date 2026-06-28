@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1782598941716,
+  "meta": {
+    "name": "Wire Timelock Roles",
+    "description": "Grant PROPOSER/EXECUTOR/CANCELLER roles to Governor and Safe"
+  },
+  "transactions": [
+    {
+      "to": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+      "value": "0",
+      "data": "0x2f2ff15db09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc10000000000000000000000003a88006e036b94f9c9463a9210d9b3d7ff6eca03"
+    },
+    {
+      "to": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+      "value": "0",
+      "data": "0x2f2ff15dd8aa0f3194971a2a116679f7c2090f6939c8d4e01a2a8d7e41d55e5351469e630000000000000000000000003a88006e036b94f9c9463a9210d9b3d7ff6eca03"
+    },
+    {
+      "to": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+      "value": "0",
+      "data": "0x2f2ff15dfd643c72710c63c0180259aba6b2d05451e3591a24e58b62239378085726f7830000000000000000000000003a88006e036b94f9c9463a9210d9b3d7ff6eca03"
+    },
+    {
+      "to": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+      "value": "0",
+      "data": "0x2f2ff15db09aa5aeb3702cfd50b6b62bc4532604938f21248a27a1d5ca736082b6819cc10000000000000000000000001082c9467488f869aa64fcb0dc78cd9bc6319f9e"
+    },
+    {
+      "to": "0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77",
+      "value": "0",
+      "data": "0x2f2ff15dd8aa0f3194971a2a116679f7c2090f6939c8d4e01a2a8d7e41d55e5351469e630000000000000000000000001082c9467488f869aa64fcb0dc78cd9bc6319f9e"
+    }
+  ]
+}

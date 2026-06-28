@@ -1,5 +1,5 @@
 # AV Treasury v3.1 — Address Book (Base Mainnet)
-# Last updated: 2026-06-27
+# Last updated: 2026-06-28
 # Status: PRODUCTION DEPLOYED — verified on Etherscan v2
 
 ## PRODUCTION DEPLOYMENT (Base Mainnet — 2026-06-27)
@@ -36,8 +36,10 @@ ArtifactTimelock:  0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77
 GovernorContract:  0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03
 FlashLoan:         0x4DDD1873964E5C2E3BE6712E199812903E6696B9  (v2 — fixed treasury=SAFE)
 TreasuryFlashBuy:  0xCE73711EE793AF348837C09B729680B12DF6D8C0  (v2 — fixed token order)
-AvOracle (new):    0xaE0D8aF68f4D610654c0517aA856335f6d92Ff8D  (V3 native TWAP, AU price live)
-AvOracle (old):    0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19  (deprecated, V2-only)
+AvOracle (active): 0x85509218F94e185E1522c9D8bB96BecDCD918fb4  (v4 — TWAP-primary, AU price live, ACTIVE)
+AvOracle (backup): 0xe3B21cb61B0bE3486BE34C7f370c47409F949d22  (v4 — TWAP-primary, same code, backup)
+AvOracle (old):    0xaE0D8aF68f4D610654c0517aA856335f6d92Ff8D  (deprecated, V3)
+AvOracle (v2):      0x6A4BFA98EA5FD675C907B48C65AD2243D80DED19  (deprecated, V2-only)
 DexSimulator:      0x2C1BD0E498CEA315DA7486A41FB3DD991DA302B2  (v2 — fixed token order)
 TreasuryAMO:      0xF096cD4D24811B0F824c929907196bCB796bca88
 Deployment Deployer: 0xEc2b8EE9266E0C4540aa9ba2F6637640b019Fa7E

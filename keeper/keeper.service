@@ -1,0 +1,16 @@
+[Unit]
+Description=AV Treasury Keeper Bot
+After=network.target
+
+[Service]
+Type=simple
+User=adam
+WorkingDirectory=/home/adam/workspace/av_treasury
+ExecStart=/usr/bin/python3 -m keeper run
+Restart=always
+RestartSec=10
+Environment=KEEPER_PRIVATE_KEY=${KEEPER_PRIVATE_KEY}
+Environment=RPC_URL_BASE=https://mainnet.base.org
+
+[Install]
+WantedBy=multi-user.target

@@ -32,3 +32,6 @@ sandbox/deployed_*.json
 # OS
 .DS_Store
 *.swp
+__pycache__/
+keeper/logs/
+*.pyc

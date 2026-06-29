@@ -1,0 +1,211 @@
+/* AV Treasury TUI — Styles */
+
+/* ─── Global ─────────────────────────────────────────────────────────────── */
+
+Screen {
+    background: $surface;
+    color: $text;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────── */
+
+Header {
+    background: #0D0D0D;
+    color: #FFD700;
+    dock: top;
+}
+
+Header .header--title {
+    color: #FFD700;
+    text-style: bold;
+}
+
+/* ─── Status Bar ──────────────────────────────────────────────────────────── */
+
+AVStatusBar {
+    background: #1A0A2E;
+    color: #FFD700;
+    dock: bottom;
+    height: 1;
+    padding: 0 1;
+}
+
+AVStatusBar .status-block {
+    color: #C0C0C0;
+}
+
+AVStatusBar .status-value {
+    color: #FFD700;
+    text-style: bold;
+}
+
+AVStatusBar .status-ok {
+    color: #00FF88;
+}
+
+AVStatusBar .status-warn {
+    color: #FFD700;
+}
+
+AVStatusBar .status-error {
+    color: #FF4444;
+}
+
+/* ─── Price Cards ─────────────────────────────────────────────────────────── */
+
+PriceCard {
+    background: #1A1A2E;
+    border: round #3A1078;
+    padding: 1 2;
+    margin: 0 1;
+    height: auto;
+}
+
+PriceCard .card-title {
+    color: #C0C0C0;
+    text-style: dim;
+}
+
+PriceCard .card-value {
+    color: #FFD700;
+    text-style: bold;
+    text-align: center;
+}
+
+PriceCard .card-change-positive {
+    color: #00FF88;
+}
+
+PriceCard .card-change-negative {
+    color: #FF4444;
+}
+
+/* ─── Gauge ───────────────────────────────────────────────────────────────── */
+
+ReserveGauge {
+    background: #1A1A2E;
+    border: round #3A1078;
+    padding: 1;
+    height: auto;
+}
+
+/* ─── Sparkline ───────────────────────────────────────────────────────────── */
+
+PriceSparkline {
+    background: #0D0D0D;
+    border: round #3A1078;
+    padding: 0 1;
+    height: 7;
+}
+
+/* ─── Tabbed Content ──────────────────────────────────────────────────────── */
+
+TabbedContent {
+    height: 1fr;
+}
+
+Tab {
+    color: #C0C0C0;
+}
+
+Tab:hover {
+    color: #FFD700;
+    text-style: bold;
+}
+
+Tab.-active {
+    color: #FFD700;
+    text-style: bold;
+    background: #3A1078;
+}
+
+/* ─── Tables ──────────────────────────────────────────────────────────────── */
+
+DataTable {
+    background: #0D0D0D;
+    color: $text;
+}
+
+DataTable .datatable--header {
+    color: #FFD700;
+    text-style: bold;
+    background: #1A0A2E;
+}
+
+DataTable .datatable--hover {
+    background: #2A1A4E;
+}
+
+DataTable .datatable--cursor {
+    background: #3A1078;
+    color: #FFD700;
+}
+
+/* ─── Forms ───────────────────────────────────────────────────────────────── */
+
+Input {
+    border: round #3A1078;
+}
+
+Input:focus {
+    border: round #FFD700;
+}
+
+Button {
+    background: #3A1078;
+    color: #FFD700;
+    border: none;
+    margin: 1 0;
+}
+
+Button:hover {
+    background: #4A2088;
+}
+
+Button.-primary {
+    background: #FFD700;
+    color: #0D0D0D;
+    text-style: bold;
+}
+
+/* ─── Labels ──────────────────────────────────────────────────────────────── */
+
+Label {
+    color: #C0C0C0;
+}
+
+.label-gold {
+    color: #FFD700;
+    text-style: bold;
+}
+
+.label-green {
+    color: #00FF88;
+}
+
+.label-red {
+    color: #FF4444;
+}
+
+.label-dim {
+    color: #666666;
+    text-style: dim;
+}
+
+/* ─── Progress Bars ──────────────────────────────────────────────────────── */
+
+ProgressBar {
+    background: #1A1A2E;
+}
+
+ProgressBar Bar {
+    background: #FFD700;
+}
+
+/* ─── Scrollable ──────────────────────────────────────────────────────────── */
+
+VerticalScroll {
+    scrollbar-size: 1 1;
+    scrollbar-background: #1A1A2E;
+    scrollbar-color: #3A1078;
+}

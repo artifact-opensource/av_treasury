@@ -231,17 +231,17 @@
 # ═══════════════════════════════════════════════════════════════════════════
 
 ## AVLPStaking_v2 — LP Token Staking & Rewards
-  Type:           Staking with RSBT Multiplier (UUPS Upgradeable)
+  Type:           Staking with QuasiCrystal Multiplier (UUPS Upgradeable)
   Proxy:          0xD96D502B20474308521958573E3Fa68DbB041685
   Implementation: 0xE699960b6e81d00A42F8580004C8FBD72902806A
   Stake Token:    QuasiCrystalLPNFT (ERC-721)
   Reward Token:   Au
   Description:    Staking contract for LP NFTs. Distributes Au rewards to
-                  liquidity providers. RSBT multiplier: veAg-weighted
+                  liquidity providers. QuasiCrystal multiplier: veAg-weighted
                   (longer Ag lock = higher multiplier on staking yield).
   Parameters:
     Reward Rate:      Governance-controlled
-    RSBT Multiplier:  veAg-weighted (1.0x–2.5x)
+    QuasiCrystal Multiplier:  veAg-weighted (1.0x–2.5x)
   Roles:
     DEFAULT_ADMIN:    Treasury Safe
     REWARD_MANAGER:   Treasury Safe
@@ -396,7 +396,7 @@
 ## Staking Parameters
   Stake Asset:          QuasiCrystalLPNFT (ERC-721)
   Reward Token:         Au
-  RSBT Multiplier:      veAg-weighted (1.0x–2.5x)
+  QuasiCrystal Multiplier:  veAg-weighted (1.0x–2.5x)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

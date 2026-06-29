@@ -4,16 +4,16 @@
 
 | Contract | Address | Status |
 |----------|---------|--------|
-| Au Token | 0x1D31719389Bd8b17277Ba367c26b830aE34D3674 | ✅ Live |
-| Ag Token | 0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08 | ✅ Live |
-| TreasuryAMO | 0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385 | ✅ Live |
-| PID Controller | 0x662321CC63700865838aB08378061BE499344714 | ✅ Live |
+| Au Token | 0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08 | ✅ Live |
+| Ag Token | 0x1D31719389Bd8b17277Ba367c26b830aE34D3674 | ✅ Live |
+| TreasuryAMO | 0x56653245f4718fe105b95C8424947B31b84b5188 | ✅ Live |
+| PID Controller | 0x991138923880773D67c01392c31A255e770F7f70 | ✅ Live |
 | AvOracle v5 | 0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB | ✅ Live |
-| Governor | 0x991138923880773D67c01392c31A255e770F7f70 | ✅ Live |
-| Timelock | 0xD96D502B20474308521958573E3Fa68DbB041685 | ✅ Live |
-| RSBT | 0x56653245f4718fe105b95C8424947B31b84b5188 | ✅ Live |
+| Governor | 0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385 | ✅ Live |
+| Timelock | 0x662321CC63700865838aB08378061BE499344714 | ✅ Live |
+| AvOracle v5 | 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD | ✅ Live |
 | AcousticVault | 0xf6383860837E6cb983F9Af8Def92fc08F15Be65b | ✅ Live |
-| Treasury Safe | 0x1082...9F9e | ⚠️ Threshold 1/2 (TODO: 2/2) |
+| Treasury Safe | 0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e | ⚠️ Threshold 1/2 (TODO: 2/2) |
 
 ## New Contracts (Source Only — Not Yet Deployed)
 

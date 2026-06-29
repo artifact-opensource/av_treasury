@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """
 AV Treasury v3 — Economic Simulation Engine with Visualizations
-Default: 36-month projection with charts, graphs, and security dashboard.
-Extended: Supports --months flag for long-range projections (50yr, 500yr, 5000yr).
+36-month projection with charts, graphs, and security dashboard.
 """
 
-import argparse
 import csv
 import math
 import os
@@ -19,7 +17,7 @@ import numpy as np
 
 # ============ CONFIGURATION ============
 
-SIMULATION_MONTHS = 36  # Default; override with --months flag. Supports up to 60,000 months (5,000 years).
+SIMULATION_MONTHS = 36
 DAYS_PER_MONTH = 30
 TOTAL_DAYS = SIMULATION_MONTHS * DAYS_PER_MONTH
 
@@ -613,19 +611,8 @@ def get_bootstrap_target_tvl(day):
 # ============ MAIN ============
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='AV Treasury Economic Simulator')
-    parser.add_argument('--months', type=int, default=SIMULATION_MONTHS,
-                        help=f'Simulation duration in months (default: {SIMULATION_MONTHS}, max: 60000)')
-    parser.add_argument('--no-charts', action='store_true',
-                        help='Skip chart generation (useful for very long runs)')
-    args = parser.parse_args()
-    
-    global SIMULATION_MONTHS
-    SIMULATION_MONTHS = min(args.months, 60000)
-    
     history = run_simulation()
-    if not args.no_charts:
-        generate_charts(history)
+    generate_charts(history)
     write_report(history)
     
     # Also write CSV

@@ -1,3 +1,12 @@
+---
+title: AV Treasury Whitepaper
+date: 2026-06-29
+status: final
+description: Core protocol whitepaper covering Au/Ag dual-token system, economic flywheel, and PID controller design.
+category: whitepaper
+related: [vision.md, ../technical/deployment-plan.md, ../reports/formal_verification.md, ../sim/index.md]
+---
+
 # AV Treasury Whitepaper
 
 ## A Self-Sustaining Decentralized Economic Organism

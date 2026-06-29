@@ -1,3 +1,12 @@
+---
+title: AV Treasury — Vision & Thesis
+date: 2026-06-29
+status: final
+description: Central banking vision and macroeconomic thesis for the AV Treasury protocol.
+category: whitepaper
+related: [whitepaper.md, ../technical/deployment-plan.md, ../sim/index.md]
+---
+
 # AV Treasury — Vision
 
 > A decentralized central banking protocol for the on-chain economy.

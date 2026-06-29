@@ -206,12 +206,12 @@ Longer locks = higher voting power. This incentivizes long-term alignment and pr
 
 #### AVLPStaking_v2
 - **Address:** `0xD96D502B20474308521958573E3Fa68DbB041685`
-- **Purpose:** Cross-token LP staking with RSBT multiplier
-- **Stake Token:** QuasiCrystalLPNFT (representing Au/ETH LP positions)
-- **Reward Token:** Au
-- **RSBT Multiplier:** veAg-weighted (1.0x–2.5x based on Ag lock duration)
-- **Functions:** `stake()`, `unstake()`, `claimRewards()`, `compound()`
-- **Access:** DEFAULT_ADMIN, REWARD_MANAGER roles
+- **Purpose:** LP staking with veAg-weighted multiplier
+- **Stake Token:** QuasiCrystalLPNFT (ERC-721 representing Au/ETH Slipstream positions)
+- **Reward Token:** Ag
+- **Multiplier:** veAg-weighted (1.0x–2.5x based on Ag governance participation)
+- **Functions:** `stake()`, `unstake()`, `claimRewards()`
+- **Access:** DEFAULT_ADMIN, GOVERNANCE roles
 
 #### OracleWrapper
 - **Address:** `0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB`
@@ -598,6 +598,6 @@ AGPL-3.0 — See LICENSE file for details.
 ---
 
 *Built by the Artifact team. Deployed June 2026. Tested in production. Still standing.*
-*For technical deep-dives, see [ARCHITECTURE.md](docs/technical/ARCHITECTURE.md) and [TOKENOMICS.md](docs/technical/TOKENOMICS.md).*
-*For governance details, see [GOVERNANCE_SPEC.md](docs/technical/GOVERNANCE_SPEC.md).*
+*For the complete technical documentation, see [docs/CENTRAL_BANKING_THESIS/](docs/CENTRAL_BANKING_THESIS/index.md).*
 *For the economic vision, see [vision.md](docs/whitepaper/vision.md).*
+*For contract addresses, see [docs/ADDRESS_BOOK.md](docs/ADDRESS_BOOK.md).*

@@ -613,14 +613,14 @@ def get_bootstrap_target_tvl(day):
 # ============ MAIN ============
 
 if __name__ == '__main__':
+    _default_months = SIMULATION_MONTHS
     parser = argparse.ArgumentParser(description='AV Treasury Economic Simulator')
-    parser.add_argument('--months', type=int, default=SIMULATION_MONTHS,
-                        help=f'Simulation duration in months (default: {SIMULATION_MONTHS}, max: 60000)')
+    parser.add_argument('--months', type=int, default=_default_months,
+                        help=f'Simulation duration in months (default: {_default_months}, max: 60000)')
     parser.add_argument('--no-charts', action='store_true',
                         help='Skip chart generation (useful for very long runs)')
     args = parser.parse_args()
     
-    global SIMULATION_MONTHS, TOTAL_DAYS
     SIMULATION_MONTHS = min(args.months, 60000)
     TOTAL_DAYS = SIMULATION_MONTHS * DAYS_PER_MONTH
     

@@ -17,7 +17,9 @@ lender of last resort — through autonomous on-chain contracts. This directory
 breaks down each function into its constituent mechanisms, policies, and
 mathematical foundations.
 
-## Document Map
+## Document Count
+
+18 documents across 7 categories (I–VII).
 
 ### I. Foundational Framework
 | # | Document | Title | Status |
@@ -57,6 +59,13 @@ mathematical foundations.
 |---|----------|-------|--------|
 | 14 | [14-central-banking-thesis.md](14-central-banking-thesis.md) | Central Banking Thesis — Full Argument | draft |
 | 15 | [15-comparison-traditional.md](15-comparison-traditional.md) | Comparison with Traditional Central Banking | draft |
+
+### VII. Phase 4 — DAE & Autonomous Operations
+| # | Document | Title | Status |
+|---|----------|-------|--------|
+| 16 | [16-dae-architecture.md](16-dae-architecture.md) | DAE Architecture — From DAO to Enterprise | draft |
+| 17 | [17-sub-dao-pilots.md](17-sub-dao-pilots.md) | Sub-DAO Pilots — MPC, TRO, LQO | draft |
+| 18 | [18-autonomy-roadmap.md](18-autonomy-roadmap.md) | Path to Total Autonomy — Roadmap & Milestones | draft |
 
 ## Reading Paths
 

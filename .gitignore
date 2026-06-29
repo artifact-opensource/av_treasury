@@ -35,3 +35,4 @@ sandbox/deployed_*.json
 __pycache__/
 keeper/logs/
 *.pyc
+keeper/venv/

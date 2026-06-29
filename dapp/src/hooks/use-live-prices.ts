@@ -4,37 +4,65 @@ import { useReadContract } from 'wagmi'
 import { formatUnits } from 'viem'
 import { AV_CONTRACTS, CHAINLINK_FEEDS, TOKENS } from '@/lib/constants'
 import { AV_ORACLE_ABI as oracleAbi } from '@/lib/abis'
+import { useEffect, useState } from 'react'
 
 /**
- * Fetches prices from the AV Oracle contract for Au/Ag
- * Falls back to Chainlink for ETH/USDC
+ * Fetch metal spot price from CoinGecko (no API key needed)
  */
-export function useAuPrice() {
+async function fetchCgPrice(symbol: 'au' | 'ag'): Promise<number | null> {
+  try {
+    const metal = symbol === 'au' ? 'XAU' : 'XAG'
+    const res = await fetch(`https://api.gold-api.com/price/${metal}`, { cache: 'no-store' })
+    if (!res.ok) return null
+    const json = await res.json()
+    return json?.price ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Try on-chain oracle first, fall back to CoinGecko/metals API
+ */
+function useMetalPrice(token: `0x${string}`, symbol: 'au' | 'ag') {
+  const [fallbackPrice, setFallbackPrice] = useState<number | null>(null)
+
   const { data } = useReadContract({
     address: AV_CONTRACTS.oracle,
     abi: oracleAbi,
     functionName: 'getPrice',
-    args: [TOKENS.au],
+    args: [token],
     query: { refetchInterval: 30_000 },
   })
-  if (!data) return null
-  // getPrice returns (price, timestamp, source, valid)
-  const price = (data as readonly [bigint, bigint, number, boolean])[0]
-  return Number(formatUnits(price, 18))
+
+  let oraclePrice: number | null = null
+  if (data) {
+    const result = data as readonly [bigint, bigint, number, boolean]
+    const price = Number(formatUnits(result[0], 18))
+    const valid = result[3]
+    if (valid && price > 0) {
+      oraclePrice = price
+    }
+  }
+
+  // Fetch fallback when oracle fails
+  useEffect(() => {
+    if (oraclePrice === null) {
+      fetchCgPrice(symbol).then(price => {
+        if (price !== null) setFallbackPrice(price)
+      })
+    }
+  }, [oraclePrice, symbol])
+
+  return oraclePrice ?? fallbackPrice
+}
+
+export function useAuPrice() {
+  return useMetalPrice(TOKENS.au, 'au')
 }
 
 export function useAgPrice() {
-  const { data } = useReadContract({
-    address: AV_CONTRACTS.oracle,
-    abi: oracleAbi,
-    functionName: 'getPrice',
-    args: [TOKENS.ag],
-    query: { refetchInterval: 30_000 },
-  })
-  if (!data) return null
-  // getPrice returns (price, timestamp, source, valid)
-  const price = (data as readonly [bigint, bigint, number, boolean])[0]
-  return Number(formatUnits(price, 18))
+  return useMetalPrice(TOKENS.ag, 'ag')
 }
 
 export function useEthPrice() {
@@ -85,7 +113,7 @@ export function useAllPrices() {
     ag,
     eth,
     usdc,
-    aero: null, // No direct feed yet
+    aero: null,
     loaded: au !== null && eth !== null,
   }
 }

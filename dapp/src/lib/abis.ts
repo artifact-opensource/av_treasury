@@ -58,7 +58,7 @@ export const AG_TOKEN_ABI = parseAbi([
 export const AV_ORACLE_ABI = parseAbi([
   'function auToken() view returns (address)',
   'function agToken() view returns (address)',
-  'function getPrice(address token) view returns (uint256 price, uint256 timestamp, uint8 source, bool valid)',
+  'function getPrice(address token) view returns (uint256 price, uint8 source)',
   'function getTvl() view returns (uint256 tvl, uint256 twatvl, uint256 timestamp, bool valid)',
   'function priceFeeds(address) view returns (address aggregator, address token, address quoteToken, uint256 heartbeat, uint256 maxDeviationBps, uint8 primarySource, bool active)',
   'function twapPools(address) view returns (address pool, address token0, address token1, uint256 twapDuration, bool token0IsTarget)',

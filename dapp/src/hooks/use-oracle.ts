@@ -27,28 +27,26 @@ export function useOraclePrices() {
     ],
   })
 
-  const auPrice = data?.[0]?.result as [bigint, bigint, number, boolean] | undefined
-  const agPrice = data?.[1]?.result as [bigint, bigint, number, boolean] | undefined
-  const tvl = data?.[2]?.result as [bigint, bigint, bigint, boolean] | undefined
+  // getPrice returns (uint256 price, uint8 source)
+  const auResult = data?.[0]?.result as [bigint, number] | undefined
+  const agResult = data?.[1]?.result as [bigint, number] | undefined
+  // getTvl returns (uint256 tvl, uint256 twatvl, uint256 timestamp, bool valid)
+  const tvlResult = data?.[2]?.result as [bigint, bigint, bigint, boolean] | undefined
 
   return {
-    au: auPrice ? {
-      price: auPrice[0],
-      timestamp: auPrice[1],
-      source: auPrice[2],
-      valid: auPrice[3],
+    au: auResult ? {
+      price: auResult[0],
+      source: auResult[1],
     } : null,
-    ag: agPrice ? {
-      price: agPrice[0],
-      timestamp: agPrice[1],
-      source: agPrice[2],
-      valid: agPrice[3],
+    ag: agResult ? {
+      price: agResult[0],
+      source: agResult[1],
     } : null,
-    tvl: tvl ? {
-      tvl: tvl[0],
-      twatvl: tvl[1],
-      timestamp: tvl[2],
-      valid: tvl[3],
+    tvl: tvlResult ? {
+      tvl: tvlResult[0],
+      twatvl: tvlResult[1],
+      timestamp: tvlResult[2],
+      valid: tvlResult[3],
     } : null,
     isLoading,
     refetch,

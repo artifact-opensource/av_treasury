@@ -38,8 +38,8 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           {[
-            { label: 'Au Price', value: au?.valid ? `$${Number(au.price) / 1e18}` : '--' },
-            { label: 'Ag Price', value: ag?.valid ? `$${Number(ag.price) / 1e18}` : '--' },
+            { label: 'Au Price', value: au?.price ? `$${Number(au.price) / 1e18}` : '--' },
+            { label: 'Ag Price', value: ag?.price ? `$${Number(ag.price) / 1e18}` : '--' },
             { label: 'TVL', value: tvl?.valid ? formatUsd(Number(tvl.tvl) / 1e18) : '--' },
             { label: 'TWATVL', value: tvl?.valid ? formatUsd(Number(tvl.twatvl) / 1e18) : '--' },
           ].map((item) => (
@@ -62,13 +62,13 @@ export default function DashboardPage() {
         <StatCard
           label="Au Balance"
           value={isLoading ? '...' : formatTokenAmount(auBalance)}
-          sublabel={au?.valid ? `~$${(Number(au.price) / 1e18 * Number(auBalance) / 1e18).toFixed(2)}` : ''}
+          sublabel={au?.price ? `~$${(Number(au.price) / 1e18 * Number(auBalance) / 1e18).toFixed(2)}` : ''}
           icon={<Coins className="h-4 w-4" />}
         />
         <StatCard
           label="Ag Balance"
           value={isLoading ? '...' : formatTokenAmount(agBalance)}
-          sublabel={ag?.valid ? `~$${(Number(ag.price) / 1e18 * Number(agBalance) / 1e18).toFixed(2)}` : ''}
+          sublabel={ag?.price ? `~$${(Number(ag.price) / 1e18 * Number(agBalance) / 1e18).toFixed(2)}` : ''}
           icon={<Coins className="h-4 w-4" />}
         />
         <StatCard
@@ -156,8 +156,8 @@ export default function DashboardPage() {
           <div>
             <div className="text-muted-foreground">Oracle Status</div>
             <div className="font-medium flex items-center gap-1.5">
-              <div className={`h-2 w-2 rounded-full ${au?.valid && ag?.valid ? 'bg-green-500' : 'bg-yellow-500'}`} />
-              {au?.valid && ag?.valid ? 'Operational' : 'Degraded'}
+              <div className={`h-2 w-2 rounded-full ${au?.price && ag?.price ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              {au?.price && ag?.price ? 'Operational' : 'Degraded'}
             </div>
           </div>
         </div>

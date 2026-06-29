@@ -37,10 +37,9 @@ function useMetalPrice(token: `0x${string}`, symbol: 'au' | 'ag') {
 
   let oraclePrice: number | null = null
   if (data) {
-    const result = data as readonly [bigint, bigint, number, boolean]
+    const result = data as readonly [bigint, number]
     const price = Number(formatUnits(result[0], 18))
-    const valid = result[3]
-    if (valid && price > 0) {
+    if (price > 0) {
       oraclePrice = price
     }
   }

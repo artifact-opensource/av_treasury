@@ -37,3 +37,4 @@ keeper/logs/
 *.pyc
 keeper/venv/
 /validator
+address.book.BROKEN_20260629

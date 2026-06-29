@@ -43,15 +43,16 @@ last_updated: 2026-06-29
 
 | Contract | Address | Type |
 |----------|---------|------|
-| Governor v5 (patched) | `0x3DEDAf8AF86838D3EB8342c2E0AE605B5F74a9eb` | Non-upgradeable |
+| Governor v5 (spectre-patched) | `0x5F061c177b76753686122185989C2332C1d0e8b1` | Non-upgradeable |
 | Timelock | `0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be` | Non-upgradeable |
 
 ### Deprecated Governance
 
 | Contract | Address | Status | Replacement |
 |----------|---------|--------|-------------|
-| Governor v5 (pre-patch) | `0x1Dc51EccAeA0c9fb41Bc42d6e452D2c27225f0a9` | Replaced | Governor v5 (patched) |
-| Governor (old) | `0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385` | Deprecated | Governor v5 (patched) |
+| Governor v5 (pre-patch) | `0x3DEDAf8AF86838D3EB8342c2E0AE605B5F74a9eb` | Replaced | Governor v5 (spectre-patched) |
+| Governor v5 (original) | `0x1Dc51EccAeA0c9fb41Bc42d6e452D2c27225f0a9` | Replaced | Governor v5 (spectre-patched) |
+| Governor (old) | `0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385` | Deprecated | Governor v5 (spectre-patched) |
 | Timelock (old) | `0x662321CC63700865838aB08378061BE499344714` | Deprecated | Timelock (new) |
 
 ## Liquidity

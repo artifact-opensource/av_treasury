@@ -46,24 +46,20 @@ async function main() {
   // ─── Step 3: Deploy FlashLoan (AccessControl) ─────────────────────────
   console.log("\n━━━ Step 3: Deploy FlashLoan (AccessControl) ━━━");
 
-  const FlashLoan = await ethers.getContractFactory("FlashLoan");
-  // Constructor: (dexSimulator, treasury, au, ag)
-  // Need to set proper addresses — using placeholder for now
-  const flashLoan = await FlashLoan.deploy(
-    ethers.constants.AddressZero, // dexSimulator (update after)
-    SAFE,                        // treasury
-    AU,                          // au
-    AG                           // ag
-  );
-  await flashLoan.deployed();
-  console.log("  ✅ New FlashLoan:", flashLoan.address);
+  // FlashLoan deployment skipped — needs real DEX simulator address
+  console.log("  ⏸️  FlashLoan deployment skipped (needs DEX simulator address)");
+  console.log("     Contract is compiled and ready — deploy when DEX is configured");
+  const flashLoan = { address: "DEPLOY_WHEN_READY" };
 
-  // ─── Step 4: Configure FlashBuy ───────────────────────────────────────
+  // ─── Step 4: Configure FlashBuy (skip if not deployed) ───────────────
   console.log("\n━━━ Step 4: Configure FlashBuy ━━━");
-
-  const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
-  await flashBuy.grantRole(EXECUTOR_ROLE, governor.address);
-  console.log("  ✅ Granted EXECUTOR_ROLE to new Governor");
+  if (flashBuy.address !== "DEPLOY_WHEN_READY") {
+    const EXECUTOR_ROLE = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("EXECUTOR_ROLE"));
+    await flashBuy.grantRole(EXECUTOR_ROLE, governor.address);
+    console.log("  ✅ Granted EXECUTOR_ROLE to new Governor");
+  } else {
+    console.log("  ⏸️  Skipped (FlashBuy not deployed yet)");
+  }
 
   // ─── Output ───────────────────────────────────────────────────────────
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");

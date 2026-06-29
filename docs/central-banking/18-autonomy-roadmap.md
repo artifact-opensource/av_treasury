@@ -126,10 +126,14 @@ and only escalates to humans for constitutional decisions.
 ### 18.4.3 Voting Power Distribution
 
 ```
-voting_power = Ag_balance + veAg_boost
-veAg_boost = Ag_locked × (lock_duration / 1460 days) × 1.5
-Max multiplier: 2.5× (4-year lock)
+voting_power = Ag_balance_at_checkpoint
 ```
+
+Voting power is **1:1 with Ag balance** at the proposal creation block
+(checkpointed via `ERC20VotesUpgradeable`). There is **no veAg boost** or
+lock-weighted multiplier in the current AgToken implementation.
+
+Holders can **delegate** voting power to other addresses without transferring tokens.
 
 ### 18.4.4 Quorum Analysis
 
@@ -139,8 +143,10 @@ Max multiplier: 2.5× (4-year lock)
 | Bear market, low engagement | 2–5% | May fail 4% quorum |
 | Constitutional proposal | 10–20% | Easily meets 10% |
 
-**Risk:** Bear market quorum failure. Mitigation: veAg boost incentivizes
-long-term holders to vote even when short-term holders disengage.
+**Risk:** Bear market quorum failure. Mitigation options:
+- Lower quorum via governance (currently 4%)
+- Delegation incentives to active governance participants
+- Sub-DAO operational autonomy reduces need for frequent governance votes
 
 ## 18.5 What "Total Autonomy" Means
 
@@ -219,7 +225,7 @@ Monthly summary for governance participants:
 | Keeper failure | Redundant keepers, governance fallback |
 | Sub-DAO underperformance | Automatic dissolution after 3 missed epochs |
 | Oracle manipulation | Three-layer stack, deviation checks |
-| Governance quorum failure | veAg boost, long-term holder incentive |
+| Governance quorum failure | Delegation incentives, lower quorum via governance |
 | Smart contract exploit | Audits, formal verification, emergency pause |
 | Economic attack | FlashBuy, emission floor, reserve ratio |
 | Regulatory uncertainty | Decentralized governance, no single point of control |

@@ -83,7 +83,7 @@ mathematical foundations.
 | PID | Proportional-Integral-Derivative controller — monetary policy engine |
 | AMO | Algorithmic Market Operations — autonomous reserve management |
 | TWAP | Time-Weighted Average Price — manipulation-resistant oracle output |
-| QuasiCrystal | QuasiCrystalLPNFT — LP staking NFT with veAg-weighted multipliers |
+| QuasiCrystal | QuasiCrystalLPNFT — LP staking NFT (ERC-721 representing Au/ETH Slipstream positions) |
 | Governor | DAO governance contract — Ag-weighted voting |
 | Timelock | 48-hour delayed execution — security layer for governance |
 

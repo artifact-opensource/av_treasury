@@ -258,3 +258,198 @@
         {"name": "flashBuy", "signature": "flashBuy(address,address,uint256,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant", "whenNotPaused"], "description": "Execute a flash buy using oracle price"},
         {"name": "executeOperation", "signature": "executeOperation(address[],uint256[],uint256[],address,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Callback for flash loan execution"},
         {"name": "setOracle", "signature": "setOracle(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the oracle address for price lookups"},
+        {"name": "setFee", "signature": "setFee(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the flash buy fee in basis points"},
+        {"name": "getFee", "signature": "getFee()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the current flash buy fee"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause flash buy operations"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume flash buy operations"}
+      ],
+      "events": ["FlashBuyExecuted", "OracleUpdated", "FeeSet"],
+      "links": [
+        {"to": "OracleWrapper", "via": "oracle", "type": "address"},
+        {"to": "FlashLoan", "via": "flashLoan", "type": "address"},
+        {"to": "AuToken", "via": "token", "type": "address"}
+      ]
+    },
+    "TreasuryFlashBuy_v2": {
+      "address": "0xB361BA4E56730880F8060B1B1A92E7B8B28833E8",
+      "file": "TreasuryFlashBuy_v2.sol",
+      "category": "Treasury & Monetary",
+      "color": "#00f0ff",
+      "inherits": ["Ownable", "Pausable", "ReentrancyGuard"],
+      "functions": [
+        {"name": "flashBuy", "signature": "flashBuy(address,address,uint256,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant", "whenNotPaused"], "description": "Execute a flash buy on behalf of treasury"},
+        {"name": "executeOperation", "signature": "executeOperation(address[],uint256[],uint256[],address,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Callback for flash loan execution"},
+        {"name": "setOracle", "signature": "setOracle(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set oracle for price validation"},
+        {"name": "setFee", "signature": "setFee(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set treasury flash buy fee"},
+        {"name": "setMaxBuyAmount", "signature": "setMaxBuyAmount(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set max buy amount per transaction"},
+        {"name": "getFee", "signature": "getFee()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get current fee"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause flash buy operations"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume flash buy operations"}
+      ],
+      "events": ["TreasuryFlashBuyExecuted", "OracleUpdated", "FeeSet", "MaxBuyAmountSet"],
+      "links": [
+        {"to": "OracleWrapper", "via": "oracle", "type": "address"},
+        {"to": "FlashLoan", "via": "flashLoan", "type": "address"},
+        {"to": "TreasuryAMO", "via": "treasury", "type": "address"},
+        {"to": "AuToken", "via": "token", "type": "address"}
+      ]
+    },
+    "FlashLoan": {
+      "address": "0x91AECE1636730880F8060B1B1A92E7B8B28833E8",
+      "file": "FlashLoan.sol",
+      "category": "Infrastructure",
+      "color": "#6b7280",
+      "inherits": ["Ownable", "IERC3156FlashLender"],
+      "functions": [
+        {"name": "flashLoan", "signature": "flashLoan(IERC3156FlashBorrower,address,uint256,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Execute a flash loan"},
+        {"name": "flashLoanFee", "signature": "flashLoanFee()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the flash loan fee"},
+        {"name": "setFlashLoanFee", "signature": "setFlashLoanFee(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the flash loan fee in basis points"},
+        {"name": "maxFlashLoan", "signature": "maxFlashLoan(address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get maximum flash loan amount for a token"},
+        {"name": "setMaxFlashLoan", "signature": "setMaxFlashLoan(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set maximum flash loan amount for a token"},
+        {"name": "withdraw", "signature": "withdraw(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Withdraw accumulated fees or stuck tokens"}
+      ],
+      "events": ["FlashLoanExecuted", "FeeSet", "MaxFlashLoanSet"],
+      "links": [
+        {"to": "OracleFlashBuy", "via": "borrower", "type": "address"},
+        {"to": "TreasuryFlashBuy_v2", "via": "borrower", "type": "address"},
+        {"to": "AuToken", "via": "token", "type": "address"}
+      ]
+    },
+    "DexSimulator": {
+      "address": "0x6FD109E6A6730880F8060B1B1A92E7B8B28833E8",
+      "file": "DexSimulator.sol",
+      "category": "Infrastructure",
+      "color": "#6b7280",
+      "inherits": ["Ownable", "Pausable"],
+      "functions": [
+        {"name": "addLiquidity", "signature": "addLiquidity(address,address,uint256,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner", "whenNotPaused"], "description": "Add liquidity for a token pair"},
+        {"name": "removeLiquidity", "signature": "removeLiquidity(address,address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner", "whenNotPaused"], "description": "Remove liquidity for a token pair"},
+        {"name": "swap", "signature": "swap(address,address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["whenNotPaused"], "description": "Swap tokens using the simulated DEX"},
+        {"name": "getPrice", "signature": "getPrice(address,address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the price of token A in terms of token B"},
+        {"name": "getReserves", "signature": "getReserves(address,address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get reserves for a token pair"},
+        {"name": "setFee", "signature": "setFee(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the swap fee in basis points"},
+        {"name": "setPrice", "signature": "setPrice(address,address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set a manual price for a pair"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause the DEX simulator"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume the DEX simulator"}
+      ],
+      "events": ["LiquidityAdded", "LiquidityRemoved", "Swap", "FeeSet", "PriceSet"],
+      "links": [
+        {"to": "AuToken", "via": "tokenA", "type": "address"},
+        {"to": "AgToken", "via": "tokenB", "type": "address"},
+        {"to": "TreasuryAMO", "via": "treasury", "type": "address"}
+      ]
+    },
+    "QuasiCrystalLPNFT": {
+      "address": "0x13C2EEBB46730880F8060B1B1A92E7B8B28833E8",
+      "file": "QuasiCrystalLPNFT.sol",
+      "category": "Staking & NFTs",
+      "color": "#22c55e",
+      "inherits": ["ERC721", "Ownable", "Pausable"],
+      "functions": [
+        {"name": "mint", "signature": "mint(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner", "whenNotPaused"], "description": "Mint an NFT representing a liquidity position"},
+        {"name": "burn", "signature": "burn(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Burn an NFT when position is closed"},
+        {"name": "tokenURI", "signature": "tokenURI(uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the metadata URI for a token"},
+        {"name": "setTokenURI", "signature": "setTokenURI(uint256,string)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the metadata URI for a token"},
+        {"name": "setBaseURI", "signature": "setBaseURI(string)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the base URI for all token metadata"},
+        {"name": "ownerOf", "signature": "ownerOf(uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the owner of a specific token"},
+        {"name": "safeTransferFrom", "signature": "safeTransferFrom(address,address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Safely transfer NFT to another address"},
+        {"name": "approve", "signature": "approve(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Approve another address to transfer a token"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause NFT minting"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume NFT minting"}
+      ],
+      "events": ["Transfer", "Approval", "TokenURIUpdated", "BaseURIUpdated"],
+      "links": [
+        {"to": "AVLPStaking_v2", "via": "staking", "type": "address"},
+        {"to": "QuasiCrystalSVG", "via": "svgRenderer", "type": "address"},
+        {"to": "OnChainBase64", "via": "base64", "type": "library"}
+      ]
+    },
+    "QuasiCrystalSVG": {
+      "address": "0x80B84F9EF6730880F8060B1B1A92E7B8B28833E8",
+      "file": "QuasiCrystalSVG.sol",
+      "category": "Staking & NFTs",
+      "color": "#22c55e",
+      "inherits": ["Ownable"],
+      "functions": [
+        {"name": "generateSVG", "signature": "generateSVG(uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Generate SVG art for a given token ID"},
+        {"name": "generateSVGForPosition", "signature": "generateSVGForPosition(address,uint256,uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Generate SVG for a liquidity position"},
+        {"name": "setColorScheme", "signature": "setColorScheme(uint256,string)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the color scheme for SVG generation"},
+        {"name": "setBackground", "signature": "setBackground(string)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the background color/pattern"},
+        {"name": "getTrait", "signature": "getTrait(uint256,uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get a specific trait for a token"},
+        {"name": "tokenURI", "signature": "tokenURI(uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the full token URI with embedded SVG"}
+      ],
+      "events": ["ColorSchemeChanged", "BackgroundChanged"],
+      "links": [
+        {"to": "QuasiCrystalLPNFT", "via": "nftContract", "type": "address"},
+        {"to": "OnChainBase64", "via": "base64", "type": "library"}
+      ]
+    },
+    "OnChainBase64": {
+      "address": "0x1260812926730880F8060B1B1A92E7B8B28833E8",
+      "file": "OnChainBase64.sol",
+      "category": "Infrastructure",
+      "color": "#6b7280",
+      "inherits": [],
+      "functions": [
+        {"name": "encode", "signature": "encode(bytes)", "visibility": "public", "mutability": "pure", "modifiers": [], "description": "Encode bytes to base64 string"},
+        {"name": "encodeURL", "signature": "encodeURL(bytes)", "visibility": "public", "mutability": "pure", "modifiers": [], "description": "Encode bytes to URL-safe base64 string"},
+        {"name": "decode", "signature": "decode(string)", "visibility": "public", "mutability": "pure", "modifiers": [], "description": "Decode a base64 string to bytes"},
+        {"name": "decodeURL", "signature": "decodeURL(string)", "visibility": "public", "mutability": "pure", "modifiers": [], "description": "Decode a URL-safe base64 string to bytes"}
+      ],
+      "events": [],
+      "links": [
+        {"to": "QuasiCrystalLPNFT", "via": "nft", "type": "library"},
+        {"to": "QuasiCrystalSVG", "via": "svg", "type": "library"}
+      ]
+    }
+  },
+  "relationships": [
+    {"from": "AuToken", "to": "TreasuryAMO", "type": "treasury", "label": "fee destination"},
+    {"from": "AuToken", "to": "PID_Emission_Controller_v2", "type": "emission", "label": "minting control"},
+    {"from": "AgToken", "to": "TreasuryAMO", "type": "treasury", "label": "reserve backing"},
+    {"from": "AgToken", "to": "AVLPStaking_v2", "type": "staking", "label": "staking token"},
+    {"from": "TreasuryAMO", "to": "PID_Emission_Controller_v2", "type": "emission", "label": "emission config"},
+    {"from": "TreasuryAMO", "to": "TreasuryFlashBuy_v2", "type": "flashBuy", "label": "flash purchase"},
+    {"from": "TreasuryAMO", "to": "GovernorContractV5", "type": "governance", "label": "governed by"},
+    {"from": "PID_Emission_Controller_v2", "to": "AvOracle", "type": "oracle", "label": "price feed"},
+    {"from": "PID_Emission_Controller_v2", "to": "AuToken", "type": "mint", "label": "controls mint"},
+    {"from": "PID_Emission_Controller_v2", "to": "AgToken", "type": "mint", "label": "controls mint"},
+    {"from": "PID_Emission_Controller_v2", "to": "TreasuryAMO", "type": "treasury", "label": "treasury reference"},
+    {"from": "AVLPStaking_v2", "to": "AgToken", "type": "staking", "label": "stakes token"},
+    {"from": "AVLPStaking_v2", "to": "AuToken", "type": "reward", "label": "reward token"},
+    {"from": "AVLPStaking_v2", "to": "QuasiCrystalLPNFT", "type": "nft", "label": "mints NFTs"},
+    {"from": "AVLPStaking_v2", "to": "GovernorContractV5", "type": "governance", "label": "governed by"},
+    {"from": "GovernorContractV5", "to": "AgToken", "type": "votes", "label": "voting power"},
+    {"from": "GovernorContractV5", "to": "ArtifactTimelock", "type": "timelock", "label": "proposes txs"},
+    {"from": "GovernorContractV5", "to": "TreasuryAMO", "type": "governance", "label": "controls treasury"},
+    {"from": "GovernorContractV5", "to": "AVLPStaking_v2", "type": "governance", "label": "controls staking"},
+    {"from": "ArtifactTimelock", "to": "GovernorContractV5", "type": "admin", "label": "admin is governor"},
+    {"from": "ArtifactTimelock", "to": "TreasuryAMO", "type": "target", "label": "executes treasury txs"},
+    {"from": "AvOracle", "to": "PID_Emission_Controller_v2", "type": "price", "label": "feeds price data"},
+    {"from": "AvOracle", "to": "OracleWrapper", "type": "wrapper", "label": "wrapped by"},
+    {"from": "AvOracle", "to": "OracleFlashBuy", "type": "price", "label": "flash buy price"},
+    {"from": "OracleWrapper", "to": "AvOracle", "type": "oracle", "label": "wraps oracle"},
+    {"from": "OracleWrapper", "to": "TreasuryFlashBuy_v2", "type": "price", "label": "validates prices"},
+    {"from": "OracleWrapper", "to": "OracleFlashBuy", "type": "price", "label": "validates prices"},
+    {"from": "OracleFlashBuy", "to": "OracleWrapper", "type": "oracle", "label": "uses oracle"},
+    {"from": "OracleFlashBuy", "to": "FlashLoan", "type": "flashLoan", "label": "borrows funds"},
+    {"from": "OracleFlashBuy", "to": "AuToken", "type": "token", "label": "buys token"},
+    {"from": "TreasuryFlashBuy_v2", "to": "OracleWrapper", "type": "oracle", "label": "uses oracle"},
+    {"from": "TreasuryFlashBuy_v2", "to": "FlashLoan", "type": "flashLoan", "label": "borrows funds"},
+    {"from": "TreasuryFlashBuy_v2", "to": "TreasuryAMO", "type": "treasury", "label": "treasury owns"},
+    {"from": "TreasuryFlashBuy_v2", "to": "AuToken", "type": "token", "label": "buys token"},
+    {"from": "FlashLoan", "to": "OracleFlashBuy", "type": "borrower", "label": "lends to"},
+    {"from": "FlashLoan", "to": "TreasuryFlashBuy_v2", "type": "borrower", "label": "lends to"},
+    {"from": "FlashLoan", "to": "AuToken", "type": "token", "label": "lends token"},
+    {"from": "DexSimulator", "to": "AuToken", "type": "pair", "label": "trades token"},
+    {"from": "DexSimulator", "to": "AgToken", "type": "pair", "label": "trades token"},
+    {"from": "DexSimulator", "to": "TreasuryAMO", "type": "treasury", "label": "liquidity mgmt"},
+    {"from": "QuasiCrystalLPNFT", "to": "AVLPStaking_v2", "type": "staking", "label": "represents stake"},
+    {"from": "QuasiCrystalLPNFT", "to": "QuasiCrystalSVG", "type": "svg", "label": "renders art"},
+    {"from": "QuasiCrystalLPNFT", "to": "OnChainBase64", "type": "library", "label": "encodes metadata"},
+    {"from": "QuasiCrystalSVG", "to": "QuasiCrystalLPNFT", "type": "nft", "label": "generates for"},
+    {"from": "QuasiCrystalSVG", "to": "OnChainBase64", "type": "library", "label": "encodes output"},
+    {"from": "OnChainBase64", "to": "QuasiCrystalLPNFT", "type": "library", "label": "used by"},
+    {"from": "OnChainBase64", "to": "QuasiCrystalSVG", "type": "library", "label": "used by"}
+  ]
+}

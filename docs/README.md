@@ -29,7 +29,7 @@ The protocol uses a **PID controller** to autonomously manage Au emission rates 
 | PID_Emission_Controller | Autonomous emission rate control |
 | Au / Ag | Dual-token system |
 | QuasiCrystalLPNFT | LP position NFTs |
-| AVLPStaking_v2 | LP staking with veAg-weighted multipliers |
+| AVLPStaking_v2 | LP staking with Ag-balance multiplier (1.0x-2.5x) |
 | OracleWrapper | Price oracle aggregation |
 | Governor / Timelock | On-chain governance |
 

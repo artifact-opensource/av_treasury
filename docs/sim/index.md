@@ -15,7 +15,7 @@ The AV Treasury simulator models the protocol's economic flywheel over time:
 
 1. **PID Controller** adjusts Au emission rates based on TVL deviation from target
 2. **Treasury Flywheel**: Fees → Buybacks → PID → Emissions → TVL → Fees
-3. **Staking Dynamics**: veAg-weighted QuasiCrystal multipliers affect LP behavior
+3. **Staking Dynamics**: Ag-balance-weighted QuasiCrystal multipliers affect LP behavior
 4. **Ag Supply**: Governance token emissions with hard cap
 
 ## Usage
@@ -65,4 +65,4 @@ The simulator implements the protocol described in [whitepaper.md](../whitepaper
 
 - **PID Controller**: Adjusts Au emission rate proportionally to TVL error, integral of historical error, and derivative (rate of change)
 - **Flywheel Effect**: Positive feedback loop where protocol growth generates fees that drive buybacks, reducing Au supply and increasing TVL attractiveness
-- **QuasiCrystal Multiplier**: veAg-weighted staking boost (1.0x–2.5x) incentivizes long-term Ag locking
+- **QuasiCrystal Multiplier**: Ag-balance-weighted staking boost (1.0x–2.5x) based on current Ag balance (not a lock)

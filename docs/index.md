@@ -103,6 +103,30 @@ related: [central-banking/INDEX.md, whitepaper/whitepaper.md, ADDRESS_BOOK.md]
 
 ---
 
+## VII. Simulation
+
+| Document | Description | Status |
+|----------|-------------|--------|
+| [sim/index.md](sim/index.md) | Economic simulation results (36mo, 50yr, 500yr, 5000yr) | complete |
+
+## VIII. Sandbox & Development
+
+| Document | Description | Status |
+|----------|-------------|--------|
+| [sandbox/README.md](sandbox/README.md) | Sandbox environment overview | complete |
+| [sandbox/CONTRACT_INVENTORY.md](sandbox/CONTRACT_INVENTORY.md) | Sandbox contract inventory | complete |
+| [sandbox/SECURITY_POSTURE.md](sandbox/SECURITY_POSTURE.md) | Security posture assessment | complete |
+| [sandbox/DEPLOYMENT_READINESS.md](sandbox/DEPLOYMENT_READINESS.md) | Deployment readiness checklist | complete |
+| [sandbox/SIMULATION_RESULTS.md](sandbox/SIMULATION_RESULTS.md) | Sandbox simulation results | complete |
+
+## IX. Research
+
+| Document | Description | Status |
+|----------|-------------|--------|
+| [research/morphspace.md](research/morphspace.md) | MorphSpace research notes | complete |
+| [research/acoustic_vault.md](research/acoustic_vault.md) | Acoustic vault research | complete |
+| [research/meta_structure_schema.md](research/meta_structure_schema.md) | Meta-structure schema | complete |
+
 ## Reading Paths
 
 **For new users:** GETTING_STARTED → USER_GUIDE → TOKENOMICS → whitepaper/vision

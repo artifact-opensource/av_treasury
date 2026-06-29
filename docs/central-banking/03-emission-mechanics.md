@@ -1,8 +1,8 @@
 ---
 title: 03 — Ag Emission Mechanics & Distribution
 date: 2026-06-29
-status: draft
-description: How PID-computed Ag emissions are distributed to stakers, LP providers, and the Treasury. Covers allocation ratios, claim mechanics, and anti-gaming measures.
+status: canonical
+description: How PID-computed Ag emissions are distributed to LP stakers and the Treasury. Covers allocation ratios, claim mechanics, and anti-gaming measures.
 category: central-banking
 related: [02-monetary-policy-engine.md, 01-dual-token-architecture.md, 05-flywheel-mechanics.md, 10-quasicrystal-nft.md, INDEX.md]
 ---
@@ -20,38 +20,35 @@ describes how those Ag tokens flow from minting to end recipients.
 PID Controller computes E(t)
          │
          ▼
-   Ag tokens minted to PID contract
+   Ag tokens minted
          │
          ▼
    Epoch-end distribution:
-   ├── 60% → QuasiCrystal LP NFT stakers
-   ├── 25% → Direct Ag stakers (veAg lockers)
-   └── 15% → TreasuryAMO (operational reserve)
+   ├── 60% → QuasiCrystal LP NFT stakers (proportional to stake)
+   ├── 25% → TreasuryAMO (operational reserve)
+   └── 15% → Ecosystem / future distribution
 ```
 
 ## 3.3 Distribution Tiers
 
 ### 3.3.1 QuasiCrystal LP NFT Stakers (60%)
 
-Largest share flows to users who provide liquidity and stake LP tokens
-in the QuasiCrystal LP NFT contract. Distribution is weighted by veAg.
+Largest share flows to users who provide liquidity and stake LP NFTs
+in the QuasiCrystal LP NFT contract. Distribution is **proportional to
+staked amount** — no veAg multiplier exists.
 
 ```
-user_reward = 0.60 × E(t) × (user_veAg_weight / total_veAg_weight)
+user_reward = 0.60 × E(t) × (user_staked_amount / total_staked)
 ```
 
-### 3.3.2 Direct Ag Stakers (25%)
+### 3.3.2 TreasuryAMO (25%)
 
-Users who lock Ag directly (without LP tokens) receive 25% of emissions.
-
-```
-direct_reward = 0.25 × E(t) × (user_veAg / total_veAg)
-```
-
-### 3.3.3 TreasuryAMO (15%)
-
-15% of emissions to TreasuryAMO as operational reserve. May be sold for
+25% of emissions to TreasuryAMO as operational reserve. May be sold for
 stablecoins, held as treasury assets, or used for FlashBuy operations.
+
+### 3.3.3 Ecosystem Reserve (15%)
+
+Future distribution, grants, incentives. Controlled by governance.
 
 ## 3.4 Anti-Gaming Measures
 
@@ -74,14 +71,7 @@ smoothed_emission = α × current_PID_output + (1 − α) × previous_emission
 Where α = 0.3 (governance-adjustable)
 ```
 
-## 3.5 veAg Multiplier Mechanics
-
-```
-multiplier = 1.0 + (veAg_balance / total_veAg) × 1.5
-Range: 1.0× (no veAg) to 2.5× (dominant veAg holder)
-```
-
-## 3.6 Supply Schedule
+## 3.5 Supply Schedule
 
 | Phase | Epochs | Characteristic |
 |-------|--------|---------------|
@@ -91,3 +81,11 @@ Range: 1.0× (no veAg) to 2.5× (dominant veAg holder)
 
 The 100M Ag hard cap ensures supply will not be reached for approximately
 15-20 years under normal conditions.
+
+## 3.6 Voting Power
+
+Ag uses `ERC20VotesUpgradeable`:
+- Voting power = Ag balance at proposal checkpoint
+- Delegatable to other addresses
+- No lock, no multiplier, no time-weighting
+- Snapshot-based for governance participation

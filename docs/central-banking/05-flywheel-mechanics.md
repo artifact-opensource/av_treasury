@@ -56,7 +56,7 @@ Step 5: MORE LIQUIDITY
 | Emission cap | PID output too high | Clamps maximum Ag/epoch |
 | Reserve ratio floor | Reserves too low | Halts new minting |
 | Transfer tax | Every Au transfer | 9bps friction reduces velocity |
-| veAg decay | Lock expires | Gradual voting power reduction |
+| QuasiCrystal unstake | LP NFT withdrawn | Reduced emission allocation |
 
 ## 5.4 Flywheel Reversal
 

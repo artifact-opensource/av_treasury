@@ -4,7 +4,7 @@ date: 2026-06-29
 status: final
 description: Guide for deploying and testing AV Treasury contracts in the sandbox environment.
 category: technical
-related: [../technical/deployment-plan.md, ../technical/deployment-readiness.md]
+related: [../central-banking/08-contracts.md, ../central-banking/09-governance-framework.md, ADDRESS_BOOK.md]
 ---
 
 # Sandbox Deployment

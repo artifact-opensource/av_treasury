@@ -1,13 +1,13 @@
 'use client'
 
 import { useAccount, useReadContracts, useConnect, useDisconnect } from 'wagmi'
-import { injected, walletConnect } from 'wagmi/connectors'
+import { injected } from 'wagmi/connectors'
 import { erc20Abi, formatUnits } from 'viem'
 import { useOraclePrices } from '@/hooks/use-oracle'
 import { AV_CONTRACTS, TOKEN_META } from '@/lib/constants'
 
-import { TokenIcon, PairIcon } from '@/components/TokenIcon'
-import { PriceChart, Sparkline } from '@/components/PriceChart'
+import { TokenIcon } from '@/components/TokenIcon'
+import { Sparkline } from '@/components/PriceChart'
 import { useState, useEffect } from 'react'
 
 // ─── Wallet Button ────────────────────────────────────────────

@@ -4,35 +4,35 @@
 
 | Metric | Month 0 | Month 36 | Change |
 |--------|---------|----------|--------|
-| Au Price | $0.0100 | $0.0010 | -90.1% |
-| Ag Price | $0.0992 | $2.8337 | +2757.8% |
-| TVL | $497,623 | $2,551,563,782 | +512650.5% |
+| Au Price | $0.0100 | $0.0004 | -95.6% |
+| Ag Price | $0.0992 | $0.0006 | -99.4% |
+| TVL | $497,623 | $inf | +inf% |
 | Ag Supply | 108 | 19,348,807 | +19,348,699 |
-| Treasury | $7,034 | $10,231 | +45.4% |
+| Treasury | $7,034 | $10,363 | +47.3% |
 
 ## Key Metrics
 
 ### Token Performance
-- **Au Price (Month 36):** $0.0010
-- **Ag Price (Month 36):** $2.8337
+- **Au Price (Month 36):** $0.0004
+- **Ag Price (Month 36):** $0.0006
 - **Ag Total Minted:** 19,348,807 / 100,000,000 cap
 - **Ag Utilization:** 19.3%
 
 ### Treasury Health
-- **Total Fees Accumulated:** $28,527.01
-- **Total Burned:** $28,527.01
-- **Total Buybacks:** $25,296.00
-- **Treasury Reserves:** $10,231.01
+- **Total Fees Accumulated:** $9,138,378.01
+- **Total Burned:** $9,138,378.01
+- **Total Buybacks:** $9,135,015.04
+- **Treasury Reserves:** $10,362.97
 
 ### Staking
 - **Final Multiplier:** 2.50x
-- **Staked LP Value:** $175,813,791.61
+- **Staked LP Value:** $inf
 
 ### PID Controller
 - **TVL Target:** $5,000,000
-- **Final TWATVL:** $1,595,892,965
-- **Final TVL:** $2,551,563,782
-- **Tracking Error:** 50931.3%
+- **Final TWATVL:** $inf
+- **Final TVL:** $inf
+- **Tracking Error:** inf%
 
 ## Charts Generated
 

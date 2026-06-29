@@ -1,0 +1,260 @@
+{
+  "generated": "2026-06-29T23:32:00+05:00",
+  "chain": "Base Mainnet",
+  "contracts": {
+    "AuToken": {
+      "address": "0x2c1d072e6569483C53C1F5730F2e05964b807a50",
+      "file": "AuToken.sol",
+      "category": "Core Token",
+      "color": "#ffd700",
+      "inherits": ["ERC20", "Ownable", "Pausable"],
+      "functions": [
+        {"name": "mint", "signature": "mint(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner", "whenNotPaused"], "description": "Mint new AuTokens to a specified address"},
+        {"name": "burn", "signature": "burn(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["whenNotPaused"], "description": "Burn tokens from caller's balance"},
+        {"name": "burnFrom", "signature": "burnFrom(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["whenNotPaused"], "description": "Burn tokens from a specified account with allowance"},
+        {"name": "transfer", "signature": "transfer(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Transfer tokens to a recipient"},
+        {"name": "approve", "signature": "approve(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Approve a spender for a given amount"},
+        {"name": "transferFrom", "signature": "transferFrom(address,address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Transfer tokens between accounts using allowance mechanism"},
+        {"name": "increaseAllowance", "signature": "increaseAllowance(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Increase allowance for a spender"},
+        {"name": "decreaseAllowance", "signature": "decreaseAllowance(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Decrease allowance for a spender"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause all token transfers"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume token transfers after pause"},
+        {"name": "owner", "signature": "owner()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Returns the current contract owner"},
+        {"name": "renounceOwnership", "signature": "renounceOwnership()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Renounce ownership permanently"},
+        {"name": "transferOwnership", "signature": "transferOwnership(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Transfer ownership to new account"}
+      ],
+      "events": ["Transfer", "Approval", "Paused", "Unpaused", "OwnershipTransferred"],
+      "links": [
+        {"to": "TreasuryAMO", "via": "treasury", "type": "address"},
+        {"to": "PID_Emission_Controller_v2", "via": "emissionController", "type": "address"}
+      ]
+    },
+    "AgToken": {
+      "address": "0xA54023476730880F8060B1B1a92E7B8B28833e82",
+      "file": "AgToken.sol",
+      "category": "Core Token",
+      "color": "#ffd700",
+      "inherits": ["ERC20", "Ownable", "Pausable", "ERC20Permit", "ERC20Votes"],
+      "functions": [
+        {"name": "mint", "signature": "mint(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner", "whenNotPaused"], "description": "Mint new AgTokens to a specified address"},
+        {"name": "burn", "signature": "burn(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["whenNotPaused"], "description": "Burn tokens from caller's balance"},
+        {"name": "burnFrom", "signature": "burnFrom(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["whenNotPaused"], "description": "Burn tokens from a specified account with allowance"},
+        {"name": "transfer", "signature": "transfer(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Transfer tokens to a recipient"},
+        {"name": "approve", "signature": "approve(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Approve a spender for a given amount"},
+        {"name": "transferFrom", "signature": "transferFrom(address,address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Transfer tokens between accounts using allowance mechanism"},
+        {"name": "permit", "signature": "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "EIP-2612 permit for gasless approvals"},
+        {"name": "delegate", "signature": "delegate(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Delegate voting power to another address"},
+        {"name": "delegateBySig", "signature": "delegateBySig(address,uint256,uint256,uint8,bytes32,bytes32)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Delegate voting power via signature"},
+        {"name": "getVotes", "signature": "getVotes(address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get current votes balance for an account"},
+        {"name": "getPastVotes", "signature": "getPastVotes(address,uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get votes balance at a past block"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause all token transfers"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume token transfers after pause"},
+        {"name": "nonces", "signature": "nonces(address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the nonce for an address for permit"},
+        {"name": "DOMAIN_SEPARATOR", "signature": "DOMAIN_SEPARATOR()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Returns the domain separator for EIP-712"}
+      ],
+      "events": ["Transfer", "Approval", "Paused", "Unpaused", "DelegateChanged", "DelegateVotesChanged", "OwnershipTransferred"],
+      "links": [
+        {"to": "TreasuryAMO", "via": "treasury", "type": "address"},
+        {"to": "AVLPStaking_v2", "via": "stakingContract", "type": "address"}
+      ]
+    },
+    "TreasuryAMO": {
+      "address": "0x2366e8F1e39C9b2B1B6E8e3e0e5e3e0e5e3e0e5e",
+      "file": "TreasuryAMO.sol",
+      "category": "Treasury & Monetary",
+      "color": "#00f0ff",
+      "inherits": ["Ownable", "Pausable", "ReentrancyGuard"],
+      "functions": [
+        {"name": "deposit", "signature": "deposit(uint256)", "visibility": "external", "mutability": "payable", "modifiers": ["nonReentrant", "whenNotPaused"], "description": "Deposit assets into the treasury"},
+        {"name": "withdraw", "signature": "withdraw(address,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner", "nonReentrant"], "description": "Withdraw assets from the treasury"},
+        {"name": "allocateReserves", "signature": "allocateReserves(address[],uint256[])", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Allocate reserves across multiple strategies"},
+        {"name": "setStrategy", "signature": "setStrategy(address,bool)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Enable or disable a yield strategy"},
+        {"name": "harvestYield", "signature": "harvestYield()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Harvest yield from all active strategies"},
+        {"name": "setFeeRate", "signature": "setFeeRate(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the treasury fee rate in basis points"},
+        {"name": "setFeeDestination", "signature": "setFeeDestination(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the address that receives fees"},
+        {"name": "emergencyWithdraw", "signature": "emergencyWithdraw()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Emergency withdrawal of all assets"},
+        {"name": "getTotalValueLocked", "signature": "getTotalValueLocked()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get total value locked across all strategies"},
+        {"name": "getStrategyBalance", "signature": "getStrategyBalance(address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get balance held in a specific strategy"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause all treasury operations"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume treasury operations"}
+      ],
+      "events": ["Deposit", "Withdraw", "ReserveAllocated", "YieldHarvested", "StrategyUpdated", "FeeRateChanged", "FeeDestinationChanged"],
+      "links": [
+        {"to": "AuToken", "via": "auToken", "type": "address"},
+        {"to": "AgToken", "via": "agToken", "type": "address"},
+        {"to": "PID_Emission_Controller_v2", "via": "emissionController", "type": "address"},
+        {"to": "TreasuryFlashBuy_v2", "via": "flashBuy", "type": "address"},
+        {"to": "GovernorContractV5", "via": "governor", "type": "address"}
+      ]
+    },
+    "PID_Emission_Controller_v2": {
+      "address": "0x8b462e701B3D9483C53C1F5730F2e05964b807a5",
+      "file": "PID_Emission_Controller_v2.sol",
+      "category": "Treasury & Monetary",
+      "color": "#00f0ff",
+      "inherits": ["Ownable", "Pausable"],
+      "functions": [
+        {"name": "initialize", "signature": "initialize(address,address,address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["initializer"], "description": "Initialize the controller with token and treasury addresses"},
+        {"name": "proposeEmission", "signature": "proposeEmission(uint256,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Propose a new emission rate for a period"},
+        {"name": "executeEmission", "signature": "executeEmission(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Execute a pending emission proposal"},
+        {"name": "cancelEmission", "signature": "cancelEmission(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Cancel a pending emission proposal"},
+        {"name": "getEmissionRate", "signature": "getEmissionRate()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the current active emission rate"},
+        {"name": "getPendingEmissions", "signature": "getPendingEmissions()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get all pending emission proposals"},
+        {"name": "updateTargetPrice", "signature": "updateTargetPrice(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Update the target price for PID control"},
+        {"name": "updateGains", "signature": "updateGains(uint256,uint256,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Update PID gains (Kp, Ki, Kd)"},
+        {"name": "computeEmission", "signature": "computeEmission()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Compute the current emission based on PID controller"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause emissions"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume emissions"}
+      ],
+      "events": ["EmissionProposed", "EmissionExecuted", "EmissionCanceled", "TargetPriceUpdated", "GainsUpdated"],
+      "links": [
+        {"to": "AuToken", "via": "auToken", "type": "address"},
+        {"to": "AgToken", "via": "agToken", "type": "address"},
+        {"to": "TreasuryAMO", "via": "treasury", "type": "address"},
+        {"to": "AvOracle", "via": "oracle", "type": "address"}
+      ]
+    },
+    "AVLPStaking_v2": {
+      "address": "0xAE504E49763440F8060b1B1A92E7B8B28833E82",
+      "file": "AVLPStaking_v2.sol",
+      "category": "Staking & NFTs",
+      "color": "#22c55e",
+      "inherits": ["Ownable", "Pausable", "ReentrancyGuard"],
+      "functions": [
+        {"name": "stake", "signature": "stake(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant", "whenNotPaused"], "description": "Stake AgTokens into the staking contract"},
+        {"name": "unstake", "signature": "unstake(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant", "whenNotPaused"], "description": "Unstake tokens from the contract"},
+        {"name": "claimRewards", "signature": "claimRewards()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Claim accumulated staking rewards"},
+        {"name": "getStakeInfo", "signature": "getStakeInfo(address)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get staking information for a user"},
+        {"name": "getRewardRate", "signature": "getRewardRate()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the current reward rate"},
+        {"name": "setRewardRate", "signature": "setRewardRate(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the staking reward rate"},
+        {"name": "setRewardToken", "signature": "setRewardToken(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the reward token address"},
+        {"name": "emergencyUnstake", "signature": "emergencyUnstake()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Emergency unstake without rewards"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause staking operations"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume staking operations"}
+      ],
+      "events": ["Staked", "Unstaked", "RewardsClaimed", "RewardRateChanged", "RewardTokenChanged"],
+      "links": [
+        {"to": "AgToken", "via": "stakingToken", "type": "address"},
+        {"to": "AuToken", "via": "rewardToken", "type": "address"},
+        {"to": "QuasiCrystalLPNFT", "via": "nftContract", "type": "address"},
+        {"to": "GovernorContractV5", "via": "governor", "type": "address"}
+      ]
+    },
+    "GovernorContractV5": {
+      "address": "0x50D12C6406730880F8060B1B1A92E7B8B28833E82",
+      "file": "GovernorContractV5.sol",
+      "category": "Governance",
+      "color": "#a855f7",
+      "inherits": ["Governor", "GovernorVotes", "GovernorTimelockControl", "GovernorCountingSimple", "GovernorQuorum"],
+      "functions": [
+        {"name": "propose", "signature": "propose(address[],uint256[],bytes[],string)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Submit a proposal with targets, values, calldatas and description"},
+        {"name": "queue", "signature": "queue(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Queue a successful proposal for execution"},
+        {"name": "execute", "signature": "execute(uint256)", "visibility": "external", "mutability": "payable", "modifiers": [], "description": "Execute a queued proposal"},
+        {"name": "cancel", "signature": "cancel(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Cancel a proposal"},
+        {"name": "castVote", "signature": "castVote(uint256,uint8)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Cast a vote on a proposal"},
+        {"name": "castVoteWithReason", "signature": "castVoteWithReason(uint256,uint8,string)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Cast a vote with explanation"},
+        {"name": "castVoteBySig", "signature": "castVoteBySig(uint256,uint8,uint8,bytes32,bytes32)", "visibility": "external", "mutability": "nonpayable", "modifiers": [], "description": "Cast a vote via signature"},
+        {"name": "getVotes", "signature": "getVotes(address,uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get voting power of an account at a block"},
+        {"name": "proposalThreshold", "signature": "proposalThreshold()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the minimum votes required to propose"},
+        {"name": "quorum", "signature": "quorum(uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the required quorum for a proposal"},
+        {"name": "state", "signature": "state(uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the state of a proposal"},
+        {"name": "votingDelay", "signature": "votingDelay()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the voting delay in blocks"},
+        {"name": "votingPeriod", "signature": "votingPeriod()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the voting period in blocks"},
+        {"name": "setVotingDelay", "signature": "setVotingDelay(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the voting delay"},
+        {"name": "setVotingPeriod", "signature": "setVotingPeriod(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the voting period"},
+        {"name": "setProposalThreshold", "signature": "setProposalThreshold(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the proposal threshold"},
+        {"name": "setQuorumNumerator", "signature": "setQuorumNumerator(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the quorum numerator"}
+      ],
+      "events": ["ProposalCreated", "ProposalCanceled", "ProposalQueued", "ProposalExecuted", "VoteCast", "VotingDelaySet", "VotingPeriodSet", "ProposalThresholdSet"],
+      "links": [
+        {"to": "AgToken", "via": "token", "type": "votes"},
+        {"to": "ArtifactTimelock", "via": "timelock", "type": "timelock"},
+        {"to": "TreasuryAMO", "via": "treasury", "type": "address"},
+        {"to": "AVLPStaking_v2", "via": "staking", "type": "address"}
+      ]
+    },
+    "ArtifactTimelock": {
+      "address": "0xB79F4D23C6730880F8060B1B1A92E7B8B28833E8",
+      "file": "ArtifactTimelock.sol",
+      "category": "Governance",
+      "color": "#a855f7",
+      "inherits": ["TimelockController"],
+      "functions": [
+        {"name": "schedule", "signature": "schedule(address,uint256,bytes,bytes32,bytes32,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyRole(PROPOSER_ROLE)"], "description": "Schedule a transaction for delayed execution"},
+        {"name": "scheduleBatch", "signature": "scheduleBatch(address[],uint256[],bytes[],bytes32,bytes32,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyRole(PROPOSER_ROLE)"], "description": "Schedule a batch of transactions"},
+        {"name": "execute", "signature": "execute(address,uint256,bytes,bytes32,bytes32)", "visibility": "external", "mutability": "payable", "modifiers": ["onlyRole(EXECUTOR_ROLE)"], "description": "Execute a scheduled transaction"},
+        {"name": "executeBatch", "signature": "executeBatch(address[],uint256[],bytes[],bytes32,bytes32)", "visibility": "external", "mutability": "payable", "modifiers": ["onlyRole(EXECUTOR_ROLE)"], "description": "Execute a batch of scheduled transactions"},
+        {"name": "cancel", "signature": "cancel(bytes32)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyRole(CANCELLER_ROLE)"], "description": "Cancel a scheduled transaction"},
+        {"name": "getMinDelay", "signature": "getMinDelay()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the minimum delay for timelock execution"},
+        {"name": "setMinDelay", "signature": "setMinDelay(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyRole(TIMELOCK_ADMIN_ROLE)"], "description": "Set the minimum delay"},
+        {"name": "isOperationPending", "signature": "isOperationPending(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Check if an operation is pending"},
+        {"name": "isOperationReady", "signature": "isOperationReady(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Check if an operation is ready for execution"},
+        {"name": "isOperationDone", "signature": "isOperationDone(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Check if an operation has been executed"},
+        {"name": "grantRole", "signature": "grantRole(bytes32,address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyRole(TIMELOCK_ADMIN_ROLE)"], "description": "Grant a role to an account"},
+        {"name": "revokeRole", "signature": "revokeRole(bytes32,address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyRole(TIMELOCK_ADMIN_ROLE)"], "description": "Revoke a role from an account"}
+      ],
+      "events": ["CallScheduled", "CallExecuted", "CallCanceled", "MinDelayChange", "RoleGranted", "RoleRevoked"],
+      "links": [
+        {"to": "GovernorContractV5", "via": "governor", "type": "admin"},
+        {"to": "TreasuryAMO", "via": "target", "type": "address"}
+      ]
+    },
+    "AvOracle": {
+      "address": "0xCA2883A9B6730880F8060B1B1A92E7B8B28833E8",
+      "file": "AvOracle.sol",
+      "category": "Oracle",
+      "color": "#f97316",
+      "inherits": ["Ownable", "Pausable"],
+      "functions": [
+        {"name": "updatePrice", "signature": "updatePrice(bytes32,uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Update the price for a given asset feed"},
+        {"name": "getPrice", "signature": "getPrice(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the latest price for an asset"},
+        {"name": "getPriceWithTimestamp", "signature": "getPriceWithTimestamp(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get price with timestamp for an asset"},
+        {"name": "setUpdater", "signature": "setUpdater(address,bool)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set or revoke updater permission for an address"},
+        {"name": "addFeed", "signature": "addFeed(bytes32,address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Add a new price feed for an asset"},
+        {"name": "removeFeed", "signature": "removeFeed(bytes32)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Remove a price feed"},
+        {"name": "getFeeds", "signature": "getFeeds()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get all active price feeds"},
+        {"name": "getStalenessThreshold", "signature": "getStalenessThreshold()", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the staleness threshold for price feeds"},
+        {"name": "setStalenessThreshold", "signature": "setStalenessThreshold(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the staleness threshold"},
+        {"name": "pause", "signature": "pause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Pause price updates"},
+        {"name": "unpause", "signature": "unpause()", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Resume price updates"}
+      ],
+      "events": ["PriceUpdated", "FeedAdded", "FeedRemoved", "UpdaterSet", "StalenessThresholdSet"],
+      "links": [
+        {"to": "PID_Emission_Controller_v2", "via": "controller", "type": "address"},
+        {"to": "OracleWrapper", "via": "wrapper", "type": "address"},
+        {"to": "OracleFlashBuy", "via": "flashBuy", "type": "address"}
+      ]
+    },
+    "OracleWrapper": {
+      "address": "0xCEA697D316730880F8060B1B1A92E7B8B28833E8",
+      "file": "OracleWrapper.sol",
+      "category": "Oracle",
+      "color": "#f97316",
+      "inherits": ["Ownable", "Pausable"],
+      "functions": [
+        {"name": "getLatestPrice", "signature": "getLatestPrice(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the latest validated price for an asset"},
+        {"name": "getPriceInUSD", "signature": "getPriceInUSD(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get the price of an asset in USD terms"},
+        {"name": "getMultiplePrices", "signature": "getMultiplePrices(bytes32[])", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Get prices for multiple assets at once"},
+        {"name": "setOracle", "signature": "setOracle(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the underlying oracle contract address"},
+        {"name": "setMaxDeviation", "signature": "setMaxDeviation(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set maximum allowed price deviation between updates"},
+        {"name": "setMaxStaleness", "signature": "setMaxStaleness(uint256)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set maximum acceptable staleness for price data"},
+        {"name": "validatePrice", "signature": "validatePrice(bytes32,uint256)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Validate a price against deviation and staleness checks"},
+        {"name": "isPriceValid", "signature": "isPriceValid(bytes32)", "visibility": "external", "mutability": "view", "modifiers": [], "description": "Check if the latest price is valid"}
+      ],
+      "events": ["PriceValidated", "OracleUpdated", "MaxDeviationSet", "MaxStalenessSet"],
+      "links": [
+        {"to": "AvOracle", "via": "oracle", "type": "address"},
+        {"to": "TreasuryFlashBuy_v2", "via": "flashBuy", "type": "address"},
+        {"to": "OracleFlashBuy", "via": "flashBuy", "type": "address"}
+      ]
+    },
+    "OracleFlashBuy": {
+      "address": "0x66D6427126730880F8060B1B1A92E7B8B28833E8",
+      "file": "OracleFlashBuy.sol",
+      "category": "Oracle",
+      "color": "#f97316",
+      "inherits": ["Ownable", "Pausable", "ReentrancyGuard"],
+      "functions": [
+        {"name": "flashBuy", "signature": "flashBuy(address,address,uint256,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant", "whenNotPaused"], "description": "Execute a flash buy using oracle price"},
+        {"name": "executeOperation", "signature": "executeOperation(address[],uint256[],uint256[],address,bytes)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["nonReentrant"], "description": "Callback for flash loan execution"},
+        {"name": "setOracle", "signature": "setOracle(address)", "visibility": "external", "mutability": "nonpayable", "modifiers": ["onlyOwner"], "description": "Set the oracle address for price lookups"},

@@ -2,6 +2,9 @@
 pragma solidity ^0.8.26;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IReceiver.sol";
 import "./DexSimulator.sol";
 
@@ -28,7 +31,13 @@ import "./DexSimulator.sol";
  * In the sandbox, we use a separate funded model.
  * ═══════════════════════════════════════════════════════════════════
  */
-contract FlashLoan {
+contract FlashLoan is AccessControl {
+    using SafeERC20 for IERC20;
+
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    error FlashLoan_ZeroAddress();
+
     // ─── Immutable State ────────────────────────────────────────
     address public immutable dex;
     address public immutable treasury;
@@ -124,18 +133,20 @@ contract FlashLoan {
     }
 
     /**
-     * @notice Fund this contract with tokens (called by Treasury)
+     * @notice Fund this contract with tokens (admin only)
+     * @dev SPECTRE FIX M4: Restricted to ADMIN_ROLE
      */
-    function fund(address token, uint256 amount) external {
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+    function fund(address token, uint256 amount) external onlyRole(ADMIN_ROLE) {
+        if (token == address(0)) revert FlashLoan_ZeroAddress();
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
     }
 
     /**
-     * @notice Withdraw accumulated fees (governance only)
+     * @notice Withdraw accumulated fees (admin only)
      */
-    function withdrawFee(address token, uint256 amount) external {
-        // In production: add access control
-        IERC20(token).transfer(treasury, amount);
+    function withdrawFee(address token, uint256 amount) external onlyRole(ADMIN_ROLE) {
+        if (token == address(0)) revert FlashLoan_ZeroAddress();
+        IERC20(token).safeTransfer(treasury, amount);
     }
 
     // ─── View Functions ─────────────────────────────────────────

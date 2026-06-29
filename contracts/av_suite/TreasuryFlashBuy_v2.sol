@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title TreasuryFlashBuy_v2
@@ -22,7 +23,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  *     - OracleGuardian confirms Au < peg
  *     - FlashBuy executes the swap
  */
-contract TreasuryFlashBuy_v2 is ReentrancyGuard, AccessControl {
+contract TreasuryFlashBuy_v2 is ReentrancyGuard, AccessControl, Pausable {
     using SafeERC20 for IERC20;
 
     // =========================================================================
@@ -169,8 +170,19 @@ contract TreasuryFlashBuy_v2 is ReentrancyGuard, AccessControl {
     }
 
     function setActive(bool _active) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (paused()) revert("FlashBuy: paused");
         emit BuybackToggled(_active);
         active = _active;
+    }
+
+    /// @notice Emergency pause — stops all buyback execution
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
+    }
+
+    /// @notice Unpause — resumes buyback execution
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
     }
 
     // =========================================================================
@@ -216,55 +228,53 @@ contract TreasuryFlashBuy_v2 is ReentrancyGuard, AccessControl {
      * @param minAgMinimum Minimum AG to accept (slippage)
      * @param dexData Encoded DEX swap data (path, router call, etc.)
      */
+    /// @dev SPECTRE FIX C3: Track USDC balance before swap to measure actual output.
+    /// Prevents reentrancy attacks where attacker manipulates balanceOf readings.
     function executeBuyback(
         uint256 usdcAmount,
         uint256 minAgMinimum,
         bytes calldata dexData
-    ) external nonReentrant onlyRole(EXECUTOR_ROLE) {
+    ) external nonReentrant whenNotPaused onlyRole(EXECUTOR_ROLE) {
         if (!active) revert NotActive();
         if (usdcAmount > maxUsdcPerBuyback) revert MaxUsdcExceeded();
 
         // Verify trigger is still met
         if (!shouldBuyback()) revert TriggerNotMet();
 
-        // Get price from oracle for logging
-        (uint256 auPrice, ) = getAuPriceFromOracle();
+        // SPECTRE FIX C3: Snapshot balances before any external calls
+        uint256 usdcBefore = usdcToken.balanceOf(address(this));
+        uint256 agBefore = agToken.balanceOf(address(this));
 
         // Transfer USDC from Treasury to this contract
         usdcToken.safeTransferFrom(treasury, address(this), usdcAmount);
 
-        // Approve DEX to spend USDC (OZ v5: use approve instead of safeApprove)
+        // Verify USDC actually arrived (prevents transferFrom callback manipulation)
+        uint256 usdcAfter = usdcToken.balanceOf(address(this));
+        if (usdcAfter - usdcBefore != usdcAmount) revert TransferFailed();
+
+        // Approve DEX to spend USDC
         usdcToken.approve(dex, 0);
         usdcToken.approve(dex, usdcAmount);
 
         // Execute DEX swap via low-level call
         (bool success, bytes memory returnData) = dex.call(dexData);
         if (!success) {
-            // Decode revert reason if available
-            string memory reason = "DEX swap failed";
-            if (returnData.length > 0) {
-                assembly {
-                    let ptr := add(returnData, 0x20)
-                    let len := mload(returnData)
-                    reason := ptr
-                    // Note: we keep the raw data, ABI-decode would need the selector
-                }
-            }
             revert TransferFailed();
         }
 
-        // Calculate AG received (balance change)
-        uint256 agBalance = agToken.balanceOf(address(this));
-        if (agBalance < minAgMinimum) revert SlippageExceeded();
+        // SPECTRE FIX C3: Use balance delta, not absolute balance
+        uint256 agAfter = agToken.balanceOf(address(this));
+        uint256 agReceived = agAfter - agBefore;
+        if (agReceived < minAgMinimum) revert SlippageExceeded();
 
-        // Transfer AG to Treasury
-        agToken.safeTransfer(treasury, agBalance);
-
-        // Update stats
+        // CEI: Update state BEFORE external transfer
         totalUsdcSpent += usdcAmount;
-        totalAgBought += agBalance;
+        totalAgBought += agReceived;
 
-        emit BuybackExecuted(msg.sender, usdcAmount, agBalance, block.timestamp);
+        // Transfer AG to Treasury (external call after state update)
+        agToken.safeTransfer(treasury, agReceived);
+
+        emit BuybackExecuted(msg.sender, usdcAmount, agReceived, block.timestamp);
     }
 
     /**
@@ -274,7 +284,7 @@ contract TreasuryFlashBuy_v2 is ReentrancyGuard, AccessControl {
         address token,
         address to,
         uint256 amount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external nonReentrant onlyRole(DEFAULT_ADMIN_ROLE) {
         if (to == address(0)) revert ZeroAddress();
         IERC20(token).safeTransfer(to, amount);
     }

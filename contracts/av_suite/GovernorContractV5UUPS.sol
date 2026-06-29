@@ -29,12 +29,17 @@ contract GovernorContractV5UUPS is
     GovernorVotesQuorumFractionUpgradeable,
     UUPSUpgradeable
 {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     // ─── Constants ────────────────────────────────────────────────────
 
     uint256 public constant INITIAL_VOTING_DELAY = 1;
     uint256 public constant INITIAL_VOTING_PERIOD = 216000;
-    uint256 public constant INITIAL_PROPOSAL_THRESHOLD = 100000e18;
-    uint256 public constant INITIAL_QUORUM_BPS = 4;
+    uint256 public constant INITIAL_PROPOSAL_THRESHOLD = 1000000e18;
+    uint256 public constant INITIAL_QUORUM_BPS = 400; // 4% — was 0.04% (critical bug)
 
     // ─── State ─────────────────────────────────────────────────────────
 
@@ -77,15 +82,19 @@ contract GovernorContractV5UUPS is
         __GovernorVotes_init(_token);
         __GovernorVotesQuorumFraction_init(INITIAL_QUORUM_BPS);
         timelock = _timelock;
+        upgrader = address(_timelock); // SPECTRE FIX H5: Only timelock can upgrade
     }
 
     // ─── UUPS Authorization ────────────────────────────────────────────
 
-    function _authorizeUpgrade(address) internal override onlyTimelock {}
+    /// @dev SPECTRE FIX H5: Upgrade authorization — only timelock (post-init) or deployer (pre-init).
+    address public upgrader;
 
-    modifier onlyTimelock() {
-        require(msg.sender == address(timelock), "Only timelock");
-        _;
+    function _authorizeUpgrade(address) internal override {
+        require(
+            msg.sender == upgrader,
+            "Unauthorized upgrade"
+        );
     }
 
     // ─── Timelock Integration ──────────────────────────────────────────

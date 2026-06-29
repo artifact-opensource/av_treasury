@@ -34,8 +34,8 @@ contract GovernorContractV5 is
 
     uint256 public constant INITIAL_VOTING_DELAY = 1;
     uint256 public constant INITIAL_VOTING_PERIOD = 216000;
-    uint256 public constant INITIAL_PROPOSAL_THRESHOLD = 100000e18;
-    uint256 public constant INITIAL_QUORUM_BPS = 4;
+    uint256 public constant INITIAL_PROPOSAL_THRESHOLD = 1000000e18;
+    uint256 public constant INITIAL_QUORUM_BPS = 400; // 4% — matches GovernorVotesQuorumFraction
 
     // ─── State ─────────────────────────────────────────────────────────
 
@@ -292,7 +292,8 @@ contract GovernorContractV5 is
         override(Governor, GovernorVotesQuorumFraction)
         returns (uint256)
     {
-        return super.quorum(0);
+        // Use current total supply for quorum (prevents 0-quorum if tokens minted after deploy)
+        return super.quorum(block.number - 1);
     }
 
     function proposalThreshold()
@@ -331,6 +332,14 @@ contract GovernorContractV5 is
         bytes32 descriptionHash
     ) public override(Governor) returns (uint256) {
         return super.cancel(targets, values, calldatas, descriptionHash);
+    }
+
+    /**
+     * @dev Override quorumDenominator to use basis points (10000) instead of percentage (100).
+     * This allows INITIAL_QUORUM_BPS = 400 to mean 4% (400/10000).
+     */
+    function quorumDenominator() public view override returns (uint256) {
+        return 10000;
     }
 
     function supportsInterface(bytes4 interfaceId)

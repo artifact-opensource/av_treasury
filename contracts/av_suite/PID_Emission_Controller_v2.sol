@@ -444,6 +444,19 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
         // Integral term: ki * integral / SCALE
         int256 iTerm = (int256(ki) * integral) / int256(SCALE);
 
+        // SPECTRE FIX C2: Hard clamp iTerm to prevent integral windup from dominating output.
+        // ki is in 1e18 scale, integral in 1e24 → iTerm can reach 1e42 without clamp.
+        // Max reasonable: 10000e18 (matches MAX_SINGLE_EMISSION cap).
+        int256 maxITerm = int256(MAX_SINGLE_EMISSION);
+        if (iTerm > maxITerm) {
+            iTerm = maxITerm;
+            // Reset integral to prevent continued windup
+            integral = (maxITerm * int256(SCALE)) / int256(ki);
+        } else if (iTerm < -maxITerm) {
+            iTerm = -maxITerm;
+            integral = -(maxITerm * int256(SCALE)) / int256(ki);
+        }
+
         // Derivative: (error - lastError) / timeElapsed, then multiply by kd / SCALE.
         int256 dError = (error - lastError) / int256(timeElapsed);
         int256 dTerm = (int256(kd) * dError) / int256(SCALE);

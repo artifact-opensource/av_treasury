@@ -43,14 +43,15 @@ last_updated: 2026-06-29
 
 | Contract | Address | Type |
 |----------|---------|------|
-| Governor v5 | `0x1Dc51EccAeA0c9fb41Bc42d6e452D2c27225f0a9` | Non-upgradeable |
+| Governor v5 (patched) | `0x3DEDAf8AF86838D3EB8342c2E0AE605B5F74a9eb` | Non-upgradeable |
 | Timelock | `0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be` | Non-upgradeable |
 
 ### Deprecated Governance
 
 | Contract | Address | Status | Replacement |
 |----------|---------|--------|-------------|
-| Governor (old) | `0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385` | Deprecated | Governor v5 |
+| Governor v5 (pre-patch) | `0x1Dc51EccAeA0c9fb41Bc42d6e452D2c27225f0a9` | Replaced | Governor v5 (patched) |
+| Governor (old) | `0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385` | Deprecated | Governor v5 (patched) |
 | Timelock (old) | `0x662321CC63700865838aB08378061BE499344714` | Deprecated | Timelock (new) |
 
 ## Liquidity

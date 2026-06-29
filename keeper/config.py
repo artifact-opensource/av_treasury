@@ -4,11 +4,24 @@ Source of truth: address.book + on-chain verification.
 """
 
 import os
+import stat
 from pathlib import Path
 
 # ─── Environment ────────────────────────────────────────────────────────────
 _dotenv = Path(__file__).parent.parent / ".env"
 if _dotenv.exists():
+    # SPECTRE FIX H6: Verify .env file permissions are restrictive (owner-only)
+    _env_stat = _dotenv.stat()
+    _env_mode = _env_stat.st_mode
+    if _env_mode & (stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH):
+        import warnings
+        warnings.warn(
+            f"SECURITY: .env file has loose permissions ({oct(_env_mode)}). "
+            f"Run: chmod 600 {_dotenv}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+
     for line in _dotenv.read_text().splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:

@@ -36,3 +36,4 @@ __pycache__/
 keeper/logs/
 *.pyc
 keeper/venv/
+/home/adam/workspace/av_treasury/av_validator

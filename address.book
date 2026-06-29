@@ -100,7 +100,7 @@
   Timelock:       ArtifactTimelock (0x662321CC63700865838aB08378061BE499344714)
   Parameters:     (from contract constants)
     Voting Delay:         1 block
-    Voting Period:        216,000 blocks (~30 days @ 12s/block)
+    Voting Period:        216,000 blocks (~5 days @ 2s/block on Base)
     Proposal Threshold:   100,000 Ag
     Quorum:               4% of total supply (4,000,000 Ag)
     Quorum Denominator:   100
@@ -367,7 +367,7 @@
 
 ## Governor Parameters
   Voting Delay:         1 block
-  Voting Period:        216,000 blocks (~30 days)
+  Voting Period:        216,000 blocks (~5 days @ 2s/block on Base)
   Proposal Threshold:   100,000 Ag
   Quorum:               4% (4,000,000 Ag)
   Timelock Delay:       2 days

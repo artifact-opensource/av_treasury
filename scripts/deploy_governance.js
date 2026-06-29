@@ -59,46 +59,29 @@ async function main() {
   console.log("Balance:", ethers.utils.formatEther(await ethers.provider.getBalance(deployerAddr)), "ETH");
   console.log();
 
-  // ─── Step 1: Deploy Timelock ──────────────────────────────────────────────
-  console.log("━━━ Step 1: Deploy ArtifactTimelock ━━━");
+  // ─── Step 1: Timelock (already deployed) ──────────────────────────────────
+  console.log("━━━ Step 1: ArtifactTimelock (existing) ━━━");
 
+  const TIMELOCK_ADDRESS = "0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be";
   const Timelock = await ethers.getContractFactory("ArtifactTimelock");
-  const timelock = await Timelock.deploy(
-    SAFE,                    // admin — Treasury Safe (3-of-5, currently 1-of-2)
-    TIMELOCK_MIN_DELAY,
-    TIMELOCK_MAX_DELAY
-  );
-  await timelock.deployed();
-  console.log("  ✅ Timelock deployed:", timelock.address);
+  const timelock = Timelock.attach(TIMELOCK_ADDRESS);
+  console.log("  ✅ Using existing Timelock:", timelock.address);
 
   // ─── Step 2: Deploy Governor ──────────────────────────────────────────────
   console.log("━━━ Step 2: Deploy GovernorContract ━━━");
 
-  const Governor = await ethers.getContractFactory("GovernorContract");
-  const governor = await Governor.deploy();
+  const Governor = await ethers.getContractFactory("GovernorContractV5");
+  const governor = await Governor.deploy(
+    AG,                      // token (voting token)
+    timelock.address         // executor (timelock)
+  );
   await governor.deployed();
   console.log("  ✅ Governor deployed:", governor.address);
 
-  // ─── Step 3: Initialize Governor ──────────────────────────────────────────
-  console.log("━━━ Step 3: Initialize Governor ━━━");
-
-  const initTx = await governor.initialize(
-    AG,                      // token (voting token)
-    timelock.address,        // executor (timelock)
-    VOTING_DELAY,
-    VOTING_PERIOD,
-    PROPOSAL_THRESHOLD,
-    QUORUM_BPS,
-    { gasLimit: 500000 }
-  );
-  await initTx.wait();
-  console.log("  ✅ Governor initialized");
+  // Step 3 removed — V5 uses constructor-only config (no initialize)
+  console.log("  ✅ Governor configured via constructor");
   console.log("     Token:", AG);
-  console.log("     Executor:", timelock.address);
-  console.log("     Voting delay:", VOTING_DELAY, "blocks");
-  console.log("     Voting period:", VOTING_PERIOD, "blocks (~3 days)");
-  console.log("     Proposal threshold:", ethers.utils.formatUnits(PROPOSAL_THRESHOLD, 18), "Ag");
-  console.log("     Quorum:", QUORUM_BPS / 100, "%");
+  console.log("     Timelock:", timelock.address);
 
   // ─── Step 4: Grant Timelock Roles ────────────────────────────────────────
   console.log("━━━ Step 4: Grant Timelock roles ━━━");
@@ -167,7 +150,7 @@ async function main() {
   // ─── Step 6: Verify on Basescan ──────────────────────────────────────────
   console.log("━━━ Step 6: Verify on Basescan ━━━");
   console.log("  Run manually:");
-  console.log(`  npx hardhat verify --network base ${timelock.address} "${SAFE}" "${TIMELOCK_MIN_DELAY}" "${TIMELOCK_MAX_DELAY}"`);
+  console.log(`  npx hardhat verify --network base ${timelock.address} "${SAFE}" "${SAFE}" "${SAFE}"`);
   console.log(`  npx hardhat verify --network base ${governor.address}`);
 
   // ─── Summary ─────────────────────────────────────────────────────────────

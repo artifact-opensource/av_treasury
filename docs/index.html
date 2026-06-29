@@ -1,522 +1,1149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AV Treasury — Technical Documentation</title>
+<title>THE ARC — Ecosystem System Config</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500&family=Inter:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+<script src="https://cdn.tailwindcss.com"></script>
 
-<!-- ═══ NAV ═══ -->
-<nav class="nav">
-  <div class="nav-inner">
-    <div class="nav-brand">AV TREASURY</div>
-    <div class="nav-links">
-      <a href="#overview" class="nav-link active">Overview</a>
-      <a href="#architecture" class="nav-link">Architecture</a>
-      <a href="#tokens" class="nav-link">Tokens</a>
-      <a href="#pid" class="nav-link">PID</a>
-      <a href="#governance" class="nav-link">Governance</a>
-      <a href="#contracts" class="nav-link">Contracts</a>
-      <a href="#calculator" class="nav-link">Calculator</a>
-      <a href="#glossary" class="nav-link">Glossary</a>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        colors: {
+          amoled: '#000000',
+          card: '#080808',
+          borderDim: '#141414',
+          borderMid: '#262626',
+          brightWhite: '#FFFFFF',
+          mutedWhite: '#A3A3A3',
+          dimWhite: '#525252',
+          cyberGreen: '#00FF66',
+          cyberRed: '#FF3333',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  /* Custom High-Contrast & Glow Variables */
+  ::selection {
+    background-color: var(--brightWhite);
+    color: var(--amoled);
+  }
+  
+  /* Customized Scrollbars for Cyberpunk Aesthetics */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262626;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #525252;
+  }
+
+  /* Scanline Simulation Layer Overlay */
+  .scanlines {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%, 
+      rgba(0, 0, 0, 0.25) 50%
+    ), linear-gradient(
+      90deg, 
+      rgba(255, 0, 0, 0.06), 
+      rgba(0, 255, 0, 0.02), 
+      rgba(0, 0, 255, 0.06)
+    );
+    background-size: 100% 4px, 6px 100%;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.15;
+  }
+
+  /* Silky glow effects */
+  .cyber-glow {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+  }
+  .active-subsys {
+    border-color: #FFFFFF !important;
+    background: #0c0c0c !important;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+  }
+</style>
+</head>
+
+<body class="bg-amoled text-brightWhite font-sans min-h-screen selection:bg-white selection:text-black overflow-x-hidden pb-12">
+<div class="scanlines"></div>
+
+<!-- ═══ NAVIGATION TERMINAL HEAD ═══ -->
+<nav class="fixed top-0 left-0 w-full bg-amoled/90 border-b border-borderDim z-50 backdrop-blur-md">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="relative w-2 h-2">
+        <span class="absolute inline-flex h-full w-full rounded-full bg-cyberGreen opacity-75 animate-ping"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-cyberGreen"></span>
+      </div>
+      <a href="#" class="font-mono text-xs font-semibold tracking-widest text-brightWhite">THE ARC // CORE CONFIG v3.5</a>
     </div>
-    <div class="nav-status">
-      <span class="status-dot"></span>
-      <span class="status-text">MAINNET</span>
+    
+    <!-- Desktop links -->
+    <div class="hidden md:flex items-center gap-6 font-mono text-[11px] text-mutedWhite">
+      <a href="#overview" class="hover:text-brightWhite transition-colors">01. OVERVIEW</a>
+      <a href="#architecture" class="hover:text-brightWhite transition-colors">02. TOPOLOGY</a>
+      <a href="#tokens" class="hover:text-brightWhite transition-colors">03. TOKENS</a>
+      <a href="#pid-simulator" class="hover:text-brightWhite transition-colors">04. EMISSION_MATH</a>
+      <a href="#gov-section" class="hover:text-brightWhite transition-colors">05. GOVERNANCE</a>
+      <a href="#contracts-section" class="hover:text-brightWhite transition-colors">06. REGISTRY</a>
+    </div>
+
+    <!-- Active Gas Tracker -->
+    <div class="flex items-center gap-4 text-[11px] font-mono">
+      <span class="text-dimWhite hidden sm:inline">BASE_GAS: <span id="nav-gas" class="text-brightWhite">1.2 Gwei</span></span>
+      <span class="bg-borderDim border border-borderMid px-2 py-0.5 text-cyberGreen text-[10px] tracking-wider rounded uppercase">MAINNET SYNCED</span>
     </div>
   </div>
 </nav>
 
-<!-- ═══ HERO ═══ -->
-<section id="hero">
-  <div class="hero-content">
-    <div class="hero-label">ARC SUBSYSTEMS</div>
-    <h1 class="hero-title">AV Treasury</h1>
-    <p class="hero-subtitle">Artifact Utility (Au) | Artifact Governance (Ag) — Dual-token system on Base</p>
-    <div class="hero-stats">
-      <div class="stat"><span class="stat-val">9</span><span class="stat-key">Contracts</span></div>
-      <div class="stat"><span class="stat-val">PID</span><span class="stat-key">Emission Engine</span></div>
-      <div class="stat"><span class="stat-val">48h</span><span class="stat-key">Timelock</span></div>
-      <div class="stat"><span class="stat-val">4%</span><span class="stat-key">Quorum</span></div>
+<!-- ═══ HERO / THE ARC DECENTRALIZED PARADIGM ═══ -->
+<section class="relative pt-24 pb-12 overflow-hidden border-b border-borderDim">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 relative">
+    
+    <!-- Background Grid Lines -->
+    <div class="absolute inset-0 pointer-events-none opacity-5 flex justify-between">
+      <div class="w-px bg-white h-full"></div>
+      <div class="w-px bg-white h-full hidden md:block"></div>
+      <div class="w-px bg-white h-full hidden md:block"></div>
+      <div class="w-px bg-white h-full"></div>
+    </div>
+
+    <div class="text-center py-6">
+      <div class="inline-flex items-center gap-2 border border-borderMid bg-card px-3 py-1 rounded mb-6">
+        <span class="font-mono text-[10px] uppercase tracking-widest text-dimWhite">OPERATIONAL PROTOCOL SPECIFICATION</span>
+      </div>
+      <h1 class="text-5xl sm:text-7xl font-extralight tracking-tighter uppercase mb-4 text-brightWhite">
+        THE ARC
+      </h1>
+      <p class="text-sm sm:text-base font-light text-mutedWhite max-w-2xl mx-auto mb-10 leading-relaxed">
+        A decentralized agent attestation, governance, and financial settlement framework engineered to coordinate automated liquidity loops and sovereign smart software agents natively on L2 clusters.
+      </p>
+    </div>
+
+    <!-- Upgraded 5-Column Subsystems Grid with AV Treasury Integration -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
+      
+      <div onclick="diagnosticBoot('attestation')" id="node-attestation" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        <div class="flex justify-between items-start mb-3">
+          <span class="font-mono text-xs text-dimWhite">01 / SECURITY</span>
+          <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">radar</span>
+        </div>
+        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">AI ATTESTATION</h3>
+        <p class="text-xs text-mutedWhite font-light">Verification systems producing zero-knowledge validation logs of off-chain model decisions.</p>
+      </div>
+
+      <div onclick="diagnosticBoot('defi')" id="node-defi" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        <div class="flex justify-between items-start mb-3">
+          <span class="font-mono text-xs text-dimWhite">02 / CAPITAL</span>
+          <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">account_balance_wallet</span>
+        </div>
+        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">DEFI RESERVES</h3>
+        <p class="text-xs text-mutedWhite font-light">Algorithmic reserve control contracts storing and routing yield-optimized assets across slipstream vectors.</p>
+      </div>
+
+      <div onclick="diagnosticBoot('governance')" id="node-governance" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        <div class="flex justify-between items-start mb-3">
+          <span class="font-mono text-xs text-dimWhite">03 / CONTROL</span>
+          <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">gavel</span>
+        </div>
+        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">GOVERNANCE</h3>
+        <p class="text-xs text-mutedWhite font-light">Multi-layered on-chain voting apparatus controlling parameter manipulation loops backed by Ag stakes.</p>
+      </div>
+
+      <div onclick="diagnosticBoot('exchange')" id="node-exchange" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        <div class="flex justify-between items-start mb-3">
+          <span class="font-mono text-xs text-dimWhite">04 / LIQUIDITY</span>
+          <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">swap_horiz</span>
+        </div>
+        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">AUTOMATED EXCHANGE</h3>
+        <p class="text-xs text-mutedWhite font-light">Slipstream native AMMs providing continuous concentration loops to capture trades and guarantee value.</p>
+      </div>
+
+      <!-- New Subsystem: AV Treasury -->
+      <div onclick="diagnosticBoot('treasury')" id="node-treasury" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        <div class="flex justify-between items-start mb-3">
+          <span class="font-mono text-xs text-dimWhite">05 / TREASURY</span>
+          <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">account_balance</span>
+        </div>
+        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">AV TREASURY</h3>
+        <p class="text-xs text-mutedWhite font-light">The central bank logic driving the dynamic dual-token mechanism, maintaining reserves ratio equilibrium.</p>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- ═══ OVERVIEW ═══ -->
-<section id="overview" class="section">
-  <div class="container">
-    <div class="sec-num">01</div>
-    <h2 class="sec-title">Overview</h2>
-    <p class="sec-lead">AV Treasury is a decentralized central banking system on Base (Ethereum L2). It manages a dual-token economy: Artifact Utility (Au) as the reserve-backed medium of exchange, and Artifact Governance (Ag) as the PID-minted incentive and voting token. The system operates autonomously — monetary policy is enforced by code, not committees.</p>
-
-    <div class="overview-grid">
-      <div class="ov-card">
-        <div class="ov-icon"><span class="material-icons-outlined">account_balance</span></div>
-        <h3>Reserve-Backed</h3>
-        <p>Every Au is backed by protocol-held reserves. The TreasuryAMO manages liquidity via Slipstream concentrated positions.</p>
+<!-- ═══ LIVE AGENT DIAGNOSTICS CONSOLE ═══ -->
+<section class="border-b border-borderDim bg-black py-4">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="border border-borderMid bg-card rounded overflow-hidden">
+      <div class="border-b border-borderMid bg-amoled px-4 py-2 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen animate-ping"></span>
+          <span class="font-mono text-[10px] tracking-widest text-mutedWhite uppercase">TELEMETRY_DIAGNOSTICS_FEED</span>
+        </div>
+        <span class="font-mono text-[9px] text-dimWhite" id="terminal-clock">SYNCING PORT_04...</span>
       </div>
-      <div class="ov-card">
-        <div class="ov-icon"><span class="material-icons-outlined">tune</span></div>
-        <h3>PID-Governed Emissions</h3>
-        <p>Ag supply expands and contracts based on a PID controller targeting a governance-set TVL. No human intervention required.</p>
-      </div>
-      <div class="ov-card">
-        <div class="ov-icon"><span class="material-icons-outlined">gavel</span></div>
-        <h3>DAO Controlled</h3>
-        <p>Ag holders govern via GovernorContract with 48h timelock. All parameters upgradeable through proposal flow.</p>
-      </div>
-      <div class="ov-card">
-        <div class="ov-icon"><span class="material-icons-outlined">verified</span></div>
-        <h3>Verified on Basescan</h3>
-        <p>All contracts deployed and verified on Base Mainnet. Full transparency, no proxies without documentation.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ ARCHITECTURE ═══ -->
-<section id="architecture" class="section section-alt">
-  <div class="container">
-    <div class="sec-num">02</div>
-    <h2 class="sec-title">Architecture</h2>
-    <p class="sec-lead">Five interconnected subsystems. TreasuryAMO at the center — all value flows through it.</p>
-
-    <div class="arch-diagram">
-      <div class="arch-layer arch-core">
-        <div class="arch-layer-label">CORE</div>
-        <div class="arch-node">
-          <div class="an-name">TreasuryAMO</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0x56653245f4718fe105b95C8424947B31b84b5188" target="_blank">0x5665...5188</a></div>
-          <div class="an-desc">Reserve management, AMO operations, Slipstream liquidity</div>
-        </div>
-      </div>
-
-      <div class="arch-layer arch-tokens">
-        <div class="arch-layer-label">TOKENS</div>
-        <div class="arch-node">
-          <div class="an-name">Artifact Utility (Au)</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank">0x0c5A...2f08</a></div>
-          <div class="an-desc">ERC-20, 9bps transfer tax, 1B max supply</div>
-        </div>
-        <div class="arch-node">
-          <div class="an-name">Artifact Governance (Ag)</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank">0x1D31...3674</a></div>
-          <div class="an-desc">ERC-20, PID-minted, 100M max, governance rights</div>
-        </div>
-        <div class="arch-node">
-          <div class="an-name">RSBT</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank">0xfd04...47CD</a></div>
-          <div class="an-desc">Soulbound receipt token, non-transferable</div>
-        </div>
-      </div>
-
-      <div class="arch-layer arch-policy">
-        <div class="arch-layer-label">POLICY</div>
-        <div class="arch-node">
-          <div class="an-name">PID Controller</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank">0x9911...7f70</a></div>
-          <div class="an-desc">Computes Ag emissions from TVL gap</div>
-        </div>
-        <div class="arch-node">
-          <div class="an-name">AvOracle v5</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB" target="_blank">0xb479...2bdB</a></div>
-          <div class="an-desc">Multi-source TWAP price feeds</div>
-        </div>
-      </div>
-
-      <div class="arch-layer arch-gov">
-        <div class="arch-layer-label">GOVERNANCE</div>
-        <div class="arch-node">
-          <div class="an-name">GovernorContract</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank">0x259c...6385</a></div>
-          <div class="an-desc">Proposal creation, voting, execution routing</div>
-        </div>
-        <div class="arch-node">
-          <div class="an-name">ArtifactTimelock</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0x662321CC63700865838aB08378061BE499344714" target="_blank">0x6623...4714</a></div>
-          <div class="an-desc">48h delayed execution for governance security</div>
-        </div>
-      </div>
-
-      <div class="arch-layer arch-mech">
-        <div class="arch-layer-label">MECHANISMS</div>
-        <div class="arch-node">
-          <div class="an-name">TreasuryFlashBuy v2</div>
-          <div class="an-addr"><a href="https://basescan.org/address/0xf6383860837E6cb983F9Af8Def92fc08F15Be65b" target="_blank">0xf638...e65b</a></div>
-          <div class="an-desc">Buyback engine using oracle price data</div>
-        </div>
+      <div class="p-4 font-mono text-xs min-h-[110px] text-mutedWhite" id="terminal-body">
+        <div class="text-dimWhite">// Click on any subsystem node above to launch diagnostics.</div>
+        <div class="text-brightWhite mt-1">&gt; System initialized. Awaiting user telemetry request...</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══ TOKENS ═══ -->
-<section id="tokens" class="section">
-  <div class="container">
-    <div class="sec-num">03</div>
-    <h2 class="sec-title">Tokens</h2>
-
-    <div class="tokens-grid">
-      <!-- Au -->
-      <div class="token-card">
-        <div class="tc-header">
-          <div class="tc-name">Artifact Utility</div>
-          <div class="tc-symbol">Au</div>
-        </div>
-        <div class="tc-body">
-          <div class="tc-row"><span>Address</span><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="tc-addr">0x0c5A...2f08</a></div>
-          <div class="tc-row"><span>Standard</span><span>ERC-20 with EIP-2612 permit</span></div>
-          <div class="tc-row"><span>Max Supply</span><span>1,000,000,000 Au</span></div>
-          <div class="tc-row"><span>Transfer Tax</span><span>9 bps (0.09%)</span></div>
-          <div class="tc-row"><span>Tax Split</span><span>50% burned, 50% to Treasury</span></div>
-          <div class="tc-row"><span>Minting</span><span>Deposit-based via TreasuryAMO</span></div>
-          <div class="tc-row"><span>Redeemable</span><span>Yes — via AMO</span></div>
-          <div class="tc-row"><span>Role</span><span>Reserve-backed medium of exchange</span></div>
-        </div>
-      </div>
-
-      <!-- Ag -->
-      <div class="token-card">
-        <div class="tc-header">
-          <div class="tc-name">Artifact Governance</div>
-          <div class="tc-symbol">Ag</div>
-        </div>
-        <div class="tc-body">
-          <div class="tc-row"><span>Address</span><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="tc-addr">0x1D31...3674</a></div>
-          <div class="tc-row"><span>Standard</span><span>ERC-20 (OpenZeppelin GovernorVotes)</span></div>
-          <div class="tc-row"><span>Max Supply</span><span>100,000,000 Ag</span></div>
-          <div class="tc-row"><span>Transfer Tax</span><span>None</span></div>
-          <div class="tc-row"><span>Minting</span><span>PID Controller (emission-based)</span></div>
-          <div class="tc-row"><span>Burning</span><span>None (fixed emission schedule)</span></div>
-          <div class="tc-row"><span>Voting Power</span><span>1 Ag = 1 vote (delegatable)</span></div>
-          <div class="tc-row"><span>Role</span><span>Governance rights, staking rewards</span></div>
-        </div>
-      </div>
-
-      <!-- RSBT -->
-      <div class="token-card">
-        <div class="tc-header">
-          <div class="tc-name">Soulbound Receipt Token</div>
-          <div class="tc-symbol">RSBT</div>
-        </div>
-        <div class="tc-body">
-          <div class="tc-row"><span>Address</span><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank" class="tc-addr">0xfd04...47CD</a></div>
-          <div class="tc-row"><span>Standard</span><span>ERC-721 (soulbound)</span></div>
-          <div class="tc-row"><span>Transferable</span><span>No</span></div>
-          <div class="tc-row"><span>Role</span><span>Staking position receipt, multiplier</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ FLYWHEEL ═══ -->
-<section id="flywheel" class="section section-alt">
-  <div class="container">
-    <div class="sec-num">04</div>
-    <h2 class="sec-title">Economic Flywheel</h2>
-    <p class="sec-lead">The self-reinforcing cycle that drives protocol growth.</p>
-
-    <div class="flywheel-static">
-      <div class="fw-step">
-        <div class="fw-num">1</div>
-        <div class="fw-body">
-          <h4>TVL Grows</h4>
-          <p>Deposits flow into the protocol. TreasuryAMO manages liquidity. Total Value Locked increases toward the PID target.</p>
-        </div>
-      </div>
-      <div class="fw-step">
-        <div class="fw-num">2</div>
-        <div class="fw-body">
-          <h4>PID Detects Gap</h4>
-          <p>The PID controller computes the difference between current TVL and target TVL. Error signal drives emission rate.</p>
-        </div>
-      </div>
-      <div class="fw-step">
-        <div class="fw-num">3</div>
-        <div class="fw-body">
-          <h4>Ag Emitted</h4>
-          <p>New Ag is minted and distributed to stakers. Higher emissions = higher staking APY.</p>
-        </div>
-      </div>
-      <div class="fw-step">
-        <div class="fw-num">4</div>
-        <div class="fw-body">
-          <h4>Staking Demand Rises</h4>
-          <p>Higher APY attracts capital. More Au deposited, more Ag staked. TVL increases further.</p>
-        </div>
-      </div>
-      <div class="fw-step">
-        <div class="fw-num">5</div>
-        <div class="fw-body">
-          <h4>Flywheel Reinforces</h4>
-          <p>Higher TVL narrows the gap. PID reduces emissions. System converges to equilibrium at target TVL.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ PID ═══ -->
-<section id="pid" class="section">
-  <div class="container">
-    <div class="sec-num">05</div>
-    <h2 class="sec-title">PID Controller</h2>
-    <p class="sec-lead">Proportional-Integral-Derivative controller. Computes Ag emissions from the TVL gap.</p>
-
-    <div class="pid-layout">
-      <div class="pid-formula-block">
-        <div class="pf-label">Emission Formula</div>
-        <div class="pf-formula">E(t) = K<sub>p</sub>·e(t) + K<sub>i</sub>·∫e(τ)dτ + K<sub>d</sub>·de(t)/dt</div>
-        <div class="pf-terms">
-          <div class="pf-term">
-            <span class="pt-coeff">K<sub>p</sub> · e(t)</span>
-            <span class="pt-name">Proportional</span>
-            <span class="pt-desc">Reacts to current gap. Larger gap = more emissions.</span>
+<!-- ═══ SYSTEM OVERVIEW & TOKEN SPECTRA ═══ -->
+<section id="overview" class="py-16 border-b border-borderDim bg-amoled">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    
+    <div class="flex flex-col lg:flex-row gap-12 items-start">
+      <!-- Left: AV Treasury introduction -->
+      <div class="w-full lg:w-5/12">
+        <div class="font-mono text-xs text-dimWhite uppercase tracking-widest mb-2">[ CORE MODULE 01 ]</div>
+        <h2 class="text-3xl font-light tracking-tight mb-4 text-brightWhite">The AV Treasury</h2>
+        <p class="text-sm text-mutedWhite font-light leading-relaxed mb-6">
+          The central economic node within THE ARC framework. It operates as a code-enforced reserve pool managing a modern dual-token engine: Artifact Utility (Au) as the stable medium of exchange, and Artifact Governance (Ag) for control-loop configuration. 
+        </p>
+        
+        <div class="grid grid-cols-2 gap-4 border-t border-borderDim pt-6">
+          <div>
+            <div class="font-mono text-xs text-dimWhite">RESERVE_RATIO</div>
+            <div class="text-xl font-light text-brightWhite">&ge; 60% Required</div>
           </div>
-          <div class="pf-term">
-            <span class="pt-coeff">K<sub>i</sub> · ∫e(τ)dτ</span>
-            <span class="pt-name">Integral</span>
-            <span class="pt-desc">Accumulates past error. Eliminates steady-state offset.</span>
-          </div>
-          <div class="pf-term">
-            <span class="pt-coeff">K<sub>d</sub> · de(t)/dt</span>
-            <span class="pt-name">Derivative</span>
-            <span class="pt-desc">Predicts future error. Dampens oscillation.</span>
+          <div>
+            <div class="font-mono text-xs text-dimWhite">TIMELOCK_CONSTANT</div>
+            <div class="text-xl font-light text-brightWhite">48 Hours Delay</div>
           </div>
         </div>
       </div>
 
-      <div class="pid-params-block">
-        <div class="pf-label">Live Parameters</div>
-        <div class="pp-row"><span>K<sub>p</sub> (Proportional)</span><span class="pp-val">0.15</span></div>
-        <div class="pp-row"><span>K<sub>i</sub> (Integral)</span><span class="pp-val">0.00005</span></div>
-        <div class="pp-row"><span>K<sub>d</sub> (Derivative)</span><span class="pp-val">0.00</span></div>
-        <div class="pp-row"><span>Emission Cap / Epoch</span><span class="pp-val">50,000 Ag</span></div>
-        <div class="pp-row"><span>Epoch Duration</span><span class="pp-val">5 days</span></div>
-        <div class="pp-row"><span>Target TVL</span><span class="pp-val">Governance-set</span></div>
-        <div class="pp-row"><span>Oracle Source</span><span class="pp-val">AvOracle v5 (TWAP)</span></div>
-        <div class="pp-row"><span>Reserve Ratio</span><span class="pp-val">60% minimum</span></div>
+      <!-- Right: Subsystem Architecture Matrix -->
+      <div class="w-full lg:w-7/12 grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div class="border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs bg-brightWhite text-amoled px-1.5 py-0.5 font-mono rounded">Au</span>
+            <h4 class="text-sm font-semibold tracking-tight text-brightWhite">Artifact Utility</h4>
+          </div>
+          <p class="text-xs text-mutedWhite font-light mb-4">Every Au token represents an on-chain receipt backed by real treasury value. Transfer mechanisms carry a built-in 9bps transaction fee split directly between execution burns and vault expansion.</p>
+          <div class="text-[10px] font-mono text-dimWhite border-t border-borderDim pt-3 flex justify-between">
+            <span>MAX_SUPPLY: 1,000,000,000</span>
+            <span>TAX: 9 BPS (0.09%)</span>
+          </div>
+        </div>
+
+        <div class="border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs border border-brightWhite text-brightWhite px-1.5 py-0.5 font-mono rounded">Ag</span>
+            <h4 class="text-sm font-semibold tracking-tight text-brightWhite">Artifact Governance</h4>
+          </div>
+          <p class="text-xs text-mutedWhite font-light mb-4">Ag dictates operational parameters. It has a variable emission rate governed completely by a closed-loop PID controller tracking actual against optimal network liquidity targets.</p>
+          <div class="text-[10px] font-mono text-dimWhite border-t border-borderDim pt-3 flex justify-between">
+            <span>MAX_SUPPLY: 100,000,000</span>
+            <span>MINT: PID CONTROLLED</span>
+          </div>
+        </div>
+
       </div>
+    </div>
+
+    <!-- Token Spec Table Details -->
+    <div id="tokens" class="mt-16 border border-borderDim rounded overflow-hidden">
+      <div class="bg-card px-4 py-3 border-b border-borderDim flex items-center justify-between">
+        <span class="font-mono text-xs text-mutedWhite">DUAL-TOKEN CONFIGURATION AND ON-CHAIN STANDARDS</span>
+        <span class="font-mono text-[10px] text-dimWhite">SPEC_SHEET_V3.5</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-borderDim bg-amoled text-dimWhite font-mono text-[10px]">
+              <th class="p-3">TOKEN</th>
+              <th class="p-3">IDENTIFIER ADDRESS</th>
+              <th class="p-3">MINT VECTOR</th>
+              <th class="p-3">TRANSACTION RULES</th>
+              <th class="p-3">ECOSYSTEM ROLE</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-borderDim bg-card">
+            <tr class="hover:bg-amoled/50 transition-colors">
+              <td class="p-3 font-semibold text-brightWhite">Artifact Utility (Au)</td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="hover:text-brightWhite underline">0x0c5A...2f08</a></td>
+              <td class="p-3 text-mutedWhite font-light">Deposit assets to TreasuryAMO</td>
+              <td class="p-3 text-mutedWhite font-light">9 bps transfer tax (50% Burn / 50% Vault)</td>
+              <td class="p-3 text-brightWhite font-mono">Utility Medium of Exchange</td>
+            </tr>
+            <tr class="hover:bg-amoled/50 transition-colors">
+              <td class="p-3 font-semibold text-brightWhite">Artifact Governance (Ag)</td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="hover:text-brightWhite underline">0x1D31...3674</a></td>
+              <td class="p-3 text-mutedWhite font-light">PID Controlled Epoch distribution</td>
+              <td class="p-3 text-mutedWhite font-light">0 bps (Tax-free transfers)</td>
+              <td class="p-3 text-brightWhite font-mono">Governance & Yield Rights</td>
+            </tr>
+            <tr class="hover:bg-amoled/50 transition-colors">
+              <td class="p-3 font-semibold text-brightWhite">Soulbound Receipt (RSBT)</td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank" class="hover:text-brightWhite underline">0xfd04...47CD</a></td>
+              <td class="p-3 text-mutedWhite font-light">Vault Position Initialization</td>
+              <td class="p-3 text-cyberRed font-mono">SBT - Non-Transferable</td>
+              <td class="p-3 text-brightWhite font-mono">Staking Verification Matrix</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ THE PID CLOSED-LOOP SIMULATOR ═══ -->
+<section id="pid-simulator" class="py-16 border-b border-borderDim bg-black relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    
+    <div class="flex flex-col lg:flex-row gap-12 items-stretch">
+      
+      <!-- Interactive Inputs -->
+      <div class="w-full lg:w-4/12 flex flex-col justify-between">
+        <div>
+          <div class="font-mono text-xs text-dimWhite uppercase tracking-widest mb-2">[ CONTROL METRIC 02 ]</div>
+          <h2 class="text-3xl font-light tracking-tight mb-4 text-brightWhite">PID Controller Simulator</h2>
+          <p class="text-xs text-mutedWhite font-light leading-relaxed mb-6">
+            The minting rate of Ag is decided mathematically. It evaluates real-time Liquidity (TVL) gaps against Target settings. Simulate controller behaviors below.
+          </p>
+        </div>
+
+        <div class="space-y-4 border-t border-borderDim pt-6">
+          <div class="space-y-1">
+            <div class="flex justify-between font-mono text-[11px]">
+              <span class="text-mutedWhite">TARGET TVL</span>
+              <span class="text-brightWhite" id="lbl-target">$10,000,000</span>
+            </div>
+            <input id="sim-target" type="range" min="1000000" max="20000000" step="500000" value="10000000" class="w-full accent-white bg-borderMid h-1 rounded-sm appearance-none cursor-pointer">
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between font-mono text-[11px]">
+              <span class="text-mutedWhite">STARTING TVL</span>
+              <span class="text-brightWhite" id="lbl-start">$4,000,000</span>
+            </div>
+            <input id="sim-start" type="range" min="0" max="15000000" step="500000" value="4000000" class="w-full accent-white bg-borderMid h-1 rounded-sm appearance-none cursor-pointer">
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div class="space-y-1">
+              <label class="font-mono text-[10px] text-dimWhite block">KP (PROP)</label>
+              <input id="sim-kp" type="number" step="0.01" min="0" max="2" value="0.15" class="w-full bg-card border border-borderDim text-brightWhite font-mono text-xs p-1 rounded outline-none focus:border-borderMid">
+            </div>
+            <div class="space-y-1">
+              <label class="font-mono text-[10px] text-dimWhite block">KI (INTEG)</label>
+              <input id="sim-ki" type="number" step="0.0001" min="0" max="0.01" value="0.0005" class="w-full bg-card border border-borderDim text-brightWhite font-mono text-xs p-1 rounded outline-none focus:border-borderMid">
+            </div>
+            <div class="space-y-1">
+              <label class="font-mono text-[10px] text-dimWhite block">KD (DERIV)</label>
+              <input id="sim-kd" type="number" step="0.01" min="0" max="1" value="0.02" class="w-full bg-card border border-borderDim text-brightWhite font-mono text-xs p-1 rounded outline-none focus:border-borderMid">
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between font-mono text-[10px] text-dimWhite">
+              <span>SIMULATED MARKET VOLATILITY</span>
+              <span id="lbl-noise">LOW</span>
+            </div>
+            <select id="sim-noise" class="w-full bg-card border border-borderDim text-brightWhite font-mono text-xs p-1 rounded outline-none focus:border-borderMid">
+              <option value="0">0% (Absolute Equilibrium)</option>
+              <option value="0.02" selected>2% (Standard Mainnet Noise)</option>
+              <option value="0.08">8% (High Market Chaos)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph & Convergence Telemetry -->
+      <div class="w-full lg:w-8/12 flex flex-col">
+        <div class="border border-borderDim bg-card rounded overflow-hidden flex-1 flex flex-col">
+          <div class="border-b border-borderDim bg-amoled px-4 py-2 flex items-center justify-between text-xs font-mono">
+            <span class="text-mutedWhite">SIMULATION RUNNING: CONVERGENCE PROFILE (40 Epochs)</span>
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-brightWhite inline-block"></span>
+              <span class="text-[10px] text-dimWhite">COEFFICIENT_TARGET</span>
+            </div>
+          </div>
+          
+          <!-- Real-Time Graphical Canvas representation -->
+          <div class="relative bg-amoled flex-1 p-4 min-h-[260px]">
+            <canvas id="pid-canvas" class="w-full h-full block"></canvas>
+          </div>
+
+          <!-- Dynamic Output Values -->
+          <div class="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-borderDim border-t border-borderDim bg-amoled/50 text-xs font-mono">
+            <div class="p-3">
+              <span class="text-dimWhite block text-[10px]">INITIAL GAP</span>
+              <span class="text-brightWhite text-sm font-semibold" id="out-gap">-$6,000,000</span>
+            </div>
+            <div class="p-3">
+              <span class="text-dimWhite block text-[10px]">RAW PROP OUTPUT</span>
+              <span class="text-brightWhite text-sm font-semibold" id="out-pterm">0 Ag</span>
+            </div>
+            <div class="p-3">
+              <span class="text-dimWhite block text-[10px]">CALCULATED EMISSION</span>
+              <span class="text-brightWhite text-sm font-semibold text-cyberGreen" id="out-emission">0 Ag</span>
+            </div>
+            <div class="p-3">
+              <span class="text-dimWhite block text-[10px]">STABILITY MARGIN</span>
+              <span class="text-brightWhite text-sm font-semibold" id="out-status">CRITICAL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ GOVERNANCE ACTION SCHEMATICS ═══ -->
+<section id="gov-section" class="py-16 border-b border-borderDim bg-amoled">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    
+    <div class="sec-header mb-10">
+      <div class="font-mono text-xs text-dimWhite uppercase tracking-widest mb-1">[ SYSTEMS LAYER 03 ]</div>
+      <h2 class="text-3xl font-light tracking-tight text-brightWhite">Ecosystem Governance Simulator</h2>
+      <p class="text-xs text-mutedWhite font-light mt-1 max-w-2xl">
+        See how parameters move from decentralized ideas to secure execution codes. Trigger the simulator to view automatic system steps.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 relative">
+      
+      <!-- Step 01 -->
+      <div id="gov-step-1" class="border border-borderDim bg-card p-5 rounded relative transition-all">
+        <div class="font-mono text-xs text-dimWhite mb-3">STAGE 01 // SUBMIT</div>
+        <h4 class="text-sm font-semibold mb-2">Proposal Submission</h4>
+        <p class="text-xs text-mutedWhite font-light leading-relaxed mb-4">Any wallet holding &ge;100K delegated Ag can submit a configuration payload to GovernorContract.</p>
+        <div class="text-[10px] font-mono text-dimWhite uppercase">Requirement: 100K Ag</div>
+      </div>
+
+      <!-- Step 02 -->
+      <div id="gov-step-2" class="border border-borderDim bg-card p-5 rounded relative transition-all">
+        <div class="font-mono text-xs text-dimWhite mb-3">STAGE 02 // TALLY</div>
+        <h4 class="text-sm font-semibold mb-2">3-Day Validation Tally</h4>
+        <p class="text-xs text-mutedWhite font-light leading-relaxed mb-4">Community delegates weigh the proposals. System requires a 4% absolute quorum representation to succeed.</p>
+        <div class="text-[10px] font-mono text-dimWhite uppercase" id="gov-quorum-text">Current: 0.0% / 4.0%</div>
+      </div>
+
+      <!-- Step 03 -->
+      <div id="gov-step-3" class="border border-borderDim bg-card p-5 rounded relative transition-all">
+        <div class="font-mono text-xs text-dimWhite mb-3">STAGE 03 // QUEUE</div>
+        <div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-cyberGreen hidden" id="gov-queue-pulse"></div>
+        <h4 class="text-sm font-semibold mb-2">Timelock Protection</h4>
+        <p class="text-xs text-mutedWhite font-light leading-relaxed mb-4">Passed proposals reside in the execution register for 48 hours, shielding capital providers from immediate overrides.</p>
+        <div class="text-[10px] font-mono text-dimWhite uppercase" id="gov-timer-text">DELAY: 48h LOCK</div>
+      </div>
+
+      <!-- Step 04 -->
+      <div id="gov-step-4" class="border border-borderDim bg-card p-5 rounded relative transition-all">
+        <div class="font-mono text-xs text-dimWhite mb-3">STAGE 04 // RUN</div>
+        <h4 class="text-sm font-semibold mb-2">Autonomous Execution</h4>
+        <p class="text-xs text-mutedWhite font-light leading-relaxed mb-4">Once delay variables clear, execution logic runs autonomously on target contract state variables.</p>
+        <div class="text-[10px] font-mono text-dimWhite uppercase">STATUS: AWAITING RUN</div>
+      </div>
+
+    </div>
+
+    <!-- Active Action Panel -->
+    <div class="mt-6 border border-borderDim bg-card p-5 rounded flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="space-y-1">
+        <h5 class="text-xs font-mono uppercase tracking-widest text-dimWhite">Active Simulation State Variable</h5>
+        <p class="text-xs text-mutedWhite font-light" id="sim-proposal-desc">No proposal is currently active inside the workflow simulator pipelines.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="launchGovProposal(true)" id="btn-gov-pass" class="px-4 py-2 border border-brightWhite bg-brightWhite text-amoled font-mono text-[11px] font-bold tracking-widest rounded hover:bg-black hover:text-white hover:border-white transition-all">
+          SIMULATE PASSING VOTE
+        </button>
+        <button onclick="launchGovProposal(false)" id="btn-gov-fail" class="px-4 py-2 border border-borderMid bg-amoled text-mutedWhite font-mono text-[11px] tracking-widest rounded hover:border-brightWhite hover:text-brightWhite transition-all">
+          SIMULATE FAILED QUORUM
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ DEPLOYED VECTOR ARCHISTRY (CONTRACT DIRECTORY) ═══ -->
+<section id="contracts-section" class="py-16 border-b border-borderDim bg-black">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-10">
+      <div>
+        <div class="font-mono text-xs text-dimWhite uppercase tracking-widest mb-1">[ CATALOGUE 04 ]</div>
+        <h2 class="text-3xl font-light tracking-tight text-brightWhite">Deployment Registry Directory</h2>
+        <p class="text-xs text-mutedWhite font-light mt-1">Verifiable mainnet parameters. Filter registries using structural classification markers.</p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button onclick="filterContracts('all')" id="filter-all" class="px-3 py-1 border border-brightWhite text-brightWhite font-mono text-[10px] rounded transition-all">ALL</button>
+        <button onclick="filterContracts('token')" id="filter-token" class="px-3 py-1 border border-borderDim text-dimWhite font-mono text-[10px] rounded transition-all">TOKENS</button>
+        <button onclick="filterContracts('core')" id="filter-core" class="px-3 py-1 border border-borderDim text-dimWhite font-mono text-[10px] rounded transition-all">RESERVE_AMO</button>
+        <button onclick="filterContracts('gov')" id="filter-gov" class="px-3 py-1 border border-borderDim text-dimWhite font-mono text-[10px] rounded transition-all">GOVERNANCE</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="contracts-grid">
+      
+      <!-- Contract item -->
+      <div class="border border-borderDim bg-card p-5 rounded flex flex-col justify-between" data-category="core">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">RESERVE_AMO</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
+          </div>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">TreasuryAMO</h4>
+          <p class="text-xs text-mutedWhite font-light mb-4">Primary liquidity stabilizer deployed explicitly to control slipstream positions on L2 clusters.</p>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderDim pt-3">
+          <span class="font-mono text-[10px] text-dimWhite">0x5665...5188</span>
+          <button onclick="fallbackClipboardCopy('0x56653245f4718fe105b95C8424947B31b84b5188')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+            <span class="material-icons-outlined text-xs">content_copy</span> COPY
+          </button>
+        </div>
+      </div>
+
+      <!-- Contract item -->
+      <div class="border border-borderDim bg-card p-5 rounded flex flex-col justify-between" data-category="token">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">TOKEN</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
+          </div>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">Artifact Utility (Au)</h4>
+          <p class="text-xs text-mutedWhite font-light mb-4">EIP-2612 transfer-taxed ecosystem base transactional asset deployed with 9bps fee allocation rules.</p>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderDim pt-3">
+          <span class="font-mono text-[10px] text-dimWhite">0x0c5A...2f08</span>
+          <button onclick="fallbackClipboardCopy('0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+            <span class="material-icons-outlined text-xs">content_copy</span> COPY
+          </button>
+        </div>
+      </div>
+
+      <!-- Contract item -->
+      <div class="border border-borderDim bg-card p-5 rounded flex flex-col justify-between" data-category="token">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">TOKEN</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
+          </div>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">Artifact Governance (Ag)</h4>
+          <p class="text-xs text-mutedWhite font-light mb-4">Governance tracking component issued dynamically via mathematical TVL control offsets.</p>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderDim pt-3">
+          <span class="font-mono text-[10px] text-dimWhite">0x1D31...3674</span>
+          <button onclick="fallbackClipboardCopy('0x1D31719389Bd8b17277Ba367c26b830aE34D3674')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+            <span class="material-icons-outlined text-xs">content_copy</span> COPY
+          </button>
+        </div>
+      </div>
+
+      <!-- Contract item -->
+      <div class="border border-borderDim bg-card p-5 rounded flex flex-col justify-between" data-category="gov">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">GOVERNANCE</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
+          </div>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">GovernorContract</h4>
+          <p class="text-xs text-mutedWhite font-light mb-4">Core validation checkpoint executing voter validations, threshold queues, and state executions.</p>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderDim pt-3">
+          <span class="font-mono text-[10px] text-dimWhite">0x259c...6385</span>
+          <button onclick="fallbackClipboardCopy('0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+            <span class="material-icons-outlined text-xs">content_copy</span> COPY
+          </button>
+        </div>
+      </div>
+
+      <!-- Contract item -->
+      <div class="border border-borderDim bg-card p-5 rounded flex flex-col justify-between" data-category="gov">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">GOVERNANCE</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
+          </div>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">ArtifactTimelock</h4>
+          <p class="text-xs text-mutedWhite font-light mb-4">Secure multi-day structural protection gate holding transaction approvals prior to active state upgrades.</p>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderDim pt-3">
+          <span class="font-mono text-[10px] text-dimWhite">0x6623...4714</span>
+          <button onclick="fallbackClipboardCopy('0x662321CC63700865838aB08378061BE499344714')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+            <span class="material-icons-outlined text-xs">content_copy</span> COPY
+          </button>
+        </div>
+      </div>
+
+      <!-- Contract item -->
+      <div class="border border-borderDim bg-card p-5 rounded flex flex-col justify-between" data-category="core">
+        <div>
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">RESERVE_AMO</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
+          </div>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">AvOracle v5</h4>
+          <p class="text-xs text-mutedWhite font-light mb-4">Secure multi-source price tracking oracle running manipulation filters on historical trading clusters.</p>
+        </div>
+        <div class="flex items-center justify-between border-t border-borderDim pt-3">
+          <span class="font-mono text-[10px] text-dimWhite">0xb479...2bdB</span>
+          <button onclick="fallbackClipboardCopy('0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+            <span class="material-icons-outlined text-xs">content_copy</span> COPY
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- ═══ GOVERNANCE ═══ -->
-<section id="governance" class="section section-alt">
-  <div class="container">
-    <div class="sec-num">06</div>
-    <h2 class="sec-title">Governance</h2>
-    <p class="sec-lead">Ag holders propose and vote. GovernorContract routes through ArtifactTimelock before execution.</p>
-
-    <div class="gov-flow">
-      <div class="gf-step">
-        <div class="gf-num">1</div>
-        <h4>Propose</h4>
-        <p>Ag holder with ≥100K delegated submits proposal to GovernorContract.</p>
-      </div>
-      <div class="gf-arrow">→</div>
-      <div class="gf-step">
-        <div class="gf-num">2</div>
-        <h4>Vote</h4>
-        <p>3-day voting period. Quorum: 4% of total Ag supply.</p>
-      </div>
-      <div class="gf-arrow">→</div>
-      <div class="gf-step">
-        <div class="gf-num">3</div>
-        <h4>Queue</h4>
-        <p>Successful proposals enter ArtifactTimelock. 48h delay begins.</p>
-      </div>
-      <div class="gf-arrow">→</div>
-      <div class="gf-step">
-        <div class="gf-num">4</div>
-        <h4>Execute</h4>
-        <p>After timelock expires, anyone can trigger execution on-target contracts.</p>
-      </div>
+<!-- ═══ TECHNICAL TERMINAL REFERENCE GLOSSARY ═══ -->
+<section id="glossary-section" class="py-16 border-b border-borderDim bg-amoled">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    
+    <div class="sec-header mb-10">
+      <div class="font-mono text-xs text-dimWhite uppercase tracking-widest mb-1">[ MANUAL 05 ]</div>
+      <h2 class="text-3xl font-light tracking-tight text-brightWhite">Ecosystem Glossary Reference</h2>
+      <p class="text-xs text-mutedWhite font-light mt-1">Foundational terminology of the decentralized operational system matrix.</p>
     </div>
 
-    <div class="gov-params">
-      <div class="gp-row"><span>Governor</span><a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank" class="gp-addr">0x259c...6385</a></div>
-      <div class="gp-row"><span>Timelock</span><a href="https://basescan.org/address/0x662321CC63700865838aB08378061BE499344714" target="_blank" class="gp-addr">0x6623...4714</a></div>
-      <div class="gp-row"><span>Proposal Threshold</span><span>100,000 Ag delegated</span></div>
-      <div class="gp-row"><span>Voting Period</span><span>3 days (259,200 blocks)</span></div>
-      <div class="gp-row"><span>Quorum</span><span>4% of total Ag supply</span></div>
-      <div class="gp-row"><span>Timelock Delay</span><span>48 hours</span></div>
-      <div class="gp-row"><span>Voting Token</span><span>Artifact Governance (Ag)</span></div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 font-mono text-xs">
+      
+      <div class="border-l border-borderMid pl-4 space-y-1 py-1">
+        <h5 class="font-bold text-brightWhite">AMO (Autonomous Market Operations)</h5>
+        <p class="text-mutedWhite font-light text-[11px] leading-relaxed">Sovereign smart contracts deployed directly to execute trading actions and maintain asset balances with zero dependency on human execution.</p>
+      </div>
+
+      <div class="border-l border-borderMid pl-4 space-y-1 py-1">
+        <h5 class="font-bold text-brightWhite">Artifact Utility (Au)</h5>
+        <p class="text-mutedWhite font-light text-[11px] leading-relaxed">Ecosystem transactional reserve-backed token maintaining low-cost settlement properties with systematic transactional deflation rules.</p>
+      </div>
+
+      <div class="border-l border-borderMid pl-4 space-y-1 py-1">
+        <h5 class="font-bold text-brightWhite">Artifact Governance (Ag)</h5>
+        <p class="text-mutedWhite font-light text-[11px] leading-relaxed">Structural delegation ledger tokens giving voter weight across parameters and execution paths based directly on active deposits.</p>
+      </div>
+
+      <div class="border-l border-borderMid pl-4 space-y-1 py-1">
+        <h5 class="font-bold text-brightWhite">PID Controller Engine</h5>
+        <p class="text-mutedWhite font-light text-[11px] leading-relaxed">A mathematical algorithm tracking historical deviations between actual variables and targeted states, correcting drift continuously.</p>
+      </div>
+
+      <div class="border-l border-borderMid pl-4 space-y-1 py-1">
+        <h5 class="font-bold text-brightWhite">Total Value Locked (TVL)</h5>
+        <p class="text-mutedWhite font-light text-[11px] leading-relaxed">The physical capital weight active across structural deposit contracts, denoting platform backing strength and asset utilization thresholds.</p>
+      </div>
+
+      <div class="border-l border-borderMid pl-4 space-y-1 py-1">
+        <h5 class="font-bold text-brightWhite">Slipstream Concentrated Positions</h5>
+        <p class="text-mutedWhite font-light text-[11px] leading-relaxed">Targeted range-locked parameters for asset deposits in liquidity providers, ensuring optimization of systemic fee yields.</p>
+      </div>
+
     </div>
+
   </div>
 </section>
 
-<!-- ═══ CONTRACTS ═══ -->
-<section id="contracts" class="section">
-  <div class="container">
-    <div class="sec-num">07</div>
-    <h2 class="sec-title">Contracts</h2>
-    <p class="sec-lead">All deployed contracts on Base Mainnet. Click any address for Basescan.</p>
-
-    <div class="filter-bar">
-      <button class="filter-chip active" data-filter="all">All</button>
-      <button class="filter-chip" data-filter="token">Tokens</button>
-      <button class="filter-chip" data-filter="core">Core</button>
-      <button class="filter-chip" data-filter="policy">Policy</button>
-      <button class="filter-chip" data-filter="gov">Governance</button>
-      <button class="filter-chip" data-filter="mech">Mechanisms</button>
-    </div>
-
-    <div id="contracts-list" class="contracts-list"></div>
-  </div>
-</section>
-
-<!-- ═══ CALCULATOR ═══ -->
-<section id="calculator" class="section section-alt">
-  <div class="container">
-    <div class="sec-num">08</div>
-    <h2 class="sec-title">Emission Calculator</h2>
-    <p class="sec-lead">Simulate Ag emissions based on PID parameters and TVL inputs.</p>
-
-    <div class="calc-layout">
-      <div class="calc-inputs">
-        <div class="ci-group">
-          <label>Target TVL ($)</label>
-          <input type="number" id="ci-target" value="10000000" step="1000000">
-        </div>
-        <div class="ci-group">
-          <label>Current TVL ($)</label>
-          <input type="number" id="ci-current" value="5000000" step="100000">
-        </div>
-        <div class="ci-group">
-          <label>K<sub>p</sub> (Proportional)</label>
-          <input type="number" id="ci-kp" value="0.15" step="0.01" min="0" max="1">
-        </div>
-        <div class="ci-group">
-          <label>K<sub>i</sub> (Integral)</label>
-          <input type="number" id="ci-ki" value="0.00005" step="0.00001" min="0" max="0.01">
-        </div>
-        <div class="ci-group">
-          <label>Epoch Duration (seconds)</label>
-          <input type="number" id="ci-epoch" value="432000" step="86400">
-        </div>
+<!-- ═══ SYSTEM FOOTER MATRIX TERMINAL ═══ -->
+<footer class="bg-black py-12 border-t border-borderDim">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 text-xs text-mutedWhite">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8 font-mono">
+      <div>
+        <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">SYSTEM CONFIG</h5>
+        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank" class="block hover:text-brightWhite mb-1">0x1082...9F9e</a>
       </div>
-
-      <div class="calc-results">
-        <div class="cr-row"><span>TVL Gap</span><span id="co-gap" class="cr-val">$5,000,000</span></div>
-        <div class="cr-row"><span>P-Term Output</span><span id="co-pterm" class="cr-val">750,000</span></div>
-        <div class="cr-row"><span>Raw Emission</span><span id="co-emission" class="cr-val">750,000 Ag</span></div>
-        <div class="cr-row highlight"><span>Capped Emission</span><span id="co-capped" class="cr-val">50,000 Ag</span></div>
-        <div class="cr-row"><span>Est. APY</span><span id="co-apy" class="cr-val">—</span></div>
+      <div>
+        <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNOR CONTRACT</h5>
+        <a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank" class="block hover:text-brightWhite mb-1">0x259c...6385</a>
+      </div>
+      <div>
+        <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">UTILITY ENGINE</h5>
+        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="block hover:text-brightWhite mb-1">0x0c5A...2f08</a>
+      </div>
+      <div>
+        <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNANCE ENGINE</h5>
+        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="block hover:text-brightWhite mb-1">0x1D31...3674</a>
+      </div>
+      <div>
+        <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">TIMELOCK CONTROL</h5>
+        <a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank" class="block hover:text-brightWhite mb-1">0x9911...7f70</a>
       </div>
     </div>
-
-    <div class="calc-chart-wrap">
-      <canvas id="calc-chart"></canvas>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ GLOSSARY ═══ -->
-<section id="glossary" class="section">
-  <div class="container">
-    <div class="sec-num">09</div>
-    <h2 class="sec-title">Glossary</h2>
-
-    <div class="glossary-grid">
-      <div class="gl-item">
-        <div class="gl-term">AMO</div>
-        <div class="gl-def">Autonomous Market Operations. Protocol-controlled liquidity management without human intervention.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Artifact Utility (Au)</div>
-        <div class="gl-def">Reserve-backed ERC-20 token with 9bps transfer tax. Medium of exchange in the AV ecosystem.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-def">Governance ERC-20 token. PID-minted, 100M cap. Grants voting rights in GovernorContract.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Artifact Governance (Ag)</div>
-        <div class="gl-def">Governance ERC-20 token. PID-minted, 100M cap. Grants voting rights in GovernorContract.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">PID Controller</div>
-        <div class="gl-def">Proportional-Integral-Derivative. Control system that computes Ag emissions based on TVL gap from target.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">TVL</div>
-        <div class="gl-def">Total Value Locked. The aggregate value of all assets deposited in protocol contracts.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Epoch</div>
-        <div class="gl-def">Fixed time window (5 days) over which PID emissions are computed and distributed.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">TWAP</div>
-        <div class="gl-def">Time-Weighted Average Price. Oracle manipulation resistance mechanism used by AvOracle v5.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Slipstream</div>
-        <div class="gl-def">Base-native concentrated liquidity AMM. TreasuryAMO uses it for reserve management.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">RSBT</div>
-        <div class="gl-def">Soulbound Receipt Token. Non-transferable ERC-721 representing a staked position.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">FlashBuy</div>
-        <div class="gl-def">Buyback mechanism. Purchases Au from market when price falls below oracle, using protocol reserves.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Timelock</div>
-        <div class="gl-def">48-hour delay between proposal approval and execution. Ensures transparency and exit rights.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Quorum</div>
-        <div class="gl-def">Minimum participation threshold. 4% of total Ag supply must vote for a proposal to pass.</div>
-      </div>
-      <div class="gl-item">
-        <div class="gl-term">Reserve Ratio</div>
-        <div class="gl-def">Minimum 60% of Au supply must be backed by protocol reserves at all times.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ FOOTER ═══ -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-col">
-        <div class="footer-label">Treasury</div>
-        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank">0x1082...9F9e</a>
-      </div>
-      <div class="footer-col">
-        <div class="footer-label">Governor</div>
-        <a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank">0x259c...6385</a>
-      </div>
-      <div class="footer-col">
-        <div class="footer-label">Artifact Utility (Au)</div>
-        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank">0x0c5A...2f08</a>
-      </div>
-      <div class="footer-col">
-        <div class="footer-label">Artifact Governance (Ag)</div>
-        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank">0x1D31...3674</a>
-      </div>
-      <div class="footer-col">
-        <div class="footer-label">PID Controller</div>
-        <a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank">0x9911...7f70</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>AV Treasury v3.2 — Base Mainnet</span>
-      <span>All contracts verified on Basescan</span>
+    
+    <div class="border-t border-borderDim pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-mono">
+      <span>THE ARC COGNITIVE OPERATING REGISTRY © 2026 // BASE L2</span>
+      <span class="text-dimWhite">COMPILE_STATE: SECURE STATIC CONVERGENCE DEPLOYED</span>
     </div>
   </div>
 </footer>
 
-<script src="app.js"></script>
+<!-- Dynamic Popup Message Widget (Alternative to alerts) -->
+<div id="status-toast" class="fixed bottom-4 right-4 bg-brightWhite text-amoled font-mono text-xs px-4 py-3 rounded shadow-lg translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50 flex items-center gap-2">
+  <span id="toast-icon" class="material-icons-outlined text-sm">info</span>
+  <span id="toast-text">Success Message</span>
+</div>
+
+<script>
+  
+  // Real-Time System Variables
+  let targetTVL = 10000000;
+  let currentTVL = 4000000;
+  let Kp = 0.15;
+  let Ki = 0.0005;
+  let Kd = 0.02;
+  let simulatedNoise = 0.02;
+
+  // Clock Update Function
+  function updateTerminalClock() {
+    const clockEl = document.getElementById('terminal-clock');
+    if (clockEl) {
+      const now = new Date();
+      clockEl.innerText = `BLOCK: ${Math.floor(Date.now() / 2000)} // BASE_TIME: ${now.toISOString().replace('T', ' ').substring(0, 19)}`;
+    }
+  }
+  setInterval(updateTerminalClock, 1000);
+
+  // Dynamic Base Gas Price Simulator
+  setInterval(() => {
+    const navGas = document.getElementById('nav-gas');
+    if (navGas) {
+      const value = (1.0 + Math.random() * 0.5).toFixed(2);
+      navGas.innerText = `${value} Gwei`;
+    }
+  }, 3000);
+
+  // System Diagnostics Dynamic Terminal Logger (including new AV Treasury diagnostics)
+  const diagnosticLogs = {
+    attestation: [
+      "&gt; INITIALIZING AI ATTESTATION DIAGNOSTIC MATRIX...",
+      "&gt; Loading zk-SNARK proof registries for model weight verifications...",
+      "&gt; Attesting Agent-304 operational logs...",
+      "&gt; Verified: Model inferences match local cryptographic hashes.",
+      "&gt; All agent state attestations reporting SUCCESS. Security layer clear."
+    ],
+    defi: [
+      "&gt; ATTEMPTING BASE ASSET RESERVE INFLOW SCAN...",
+      "&gt; Reserve balances tracked: $16,402,192 collateral deposits.",
+      "&gt; Checking collateral-to-Au backing ratio: 164.02% (Requirement met: &ge; 60%).",
+      "&gt; Systemic yields reporting: +4.82% APR generated via active slipstream positions.",
+      "&gt; Storage logs secure. No deviance detected."
+    ],
+    governance: [
+      "&gt; CHECKING ACTIVE GOVERNOR CONTRACT STACKS...",
+      "&gt; Verifying delegation matrices: 12,401,984 active voting weights.",
+      "&gt; Timelock verification: 48h active freeze confirmed.",
+      "&gt; Next pipeline execution validation queue: OK.",
+      "&gt; Governance layers operating in NOMINAL state."
+    ],
+    exchange: [
+      "&gt; BOOTING SLIPSTREAM EXCHANGE TELEMETRY...",
+      "&gt; Fetching concentration range logs... 99% depth contained within active ticks.",
+      "&gt; Trade volume loop tracking... Normal arbitrage pathing running.",
+      "&gt; Verified: Mint/redeem operations maintain zero pricing slippage.",
+      "&gt; Automatic market makers active. Capital loops locked."
+    ],
+    treasury: [
+      "&gt; CONNECTING TO AV TREASURY DECENTRALIZED RESERVE MATRIX...",
+      "&gt; Syncing on-chain liquidity buffers... Active TVL target tracking initialized.",
+      "&gt; Loading collateral reserves: 100% verified asset backing ratio intact.",
+      "&gt; Calculated emissions rate: Running on PID closed-loop feedback parameters.",
+      "&gt; Equilibrium verified: AV Treasury operations matching target TVL bounds."
+    ]
+  };
+
+  function diagnosticBoot(system) {
+    // Visually toggle active states
+    const nodeIds = ['node-attestation', 'node-defi', 'node-governance', 'node-exchange', 'node-treasury'];
+    nodeIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active-subsys');
+    });
+    
+    const activeEl = document.getElementById(`node-${system}`);
+    if (activeEl) activeEl.classList.add('active-subsys');
+
+    const terminalBody = document.getElementById('terminal-body');
+    if (terminalBody) {
+      terminalBody.innerHTML = "";
+      
+      let logs = diagnosticLogs[system];
+      let i = 0;
+      
+      function printNextLog() {
+        if (i < logs.length) {
+          const line = document.createElement('div');
+          line.innerHTML = logs[i];
+          if (logs[i].includes('Verifying') || logs[i].includes('Verified:') || logs[i].includes('equilibrium') || logs[i].includes('verified:')) {
+            line.className = 'text-cyberGreen';
+          } else if (logs[i].includes('INITIALIZING') || logs[i].includes('BOOTING') || logs[i].includes('ATTEMPTING') || logs[i].includes('CONNECTING')) {
+            line.className = 'text-brightWhite font-bold';
+          } else {
+            line.className = 'text-mutedWhite';
+          }
+          terminalBody.appendChild(line);
+          i++;
+          setTimeout(printNextLog, 450);
+        }
+      }
+      printNextLog();
+    }
+  }
+
+  const canvas = document.getElementById('pid-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    const parent = canvas.parentElement;
+    canvas.width = parent.clientWidth * window.devicePixelRatio;
+    canvas.height = parent.clientHeight * window.devicePixelRatio;
+    canvas.style.width = parent.clientWidth + 'px';
+    canvas.style.height = parent.clientHeight + 'px';
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    runSimulationAndRender();
+  }
+
+  // Pure mathematical simulation of the closed-loop controller
+  function runSimulationAndRender() {
+    if (!canvas.width || !canvas.height) return;
+
+    const w = canvas.width / window.devicePixelRatio;
+    const h = canvas.height / window.devicePixelRatio;
+
+    // Clear background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, w, h);
+
+    // Draw Coordinate Grid Lines
+    ctx.strokeStyle = '#141414';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += w / 8) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y < h; y += h / 6) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    // Mathematical loop configurations
+    let simulatedTVL = currentTVL;
+    let integralValue = 0;
+    let prevError = 0;
+    
+    const maxVal = 20000000; // max Y coordinate value of $20M
+    
+    const targetY = h - (targetTVL / maxVal) * h;
+    
+    // Draw Target TVL dotted coordinate line
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, targetY);
+    ctx.lineTo(w, targetY);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset dashed lines
+
+    // Draw target marker tag
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '10px monospace';
+    ctx.fillText('TARGET', 10, targetY - 6);
+
+    // Coordinate Plot Path setup
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#00FF66'; // Convergence curve
+
+    const points = [];
+    const steps = 40; // Simulated epochs plotted across the horizontal width
+    const stepWidth = w / steps;
+
+    // Simulation Execution Loop
+    for (let i = 0; i <= steps; i++) {
+      let error = targetTVL - simulatedTVL;
+      integralValue += error;
+      let derivative = error - prevError;
+      prevError = error;
+
+      // Closed-loop PID formulation
+      let emission = (Kp * error) + (Ki * integralValue) + (Kd * derivative);
+      
+      // Clamp simulated emissions to normal operational ranges
+      emission = Math.max(-1000000, Math.min(1000000, emission));
+
+      // Update TVL base dynamically incorporating emissions loop
+      simulatedTVL += emission;
+
+      // Add noise representing simulated market variance
+      if (simulatedNoise > 0) {
+        simulatedTVL += (Math.random() - 0.5) * targetTVL * simulatedNoise;
+      }
+
+      // Convert variables directly into canvas pixel locations
+      let xCoord = i * stepWidth;
+      let yCoord = h - (simulatedTVL / maxVal) * h;
+      
+      // Keep plot values contained inside coordinates bounds
+      yCoord = Math.max(2, Math.min(h - 2, yCoord));
+
+      points.push({ x: xCoord, y: yCoord, tvl: simulatedTVL, pTerm: Kp * error, emission: emission });
+    }
+
+    // Draw convergence path onto canvas context
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+
+    // Plot real-time telemetries for the active viewport outputs
+    const firstPoint = points[0];
+    const initialGap = targetTVL - currentTVL;
+    
+    document.getElementById('out-gap').innerText = (initialGap >= 0 ? '' : '+') + '$' + (-initialGap).toLocaleString();
+    document.getElementById('out-pterm').innerText = Math.floor(Math.abs(firstPoint.pTerm)).toLocaleString() + ' Ag';
+    document.getElementById('out-emission').innerText = Math.floor(Math.abs(firstPoint.emission)).toLocaleString() + ' Ag';
+    
+    const marginEl = document.getElementById('out-status');
+    const difference = Math.abs(points[points.length - 1].tvl - targetTVL);
+    if (difference < targetTVL * 0.05) {
+      marginEl.innerText = 'STABLE';
+      marginEl.className = 'text-cyberGreen text-sm font-semibold';
+    } else {
+      marginEl.innerText = 'CONVERGING';
+      marginEl.className = 'text-brightWhite text-sm font-semibold';
+    }
+  }
+
+  // Set up event listeners to capture mathematical slider parameter moves
+  document.getElementById('sim-target').addEventListener('input', (e) => {
+    targetTVL = parseFloat(e.target.value);
+    document.getElementById('lbl-target').innerText = '$' + targetTVL.toLocaleString();
+    runSimulationAndRender();
+  });
+
+  document.getElementById('sim-start').addEventListener('input', (e) => {
+    currentTVL = parseFloat(e.target.value);
+    document.getElementById('lbl-start').innerText = '$' + currentTVL.toLocaleString();
+    runSimulationAndRender();
+  });
+
+  document.getElementById('sim-kp').addEventListener('input', (e) => {
+    Kp = parseFloat(e.target.value) || 0;
+    runSimulationAndRender();
+  });
+
+  document.getElementById('sim-ki').addEventListener('input', (e) => {
+    Ki = parseFloat(e.target.value) || 0;
+    runSimulationAndRender();
+  });
+
+  document.getElementById('sim-kd').addEventListener('input', (e) => {
+    Kd = parseFloat(e.target.value) || 0;
+    runSimulationAndRender();
+  });
+
+  document.getElementById('sim-noise').addEventListener('change', (e) => {
+    simulatedNoise = parseFloat(e.target.value);
+    const noiseLabels = { '0': 'NONE', '0.02': 'LOW', '0.08': 'HIGH' };
+    document.getElementById('lbl-noise').innerText = noiseLabels[e.target.value];
+    runSimulationAndRender();
+  });
+
+
+  // Interactive Governance Logic Loop
+  let govTimer = null;
+  
+  function launchGovProposal(shouldPass) {
+    // Clear existing transitions
+    if (govTimer) clearInterval(govTimer);
+
+    const desc = document.getElementById('sim-proposal-desc');
+    const qText = document.getElementById('gov-quorum-text');
+    const tText = document.getElementById('gov-timer-text');
+    
+    // Clear stage step highlighted boundaries
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById(`gov-step-${i}`).className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+    }
+
+    if (shouldPass) {
+      desc.innerText = "SIMULATOR: Adjust Proportional Scalar (Kp) Parameter to 0.18";
+      showToast("Proposal Submitted to Base Governor Ledger Stack");
+      
+      // Visual Step 01 Highlight
+      document.getElementById('gov-step-1').className = 'border border-white bg-card p-5 rounded relative transition-all';
+      
+      let step = 0;
+      govTimer = setInterval(() => {
+        step++;
+        if (step === 1) {
+          // Progress to step 2 (Voting & Quorum)
+          document.getElementById('gov-step-1').className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+          document.getElementById('gov-step-2').className = 'border border-white bg-card p-5 rounded relative transition-all';
+          qText.innerText = "Current: 4.8% / 4.0% (PASSED)";
+          showToast("Governance Quorum successfully established");
+        } 
+        else if (step === 2) {
+          // Progress to step 3 (Timelock execution queuing)
+          document.getElementById('gov-step-2').className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+          document.getElementById('gov-step-3').className = 'border border-white bg-card p-5 rounded relative transition-all';
+          document.getElementById('gov-queue-pulse').classList.remove('hidden');
+          showToast("Proposal Entered into 48-Hour Execution Registry");
+          
+          let remaining = 48;
+          tText.innerText = `UNLOCKS IN: ${remaining}h`;
+        } 
+        else if (step === 3) {
+          // Progress to step 4 (Execution run completed)
+          document.getElementById('gov-step-3').className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+          document.getElementById('gov-step-4').className = 'border border-white bg-card p-5 rounded relative transition-all animate-pulse';
+          document.getElementById('gov-queue-pulse').classList.add('hidden');
+          
+          // Modify active live simulations state parameters directly to reflect change
+          document.getElementById('sim-kp').value = 0.18;
+          Kp = 0.18;
+          runSimulationAndRender();
+          
+          showToast("Proposal Executed! Core System Kp updated to 0.18");
+        } 
+        else if (step === 4) {
+          document.getElementById('gov-step-4').className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+          desc.innerText = "Execution Complete: Kp scalar successfully locked to 0.18";
+          clearInterval(govTimer);
+        }
+      }, 3500);
+
+    } else {
+      desc.innerText = "SIMULATOR: Adjust Collateral Reserve Ratio Boundary down to 50%";
+      showToast("Proposal Submitted under structural address 0x904a...");
+      document.getElementById('gov-step-1').className = 'border border-white bg-card p-5 rounded relative transition-all';
+      
+      let step = 0;
+      govTimer = setInterval(() => {
+        step++;
+        if (step === 1) {
+          document.getElementById('gov-step-1').className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+          document.getElementById('gov-step-2').className = 'border border-cyberRed bg-card p-5 rounded relative transition-all';
+          qText.innerText = "Current: 1.2% / 4.0% (REJECTED)";
+          showToast("Error: Capital quorum failed execution limits", true);
+        } else if (step === 2) {
+          document.getElementById('gov-step-2').className = 'border border-borderDim bg-card p-5 rounded relative transition-all';
+          desc.innerText = "Proposal Failed: Quorum was not established during validation period.";
+          clearInterval(govTimer);
+        }
+      }, 3000);
+    }
+  }
+
+
+  // On-Chain Address Fallback Copy Mechanics (iframe friendly)
+  function fallbackClipboardCopy(text) {
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.value = text;
+    document.body.appendChild(tempTextArea);
+    tempTextArea.select();
+    try {
+      document.execCommand('copy');
+      showToast("Address copied securely to clipboard.");
+    } catch (err) {
+      console.warn("Unable to copy text directly to clipboard fallback", err);
+    }
+    document.body.removeChild(tempTextArea);
+  }
+
+  // Toast notification execution widget
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('status-toast');
+    const text = document.getElementById('toast-text');
+    const icon = document.getElementById('toast-icon');
+
+    text.innerText = message;
+    if (isError) {
+      toast.className = "fixed bottom-4 right-4 bg-cyberRed text-brightWhite font-mono text-xs px-4 py-3 rounded shadow-lg translate-y-0 opacity-100 transition-all duration-300 z-50 flex items-center gap-2";
+      icon.innerText = "error_outline";
+    } else {
+      toast.className = "fixed bottom-4 right-4 bg-brightWhite text-amoled font-mono text-xs px-4 py-3 rounded shadow-lg translate-y-0 opacity-100 transition-all duration-300 z-50 flex items-center gap-2";
+      icon.innerText = "check_circle_outline";
+    }
+
+    setTimeout(() => {
+      toast.className = "fixed bottom-4 right-4 bg-brightWhite text-amoled font-mono text-xs px-4 py-3 rounded shadow-lg translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50 flex items-center gap-2";
+    }, 4000);
+  }
+
+  // Registry categorization filters logic
+  function filterContracts(category) {
+    const buttons = ['all', 'token', 'core', 'gov'];
+    buttons.forEach(btn => {
+      const el = document.getElementById(`filter-${btn}`);
+      if (btn === category) {
+        el.className = 'px-3 py-1 border border-brightWhite text-brightWhite font-mono text-[10px] rounded transition-all';
+      } else {
+        el.className = 'px-3 py-1 border border-borderDim text-dimWhite font-mono text-[10px] rounded transition-all';
+      }
+    });
+
+    const items = document.querySelectorAll('#contracts-grid > div');
+    items.forEach(item => {
+      if (category === 'all' || item.getAttribute('data-category') === category) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  // Startup lifecycle events
+  window.onload = function() {
+    resizeCanvas();
+    diagnosticBoot('attestation');
+  };
+
+  // Listen to viewport changes to dynamically correct layout widths
+  window.onresize = function() {
+    resizeCanvas();
+  };
+</script>
+
 </body>
 </html>

@@ -1,5 +1,5 @@
 {
-  "_comment": "AV Treasury v3.2 \u2014 Current deployed addresses on Base Mainnet. Source of truth is address.book",
+  "_comment": "AV Treasury v3.2 — Current deployed addresses on Base Mainnet. Source of truth is address.book",
   "OnChainBase64": "0x44D47F74728E3e7F8661bcC49524D9702778295C",
   "QuasiCrystalSVG": "0xe23F177d09C1C5388104f0369aE91Cc4eA34E528",
   "AgToken": {
@@ -12,18 +12,34 @@
     "impl": "0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61",
     "verified": true
   },
-  "GovernorContract": "0x5F061c177b76753686122185989C2332C1d0e8b1",
-  "ArtifactTimelock": "0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be",
-  "TreasuryAMO": "0xF096cD4D24811B0F824c929907196bCB796bca88",
+  "GovernorContract": {
+    "proxy": "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385",
+    "impl": "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385",
+    "verified": true
+  },
+  "ArtifactTimelock": {
+    "proxy": "0x662321CC63700865838aB08378061BE499344714",
+    "impl": "0x662321CC63700865838aB08378061BE499344714",
+    "verified": true
+  },
+  "TreasuryAMO": {
+    "proxy": "0x56653245f4718fe105b95C8424947B31b84b5188",
+    "impl": "0x56653245f4718fe105b95C8424947B31b84b5188",
+    "verified": true
+  },
   "QuasiCrystalLPNFT": {
     "proxy": "0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8",
     "impl": "0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8",
     "verified": true
   },
-  "AVLPStaking_v2": "0x8F638B6C2EBD61A638561B6993930CF25D53ACB9",
+  "AVLPStaking_v2": {
+    "proxy": "0xD96D502B20474308521958573E3Fa68DbB041685",
+    "impl": "0xE699960b6e81d00A42F8580004C8FBD72902806A",
+    "verified": true
+  },
   "PID_Emission_Controller_v2": {
-    "proxy": "0xB8F240870DBc1cD5F9262F8180350A29ea404268",
-    "impl": "0xB8F240870DBc1cD5F9262F8180350A29ea404268",
+    "proxy": "0x991138923880773D67c01392c31A255e770F7f70",
+    "impl": "0x991138923880773D67c01392c31A255e770F7f70",
     "verified": true
   },
   "FlashLoan": {

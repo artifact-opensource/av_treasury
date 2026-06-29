@@ -152,7 +152,19 @@ related: [central-banking/INDEX.md, whitepaper/whitepaper.md, ADDRESS_BOOK.md]
 
 ## Document Stats
 
-- **Total documents:** 36
-- **Categories:** 6 (Foundational, User, Architecture, Central Banking, Whitepaper, Reports)
-- **Central Banking deep-dive:** 18 documents
+- **Total documents:** 40+
+- **Categories:** 9 (Foundational, User, Architecture, Central Banking, Whitepaper, Reports, Simulation, Sandbox, Research)
+- **Central Banking deep-dive:** 18 documents + INDEX
+- **All documents have YAML front matter** (title, date, status, description, category, related)
 - **Contract addresses:** See [ADDRESS_BOOK.md](ADDRESS_BOOK.md)
+
+## Verification Status
+
+| Check | Status |
+|-------|--------|
+| All `.md` files have front matter | ✅ |
+| All central-banking/ docs cross-referenced | ✅ |
+| All contract addresses match address.book | ✅ |
+| Formal verification (invariants) | 41/42 pass |
+| Simulator runs (36–120+ months) | ✅ |
+| RSBT → QuasiCrystal rename complete | ✅ |

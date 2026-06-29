@@ -6,26 +6,34 @@ import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import "@openzeppelin/contracts/governance/TimelockController.sol";
 
 /**
  * @title ArtifactGovernor — GovernorContract
  * @notice OpenZeppelin Governor v5 for AV Treasury v3 DAO.
  * @dev Inherits Governor, GovernorSettings, GovernorCountingSimple,
- *      GovernorVotes, GovernorVotesQuorumFraction.
+ *      GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl.
  *      Stores proposal descriptions and emits detailed creation events.
- *      Executor is set via the _executor() override (timelock address).
+ *      All proposal execution is routed through the timelock (48h delay).
  *
  * @author Artifact Virtual DAO
+ *
+ * @custom:security-fix 2026-06-29 — Added GovernorTimelockControl to enforce
+ *         timelock delay on all governance actions. Previously _executeOperations
+ *         called targets directly, bypassing the timelock entirely.
  *
  * @custom:compiler-version 0.8.26
  * @custom:optimizer-runs 200
  * @custom:evm-version cancun
  */
 contract GovernorContract is
+    Governor,
     GovernorSettings,
     GovernorCountingSimple,
     GovernorVotes,
-    GovernorVotesQuorumFraction
+    GovernorVotesQuorumFraction,
+    GovernorTimelockControl
 {
     // ─── Constants ────────────────────────────────────────────────────
 
@@ -49,9 +57,6 @@ contract GovernorContract is
     /// @notice Mapping from proposal ID to its description string.
     mapping(uint256 => string) public proposalDescriptions;
 
-    /// @notice Executor address for proposals (the timelock).
-    address public executorAddress;
-
     // ─── Events ───────────────────────────────────────────────────────
 
     /// @notice Emitted when a proposal is created with full detail.
@@ -72,11 +77,11 @@ contract GovernorContract is
     /**
      * @notice Deploys the governor contract.
      * @param _token The IVotes-compatible governance token (AgToken).
-     * @param executorParam The timelock or executor address.
+     * @param _timelock The TimelockController that enforces the delay.
      */
     constructor(
         IVotes _token,
-        address executorParam
+        TimelockController _timelock
     )
         Governor("ArtifactGovernor")
         GovernorSettings(
@@ -86,8 +91,8 @@ contract GovernorContract is
         )
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(INITIAL_QUORUM_BPS)
+        GovernorTimelockControl(_timelock)
     {
-        executorAddress = executorParam;
     }
 
     // ─── View Overrides ───────────────────────────────────────────────
@@ -126,11 +131,6 @@ contract GovernorContract is
         return super.proposalThreshold();
     }
 
-    /// @notice Returns the address that executes proposals.
-    function _executor() internal view override returns (address) {
-        return executorAddress;
-    }
-
     // ─── Proposal Lifecycle Overrides ─────────────────────────────────
 
     /**
@@ -140,7 +140,7 @@ contract GovernorContract is
     function state(uint256 proposalId)
         public
         view
-        override(Governor)
+        override(Governor, GovernorTimelockControl)
         returns (ProposalState)
     {
         return super.state(proposalId);
@@ -198,31 +198,35 @@ contract GovernorContract is
         bytes32 descriptionHash
     )
         internal
-        override(Governor)
+        override(Governor, GovernorTimelockControl)
         returns (uint256)
     {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
     /**
-     * @notice Queue proposal operations. Returns 0 (no queuing needed without timelock).
+     * @notice Queue proposal operations in the timelock.
+     * @dev GovernorTimelockControl handles scheduling each operation
+     *      with the timelock's minimum delay (48h).
      */
     function _queueOperations(
-        uint256,
-        address[] memory,
-        uint256[] memory,
-        bytes[] memory,
-        bytes32
+        uint256 proposalId,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
     )
         internal
-        override(Governor)
-        returns (uint48)
+        override(Governor, GovernorTimelockControl)
+        returns (bytes32)
     {
-        return 0;
+        return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
     /**
-     * @notice Execute proposal operations immediately.
+     * @notice Execute proposal operations through the timelock.
+     * @dev GovernorTimelockControl routes all calls through the timelock,
+     *      enforcing the 48h delay before execution.
      */
     function _executeOperations(
         uint256 proposalId,
@@ -232,19 +236,19 @@ contract GovernorContract is
         bytes32 descriptionHash
     )
         internal
-        override(Governor)
+        override(Governor, GovernorTimelockControl)
     {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
 
     /// @notice Whether a proposal needs to be queued.
-    function proposalNeedsQueuing(uint256)
+    function proposalNeedsQueuing(uint256 proposalId)
         public
         view
-        override(Governor)
+        override(Governor, GovernorTimelockControl)
         returns (bool)
     {
-        return super.proposalNeedsQueuing(0);
+        return super.proposalNeedsQueuing(proposalId);
     }
 
     /**
@@ -255,7 +259,7 @@ contract GovernorContract is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(Governor)
+        override(Governor, GovernorTimelockControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

@@ -43,8 +43,15 @@ last_updated: 2026-06-29
 
 | Contract | Address | Type |
 |----------|---------|------|
-| Governor | `0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385` | Non-upgradeable |
-| Timelock | `0x662321CC63700865838aB08378061BE499344714` | Non-upgradeable |
+| Governor v5 | `0x1Dc51EccAeA0c9fb41Bc42d6e452D2c27225f0a9` | Non-upgradeable |
+| Timelock | `0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be` | Non-upgradeable |
+
+### Deprecated Governance
+
+| Contract | Address | Status | Replacement |
+|----------|---------|--------|-------------|
+| Governor (old) | `0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385` | Deprecated | Governor v5 |
+| Timelock (old) | `0x662321CC63700865838aB08378061BE499344714` | Deprecated | Timelock (new) |
 
 ## Liquidity
 
@@ -53,6 +60,12 @@ last_updated: 2026-06-29
 | QuasiCrystalLPNFT | `0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8` | ERC-721 |
 | AVLPStaking v2 (Proxy) | `0xD96D502B20474308521958573E3Fa68DbB041685` | UUPS Proxy |
 | AVLPStaking v2 (Implementation) | `0xE699960b6e81d00A42F8580004C8FBD72902806A` | Implementation |
+
+## Keeper Bot
+
+| Wallet | Address | Network | Role |
+|--------|---------|---------|------|
+| Keeper Hot Wallet | `0xc63B7A10BB926B3b25EcB51887945CaeB6927555` | Base | Emission/Buyback/Oracle automation |
 
 ## External
 

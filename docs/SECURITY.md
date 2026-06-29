@@ -140,7 +140,22 @@ Any queued governance action can be cancelled by:
 | OracleWrapper | Timelock | ADMIN_ROLE | No |
 | FlashBuy | Timelock | — | Yes |
 
-## 6. Known Risks and Limitations
+## 6. Security Fixes
+
+### Governor Timelock Bypass (Fixed 2026-06-29)
+
+**Severity:** Critical  
+**Status:** Fixed in commit `04e6232`
+
+**Problem:** `GovernorContract._executeOperations()` called target contracts directly, completely bypassing the 48h timelock delay. Any passed proposal executed instantly.
+
+**Fix:** Added `GovernorTimelockControl` inheritance. Now:
+- `_queueOperations()` → `timelock.scheduleBatch()` with 48h delay
+- `_executeOperations()` → `timelock.executeBatch()` (only after delay expires)
+
+**New flow:** Propose → Vote → Queue → **48h delay** → Execute
+
+## 7. Known Risks and Limitations
 
 | Risk | Severity | Likelihood | Status |
 |------|----------|-----------|--------|

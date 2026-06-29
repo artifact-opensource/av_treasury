@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Any, Optional
 
 from .logger import get_logger
-from .config import Settings
+from .settings import Settings
 
 log = get_logger("governor")
 

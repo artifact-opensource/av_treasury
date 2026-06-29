@@ -67,6 +67,36 @@ GAS_PRICE_MULTIPLIER = 1.1         # 10% over base gas for priority
 MAX_GAS_PRICE_GWEI = 0.5           # Base L2 gas cap
 TX_CONFIRMATION_BLOCKS = 1         # Wait for 1 confirmation on L2
 
+# ─── Derived: Keeper Address ────────────────────────────────────────────────
+try:
+    from eth_account import Account as _Acct
+    KEEPER_ADDRESS = _Acct.from_key(KEEPER_PRIVATE_KEY).address if KEEPER_PRIVATE_KEY else ""
+except ImportError:
+    KEEPER_ADDRESS = ""
+
+# ─── God Mode Parameters ────────────────────────────────────────────────────
+# Buyback strategy
+BUYBACK_DAILY_CAP = float(os.environ.get("BUYBACK_DAILY_CAP", "5000"))  # $5k/day default
+BUYBACK_MIN_AMOUNT = float(os.environ.get("BUYBACK_MIN_AMOUNT", "50"))  # $50 minimum
+BUYBACK_COOLDOWN = int(os.environ.get("BUYBACK_COOLDOWN", "300"))       # 5min cooldown
+BUYBACK_SLIPPAGE_BPS = int(os.environ.get("BUYBACK_SLIPPAGE_BPS", "50"))  # 0.5% default
+
+# MEV Protection
+FLASHBOTS_SIGNING_KEY = os.environ.get("FLASHBOTS_SIGNING_KEY", "") or None
+
+# DEX Pool addresses for monitoring (extend as needed)
+POOL_ADDRESSES = [
+    os.environ.get("AG_USDC_POOL", ""),
+    os.environ.get("AG_ETH_POOL", ""),
+]
+POOL_ADDRESSES = [a for a in POOL_ADDRESSES if a]
+
+# Warden sensitivity (0.0 = chill, 1.0 = paranoid)
+WARDEN_SENSITIVITY = float(os.environ.get("WARDEN_SENSITIVITY", "0.5"))
+
+# Strategy
+STRATEGY_AGGRESSION = os.environ.get("STRATEGY_AGGRESSION", "balanced")  # conservative|balanced|aggressive
+
 # ─── Logging ────────────────────────────────────────────────────────────────
 LOG_DIR = Path(__file__).parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
@@ -218,3 +248,66 @@ AG_ABI = [
         "type": "function",
     },
 ]
+
+
+# ─── Settings Wrapper ──────────────────────────────────────────────────────
+# Provides a clean object interface for all keeper subsystems.
+
+class Settings:
+    """Centralized settings object consumed by all keeper modules."""
+
+    def __init__(self) -> None:
+        # Chain
+        self.rpc_url = RPC_URL
+        self.chain_id = CHAIN_ID
+
+        # Keys
+        self.keeper_private_key = KEEPER_PRIVATE_KEY
+        self.keeper_address = KEEPER_ADDRESS
+
+        # Contracts
+        self.ag_address = CONTRACTS["ag"]
+        self.au_address = CONTRACTS["au"]
+        self.treasury_amo_address = CONTRACTS["treasury_amo"]
+        self.governor_address = CONTRACTS["governor"]
+        self.timelock_address = CONTRACTS["timelock"]
+
+        # Buyback parameters
+        self.peg_price = 1.0
+        self.peg_threshold = NAV_DEVIATION_THRESHOLD
+        self.daily_buy_cap_usd = BUYBACK_DAILY_CAP
+        self.monthly_buy_cap_usd = BUYBACK_DAILY_CAP * 30
+        self.max_buy_usd = BUYBACK_DAILY_CAP * 0.25  # 25% of daily per tx
+        self.min_buy_usd = BUYBACK_MIN_AMOUNT
+        self.slippage_tolerance = BUYBACK_SLIPPAGE_BPS
+        self.cooldown_blocks = BUYBACK_COOLDOWN // 12  # Convert secs→blocks
+        self.min_ag_output = 0.0
+
+        # Gas
+        self.max_gas_gwei = MAX_GAS_PRICE_GWEI
+
+        # Loop timing
+        self.tick_interval_seconds = EMISSION_CHECK_INTERVAL
+
+        # MEV
+        self.flashbots_signing_key = FLASHBOTS_SIGNING_KEY
+        self.pool_addresses = POOL_ADDRESSES
+
+        # Strategy
+        self.strategy_aggression = STRATEGY_AGGRESSION
+        self.warden_sensitivity = WARDEN_SENSITIVITY
+
+    def validate(self) -> list[str]:
+        """Validate settings, return list of errors."""
+        errors = []
+        if not self.keeper_private_key:
+            errors.append("KEEPER_PRIVATE_KEY not set")
+        if not self.rpc_url:
+            errors.append("RPC_URL not set")
+        if not self.ag_address:
+            errors.append("Ag contract address not set")
+        return errors
+
+
+# Singleton — import this from other modules
+settings = Settings()

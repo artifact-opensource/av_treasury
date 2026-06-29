@@ -109,6 +109,17 @@ class OracleKeeper:
             logger.error(f"Oracle update error: {e}")
             return None
 
+    def get_latest_data(self) -> dict:
+        """Return latest price data for Warden/Strategy consumption."""
+        data: dict = {"price": 0.0, "twap_price": 0.0, "timestamp": 0.0}
+        try:
+            price = self.oracle.functions.getAuPrice().call()
+            data["price"] = float(price) / 1e18
+            data["timestamp"] = time.time()
+        except Exception as e:
+            logger.debug(f"get_latest_data read failed: {e}")
+        return data
+
     async def run(self):
         """Main loop — update oracle periodically."""
         self.running = True

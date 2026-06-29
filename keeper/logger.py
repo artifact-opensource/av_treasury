@@ -36,6 +36,14 @@ def setup_logger(name: str = "keeper") -> logging.Logger:
     return logger
 
 
+def get_logger(name: str) -> logging.Logger:
+    """Get or create a logger instance. Alias for setup_logger with a module name."""
+    logger = logging.getLogger(f"keeper.{name}")
+    if not logger.handlers:
+        return setup_logger(f"keeper.{name}")
+    return logger
+
+
 # ─── Event Log (structured JSON for TUI consumption) ────────────────────────
 
 _event_log_file = LOG_DIR / "events.jsonl"

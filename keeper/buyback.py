@@ -53,6 +53,7 @@ class BuybackKeeper:
         self.last_buyback_tx: Optional[str] = None
         self.last_buyback_time: float = 0
         self.error_count: int = 0
+        self._warden_pause = False  # Warden pause gate
         self.total_buybacks_executed: int = 0
         self._tvl_24h_ago: Optional[int] = None
         self._last_tvl_check: float = 0
@@ -199,12 +200,23 @@ class BuybackKeeper:
         logger.info(f"Buyback keeper started (address={self.keeper_address})")
 
         while self.running:
+            # Warden pause gate — halt on threat
+            if self._warden_pause:
+                logger.warning("Buyback paused by Warden — threat detected")
+                await asyncio.sleep(30)
+                continue
+
             try:
                 self.execute_buyback()
             except Exception as e:
                 logger.error(f"Buyback loop error: {e}")
 
             await asyncio.sleep(BUYBACK_CHECK_INTERVAL)
+
+    def set_pause(self, paused: bool):
+        """Warden can pause/unpause buyback execution."""
+        self._warden_pause = paused
+        logger.info(f"Buyback pause set to {paused}")
 
     def stop(self):
         self.running = False

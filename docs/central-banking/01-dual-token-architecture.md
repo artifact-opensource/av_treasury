@@ -89,19 +89,16 @@ Ag is NOT mintable by any external party. The PID Controller is the sole minter.
 Emission rate is computed dynamically based on the gap between target TVL and
 actual TVL (see [02-monetary-policy-engine.md](02-monetary-policy-engine.md)).
 
-### 1.3.3 veAg — Time-Weighted Governance
+### 1.3.3 Voting Power
 
-Users can lock Ag to receive **veAg** (vested escrow Ag), which provides:
-- **Multiplied voting power** — longer locks = higher voting weight
-- **Proportional reward share** — veAg holders receive larger share of emissions
-- **Governance commitment** — signals long-term alignment
+Ag uses `ERC20VotesUpgradeable` for governance:
+- **1:1 voting power** — voting weight equals Ag balance at proposal checkpoint
+- **Checkpointed** — power is snapshotted at the block a proposal is created
+- **Delegatable** — holders can delegate voting power to other addresses without transferring tokens
+- **No lock, no multiplier** — voting power is not time-weighted
 
 ```
-veAg_weight = Ag_locked × (lock_duration / max_lock_duration)
-
-Where:
-  max_lock_duration = 4 years (1,461 days)
-  min_lock_duration = 1 week (7 days)
+voting_power = Ag_balance_at_checkpoint
 ```
 
 ## 1.4 Token Interaction Model

@@ -620,8 +620,9 @@ if __name__ == '__main__':
                         help='Skip chart generation (useful for very long runs)')
     args = parser.parse_args()
     
-    global SIMULATION_MONTHS
+    global SIMULATION_MONTHS, TOTAL_DAYS
     SIMULATION_MONTHS = min(args.months, 60000)
+    TOTAL_DAYS = SIMULATION_MONTHS * DAYS_PER_MONTH
     
     history = run_simulation()
     if not args.no_charts:

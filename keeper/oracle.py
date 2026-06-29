@@ -28,9 +28,14 @@ class OracleKeeper:
 
     def __init__(self):
         self.w3 = Web3(Web3.HTTPProvider(RPC_URL))
-        self.account = self.w3.eth.account.from_key(KEEPER_PRIVATE_KEY)
+        if KEEPER_PRIVATE_KEY:
+            self.account = self.w3.eth.account.from_key(KEEPER_PRIVATE_KEY)
+        else:
+            self.account = None
+        # Use AvOracle v5 (Quasicrystal) — has getAuAgPrices()
+        oracle_addr = CONTRACTS.get("quasicrystal") or CONTRACTS.get("oracle")
         self.oracle = self.w3.eth.contract(
-            address=Web3.to_checksum_address(CONTRACTS["oracle"]),
+            address=Web3.to_checksum_address(oracle_addr),
             abi=ORACLE_ABI,
         )
         self.running = False
@@ -110,14 +115,52 @@ class OracleKeeper:
             return None
 
     def get_latest_data(self) -> dict:
-        """Return latest price data for Warden/Strategy consumption."""
-        data: dict = {"price": 0.0, "twap_price": 0.0, "timestamp": 0.0}
+        """Return latest price data for Warden/Strategy consumption.
+        
+        Priority: 1) On-chain AvOracle v5 (getAuAgPrices), 2) Manual config fallback
+        """
+        from .config import MANUAL_AU_PRICE, MANUAL_AG_PRICE
+
+        data: dict = {
+            "au_price": 0.0,
+            "ag_price": 0.0,
+            "twap_price": 0.0,
+            "timestamp": time.time(),
+            "source": "none",
+        }
+
+        # Try on-chain oracle (AvOracle v5 at quasicrystal address)
         try:
-            price = self.oracle.functions.getAuPrice().call()
-            data["price"] = float(price) / 1e18
-            data["timestamp"] = time.time()
-        except Exception as e:
-            logger.debug(f"get_latest_data read failed: {e}")
+            au_price, ag_price, au_src, ag_src = self.oracle.functions.getAuAgPrices().call()
+            au_val = float(au_price) / 1e18
+            ag_val = float(ag_price) / 1e18
+            if au_val > 0.001:
+                data["au_price"] = au_val
+            if ag_val > 0.001:
+                data["ag_price"] = ag_val
+            if au_val > 0.001 or ag_val > 0.001:
+                data["source"] = "onchain"
+        except Exception:
+            # Try individual getPrice calls
+            try:
+                AU = "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08"
+                au_result = self.oracle.functions.getPrice(AU).call()
+                au_val = float(au_result[0]) / 1e18
+                if au_val > 0.001:
+                    data["au_price"] = au_val
+                    data["source"] = "onchain_partial"
+            except Exception:
+                pass
+
+        # Manual fallback for any missing prices
+        if data["au_price"] == 0.0 and MANUAL_AU_PRICE > 0:
+            data["au_price"] = MANUAL_AU_PRICE
+            data["source"] = ("manual" if data["source"] == "none" else data["source"] + "+manual")
+
+        if data["ag_price"] == 0.0 and MANUAL_AG_PRICE > 0:
+            data["ag_price"] = MANUAL_AG_PRICE
+            data["source"] = ("manual" if data["source"] == "none" else data["source"] + "+manual")
+
         return data
 
     async def run(self):

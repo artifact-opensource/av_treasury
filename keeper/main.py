@@ -178,18 +178,19 @@ class KeeperBot:
             logger.info("✅ Keeper resuming operations")
 
     def _read_ag_price(self) -> Optional[float]:
-        """Read current Ag price from on-chain oracle."""
-        if not self.w3:
-            return None
-        try:
-            # Use the existing oracle keeper's contract reference
-            oracle_contract = self.oracle.flashbuy if hasattr(self.oracle, 'flashbuy') else None
-            if oracle_contract:
-                # Try to get last known price from contract
-                # This is a fallback — primary source is DEXScreener
-                pass
+        """Read current Ag price from on-chain AvOracle (primary) with DEXScreener fallback."""
+        # Primary: on-chain oracle
+        if self.oracle:
+            try:
+                data = self.oracle.get_latest_data()
+                ag_price = data.get("ag_price", 0.0)
+                if ag_price > 0:
+                    return ag_price
+            except Exception as e:
+                logger.debug(f"Oracle Ag price read failed: {e}")
 
-            # Primary: DEXScreener API for Ag token
+        # Fallback: DEXScreener
+        try:
             import urllib.request
             ag_address = "0x1D31719389Bd8b17277Ba367c26b830aE34D3674"
             url = f"https://api.dexscreener.com/latest/dex/tokens/{ag_address}"
@@ -198,10 +199,21 @@ class KeeperBot:
                 import json
                 data = json.loads(resp.read())
                 if data.get("pairs"):
-                    price = float(data["pairs"][0]["priceUsd"])
-                    return price
+                    return float(data["pairs"][0]["priceUsd"])
         except Exception as e:
-            logger.debug(f"Price read error: {e}")
+            logger.debug(f"DEXScreener Ag price read failed: {e}")
+        return None
+
+    def _read_au_price(self) -> Optional[float]:
+        """Read current Au price from on-chain AvOracle."""
+        if self.oracle:
+            try:
+                data = self.oracle.get_latest_data()
+                au_price = data.get("au_price", 0.0)
+                if au_price > 0:
+                    return au_price
+            except Exception as e:
+                logger.debug(f"Oracle Au price read failed: {e}")
         return None
 
     def _read_gas_price_gwei(self) -> float:

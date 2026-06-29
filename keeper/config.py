@@ -67,6 +67,13 @@ GAS_PRICE_MULTIPLIER = 1.1         # 10% over base gas for priority
 MAX_GAS_PRICE_GWEI = 0.5           # Base L2 gas cap
 TX_CONFIRMATION_BLOCKS = 1         # Wait for 1 confirmation on L2
 
+# ─── Manual Price Fallback ─────────────────────────────────────────────────
+# Used when on-chain oracle has no price data (no DEX liquidity yet).
+# Set to 0.0 to disable and require live pricing.
+MANUAL_AU_PRICE = float(os.environ.get("AU_PRICE_MANUAL", "1.0"))
+MANUAL_AG_PRICE = float(os.environ.get("AG_PRICE_MANUAL", "0.1"))
+PRICE_MAX_DEVIATION = 0.05          # 5% max deviation between on-chain and manual
+
 # ─── Derived: Keeper Address ────────────────────────────────────────────────
 try:
     from eth_account import Account as _Acct
@@ -186,6 +193,28 @@ ORACLE_ABI = [
         "inputs": [],
         "name": "getAuPrice",
         "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [],
+        "name": "getAuAgPrices",
+        "outputs": [
+            {"internalType": "uint256", "name": "auPrice", "type": "uint256"},
+            {"internalType": "uint256", "name": "agPrice", "type": "uint256"},
+            {"internalType": "uint8", "name": "auSource", "type": "uint8"},
+            {"internalType": "uint8", "name": "agSource", "type": "uint8"},
+        ],
+        "stateMutability": "view",
+        "type": "function",
+    },
+    {
+        "inputs": [{"internalType": "address", "name": "token", "type": "address"}],
+        "name": "getPrice",
+        "outputs": [
+            {"internalType": "uint256", "name": "price", "type": "uint256"},
+            {"internalType": "uint8", "name": "source", "type": "uint8"},
+        ],
         "stateMutability": "view",
         "type": "function",
     },

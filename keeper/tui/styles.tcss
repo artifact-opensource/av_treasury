@@ -1,0 +1,424 @@
+/* AV Treasury TUI — Cyberpunk Dark Theme */
+
+/* ── Color Variables ── */
+$bg-primary: #0a0a0f;
+$bg-secondary: #12121a;
+$bg-panel: #1a1a2e;
+$bg-surface: #16213e;
+$text-primary: #e0e0e0;
+$text-secondary: #a0a0b0;
+$accent-gold: #FFD700;
+$accent-silver: #C0C0C0;
+$accent-cyan: #00FFFF;
+$accent-green: #00FF88;
+$accent-red: #FF4444;
+$accent-yellow: #FFAA00;
+$accent-purple: #AA44FF;
+$border-color: #2a2a4a;
+
+/* ── Global ── */
+Screen {
+    background: $bg-primary;
+    color: $text-primary;
+}
+
+Header {
+    background: $bg-secondary;
+    color: $accent-gold;
+    text-style: bold;
+    height: 1;
+    dock: top;
+}
+
+Footer {
+    background: $bg-secondary;
+    color: $text-secondary;
+    height: 1;
+    dock: bottom;
+}
+
+/* ── Tabbed Content ── */
+TabbedContent {
+    background: $bg-primary;
+}
+
+TabbedContent Tab {
+    background: $bg-secondary;
+    color: $text-secondary;
+    padding: 0 2;
+}
+
+TabbedContent Tab:hover {
+    background: $bg-panel;
+    color: $accent-cyan;
+}
+
+TabbedContent Tab.-active {
+    background: $bg-panel;
+    color: $accent-gold;
+    text-style: bold;
+    border-bottom: solid $accent-gold;
+}
+
+TabbedContent TabPane {
+    background: $bg-primary;
+    padding: 0;
+}
+
+/* ── Containers ── */
+#overview-container,
+#keeper-container,
+#treasury-container,
+#gov-container,
+#nft-container,
+#market-container,
+#system-container {
+    height: 100%;
+    padding: 0 1;
+}
+
+/* ── Horizontal/Vertical Layouts ── */
+Horizontal {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+Vertical {
+    height: auto;
+    margin: 0 1 0 0;
+}
+
+/* ── Panels ── */
+.panel-header {
+    color: $accent-cyan;
+    text-style: bold;
+    height: 1;
+    margin: 1 0 0 0;
+}
+
+/* ── Price Cards ── */
+.price-card {
+    background: $bg-panel;
+    border: solid $border-color;
+    padding: 1 2;
+    margin: 0 1 0 0;
+    height: 5;
+    width: 1fr;
+}
+
+/* ── Metric Boxes ── */
+.metric-box {
+    background: $bg-panel;
+    border: solid $border-color;
+    padding: 1 2;
+    margin: 0 1 0 0;
+    height: 5;
+    width: 1fr;
+}
+
+.chain-box {
+    background: $bg-panel;
+    border: solid $border-color;
+    padding: 1 2;
+    margin: 0 1 0 0;
+    height: 3;
+    width: 1fr;
+}
+
+/* ── Buttons ── */
+Button {
+    margin: 0 1;
+    min-width: 10;
+    height: 1;
+}
+
+Button.-primary {
+    background: $accent-cyan;
+    color: $bg-primary;
+    text-style: bold;
+}
+
+Button.-success {
+    background: $accent-green;
+    color: $bg-primary;
+    text-style: bold;
+}
+
+Button.-error {
+    background: $accent-red;
+    color: white;
+    text-style: bold;
+}
+
+Button.-warning {
+    background: $accent-yellow;
+    color: $bg-primary;
+    text-style: bold;
+}
+
+Button:hover {
+    text-style: bold;
+}
+
+/* ── Data Tables ── */
+DataTable {
+    background: $bg-panel;
+    border: solid $border-color;
+    height: auto;
+    max-height: 12;
+    margin: 0 0 1 0;
+}
+
+DataTable > .datatable--header {
+    background: $bg-secondary;
+    color: $accent-gold;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: $bg-surface;
+    color: $accent-cyan;
+}
+
+DataTable > .datatable--hover {
+    background: $bg-surface;
+}
+
+DataTable > .datatable--odd {
+    background: $bg-panel;
+}
+
+DataTable > .datatable--even {
+    background: $bg-secondary;
+}
+
+/* ── Input Fields ── */
+Input {
+    background: $bg-secondary;
+    border: solid $border-color;
+    color: $text-primary;
+    margin: 0 1;
+    min-width: 12;
+}
+
+Input:focus {
+    border: solid $accent-cyan;
+}
+
+/* ── TextArea ── */
+TextArea {
+    background: $bg-secondary;
+    border: solid $border-color;
+    color: $text-primary;
+    height: 4;
+    margin: 0 0 1 0;
+}
+
+TextArea:focus {
+    border: solid $accent-cyan;
+}
+
+/* ── Log Widget ── */
+Log {
+    background: $bg-secondary;
+    border: solid $border-color;
+    color: $text-primary;
+    height: 10;
+    overflow-y: scroll;
+}
+
+/* ── Static Widgets ── */
+Static {
+    color: $text-primary;
+}
+
+/* ── Labels ── */
+Label {
+    color: $text-secondary;
+    align: center middle;
+    height: 1;
+    margin: 0 1;
+}
+
+/* ── Status Indicators ── */
+StatusIndicator {
+    margin: 0 1;
+    height: 1;
+}
+
+/* ── Gauge Bars ── */
+GaugeBar {
+    margin: 0 0 1 0;
+    height: 1;
+}
+
+/* ── Sparklines ── */
+Sparkline {
+    margin: 0 0 1 0;
+    height: 1;
+}
+
+/* ── Ticker Tape ── */
+TickerTape {
+    dock: top;
+    height: 1;
+    margin: 0;
+}
+
+/* ── Keeper-specific ── */
+.keeper-row {
+    height: 3;
+    align: center middle;
+    margin: 0 0 1 0;
+}
+
+.keeper-row StatusIndicator {
+    width: 16;
+}
+
+.health-row {
+    background: $bg-panel;
+    border-left: solid $accent-cyan;
+    padding: 0 1;
+    margin: 0 0 1 0;
+    height: auto;
+}
+
+.log-controls {
+    height: 1;
+    margin: 0 0 1 0;
+}
+
+.log-controls Button {
+    min-width: 8;
+    margin: 0 1;
+}
+
+/* ── Treasury-specific ── */
+.action-row {
+    height: 3;
+    align: center middle;
+    margin: 0 0 1 0;
+}
+
+.metric-display {
+    background: $bg-panel;
+    border-left: solid $accent-gold;
+    padding: 0 1;
+    margin: 0 0 1 0;
+    height: 1;
+}
+
+/* ── Governance-specific ── */
+.vote-buttons {
+    height: 3;
+    align: center middle;
+    margin: 1 0;
+}
+
+.vote-buttons Button {
+    min-width: 14;
+    margin: 0 2;
+}
+
+.gov-actions {
+    height: 3;
+    align: center middle;
+}
+
+.form-row {
+    height: 3;
+    align: center middle;
+    margin: 0 0 1 0;
+}
+
+/* ── NFT/Staking-specific ── */
+.staking-metric {
+    background: $bg-panel;
+    border-left: solid $accent-silver;
+    padding: 0 1;
+    margin: 0 0 1 0;
+    height: 1;
+}
+
+.reward-row {
+    height: 3;
+    align: center middle;
+    margin: 0 0 1 0;
+}
+
+.reward-row Label {
+    width: 14;
+}
+
+.reward-row Static {
+    color: $accent-gold;
+    text-style: bold;
+    width: 12;
+}
+
+/* ── Market-specific ── */
+.ob-header {
+    color: $accent-cyan;
+    text-style: bold;
+    margin: 1 0 0 0;
+    height: 1;
+}
+
+/* ── System-specific ── */
+.conn-metric {
+    background: $bg-panel;
+    border-left: solid $accent-cyan;
+    padding: 0 1;
+    margin: 0 0 1 0;
+    height: 1;
+}
+
+.gas-metric {
+    background: $bg-panel;
+    border-left: solid $accent-yellow;
+    padding: 0 1;
+    margin: 0 0 1 0;
+    height: 1;
+}
+
+/* ── Scrollable ── */
+ScrollableContainer {
+    overflow-y: auto;
+}
+
+/* ── Select Widget ── */
+Select {
+    background: $bg-secondary;
+    border: solid $border-color;
+    color: $text-primary;
+    margin: 0 1;
+}
+
+Select:focus {
+    border: solid $accent-cyan;
+}
+
+/* ── Blinking animation for alerts ── */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+.blink {
+    animation: blink 1s infinite;
+}
+
+/* ── Custom scrollbar ── */
+VerticalScroll {
+    scrollbar-size-vertical: 1;
+}
+
+VerticalScroll > .scrollbar--bar {
+    background: $border-color;
+}
+
+VerticalScroll > .scrollbar--bar:hover {
+    background: $accent-cyan;
+}

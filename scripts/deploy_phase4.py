@@ -53,13 +53,15 @@ def load_env():
 
 # ── Contract Addresses ────────────────────────────────────────
 ADDRESSES = {
-    "au":           "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
-    "ag":           "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
-    "treasury_amo": "0x56653245f4718fe105b95C8424947B31b84b5188",
-    "pid":          "0x99114F594Ff218028309d3E7F47C5873B9917f70",
-    "oracle":       "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB",
-    "flashbuy":     "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b",
-    "treasury_safe":"0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e",
+    "au":           Web3.to_checksum_address("0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08"),
+    "ag":           Web3.to_checksum_address("0x1D31719389Bd8b17277Ba367c26b830aE34D3674"),
+    "treasury_amo": Web3.to_checksum_address("0x56653245f4718fe105b95C8424947B31b84b5188"),
+    "pid":          Web3.to_checksum_address("0x99114F594Ff218028309d3E7F47C5873B9917f70"),
+    "oracle":       Web3.to_checksum_address("0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB"),
+    "flashbuy":     Web3.to_checksum_address("0xf6383860837E6cb983F9Af8Def92fc08F15Be65b"),
+    "treasury_safe":Web3.to_checksum_address("0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e"),
+    "usdc":         Web3.to_checksum_address("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
+    "aerodrome":    Web3.to_checksum_address("0xcF77a3Ba9A5CA399B7c97c74d5e8A7C736508e0B"),
 }
 
 # ── Deployment ─────────────────────────────────────────────────
@@ -142,7 +144,10 @@ class Phase4Deployer:
             print(f"  📋 DRY RUN: Would deploy {contract_name}")
             print(f"     Gas: {tx['gas']:,}, Cost: {tx['gas'] * self.gas_price / 1e18:.4f} ETH")
             self.nonce += 1
-            return "0x" + "0" * 40  # Dummy address
+            # Use a non-zero dummy address for dry-run
+            dummy = "0x" + "1" * 40
+            self.deployed[contract_name] = dummy
+            return dummy
 
         # Sign and send
         signed = self.deployer.sign_transaction(tx)
@@ -181,12 +186,13 @@ class Phase4Deployer:
         print(f"  Timelock: {timelock_addr}")
 
         # ── Step 2: Deploy Governor ───────────────────────────
-        print("\n[2/5] Deploying GovernorContract...")
-        # Governor: token (Ag), timelock
+        print("\n[2/5] Deploying GovernorContractV5...")
+        # OZ v5 compatible Governor with manual timelock integration.
+        # Compiled with --via-ir to fit under 24KB EIP-170 limit (20,523 bytes).
         governor_addr = self._deploy(
-            "GovernorContract",
-            ADDRESSES["ag"],  # vote token
-            timelock_addr,    # executor (timelock)
+            "GovernorContractV5",
+            ADDRESSES["ag"],  # IVotes token (Ag)
+            timelock_addr,    # TimelockController
         )
         print(f"  Governor: {governor_addr}")
 
@@ -204,15 +210,12 @@ class Phase4Deployer:
 
         # ── Step 4: Deploy OracleFlashBuy ──────────────────────
         print("\n[4/5] Deploying OracleFlashBuy...")
-        # Need USDC and DEX addresses on Base
-        USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"  # USDC on Base
-        AERODROME_ROUTER = self.env.get("AERODROME_ROUTER_ADDRESS", "0xcF77a3Ba9A5CA399B7c97c74d5e8A7C736508e0B")
         oracle_flashbuy_addr = self._deploy(
             "OracleFlashBuy",
             ADDRESSES["treasury_amo"],  # _treasury
             ADDRESSES["au"],            # _auToken
-            USDC_BASE,                  # _usdcToken
-            AERODROME_ROUTER,           # _dex
+            ADDRESSES["usdc"],          # _usdcToken
+            ADDRESSES["aerodrome"],     # _dex
             oracle_wrapper_addr,        # _oracleWrapper
             self.w3.to_wei(10000, "ether"),  # _maxBuybackPerExecution (10000 USDC)
             6 * 3600,                   # _cooldown (6 hours)
@@ -225,7 +228,7 @@ class Phase4Deployer:
             "OracleGuardian",
             ADDRESSES["oracle"],         # _oracle
             ADDRESSES["au"],             # _auToken
-            USDC_BASE,                   # _usdcToken
+            ADDRESSES["usdc"],                  # _usdcToken
             ADDRESSES["treasury_amo"],   # _treasuryAMO
             self.deployer.address,       # _admin (temporary, transfer to Governor)
             self.w3.to_wei(1, "ether"), # _auPeg ($1.00)

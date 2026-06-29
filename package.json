@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",
-    "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "@openzeppelin/contracts": "^5.6.0",
     "@openzeppelin/contracts-upgradeable": "5.6.1",
     "@openzeppelin/hardhat-upgrades": "^2.5.1",
@@ -21,6 +20,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
     "chai": "^6.2.2",
     "ganache": "^7.7.5"
   }

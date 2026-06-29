@@ -1,91 +1,91 @@
 'use client'
 
-import { useReadContracts } from 'wagmi'
-import { base } from 'wagmi/chains'
-import { CHAINLINK_AGGREGATOR_ABI } from '@/lib/abis'
-import { CHAINLINK_FEEDS } from '@/lib/constants'
+import { useReadContract } from 'wagmi'
+import { formatUnits } from 'viem'
+import { AV_CONTRACTS, CHAINLINK_FEEDS, TOKENS } from '@/lib/constants'
+import { AV_ORACLE_ABI as oracleAbi } from '@/lib/abis'
 
-// Base mainnet Chainlink feeds
-const ETH_USD_FEED = '0x71041dddad3595F968c393B2C632eF1d76e2fc50' as `0x${string}` // Chainlink ETH/USD
-const USDC_USD_FEED = '0xd9a0114a5bC16657F048Ce7689483957E13c9446' as `0x${string}` // Chainlink USDC/USD
-const BTC_USD_FEED = '0x2435281d254e26C618E659f7C44137086DBd498A' as `0x${string}` // Chainlink BTC/USD
-
-export interface LivePrice {
-  symbol: string
-  priceUsd: number
-  decimals: number
-  valid: boolean
+/**
+ * Fetches prices from the AV Oracle contract for Au/Ag
+ * Falls back to Chainlink for ETH/USDC
+ */
+export function useAuPrice() {
+  const { data } = useReadContract({
+    address: AV_CONTRACTS.oracle,
+    abi: oracleAbi,
+    functionName: 'getPrice',
+    args: [TOKENS.au],
+    query: { refetchInterval: 30_000 },
+  })
+  if (!data) return null
+  // getPrice returns (price, timestamp, source, valid)
+  const price = (data as readonly [bigint, bigint, number, boolean])[0]
+  return Number(formatUnits(price, 18))
 }
 
-export function useLivePrices() {
-  const { data, isLoading, refetch } = useReadContracts({
-    contracts: [
-      {
-        address: ETH_USD_FEED,
-        abi: CHAINLINK_AGGREGATOR_ABI,
-        functionName: 'latestRoundData',
-        chainId: base.id,
-      },
-      {
-        address: ETH_USD_FEED,
-        abi: CHAINLINK_AGGREGATOR_ABI,
-        functionName: 'decimals',
-        chainId: base.id,
-      },
-      {
-        address: BTC_USD_FEED,
-        abi: CHAINLINK_AGGREGATOR_ABI,
-        functionName: 'latestRoundData',
-        chainId: base.id,
-      },
-      {
-        address: BTC_USD_FEED,
-        abi: CHAINLINK_AGGREGATOR_ABI,
-        functionName: 'decimals',
-        chainId: base.id,
-      },
-      {
-        address: USDC_USD_FEED,
-        abi: CHAINLINK_AGGREGATOR_ABI,
-        functionName: 'latestRoundData',
-        chainId: base.id,
-      },
-      {
-        address: USDC_USD_FEED,
-        abi: CHAINLINK_AGGREGATOR_ABI,
-        functionName: 'decimals',
-        chainId: base.id,
-      },
-    ],
+export function useAgPrice() {
+  const { data } = useReadContract({
+    address: AV_CONTRACTS.oracle,
+    abi: oracleAbi,
+    functionName: 'getPrice',
+    args: [TOKENS.ag],
+    query: { refetchInterval: 30_000 },
   })
+  if (!data) return null
+  // getPrice returns (price, timestamp, source, valid)
+  const price = (data as readonly [bigint, bigint, number, boolean])[0]
+  return Number(formatUnits(price, 18))
+}
 
-  const ethRound = data?.[0]?.result as [bigint, bigint, bigint, bigint, bigint] | undefined
-  const ethDecimals = (data?.[1]?.result as number) ?? 8
-  const btcRound = data?.[2]?.result as [bigint, bigint, bigint, bigint, bigint] | undefined
-  const btcDecimals = (data?.[3]?.result as number) ?? 8
-  const usdcRound = data?.[4]?.result as [bigint, bigint, bigint, bigint, bigint] | undefined
-  const usdcDecimals = (data?.[5]?.result as number) ?? 8
+export function useEthPrice() {
+  const { data } = useReadContract({
+    address: CHAINLINK_FEEDS.ethUsd,
+    abi: [{
+      name: 'latestAnswer',
+      type: 'function',
+      stateMutability: 'view',
+      inputs: [],
+      outputs: [{ type: 'int256' }],
+    }],
+    functionName: 'latestAnswer',
+    query: { refetchInterval: 60_000 },
+  })
+  if (!data) return null
+  return Number(formatUnits(data as bigint, 8))
+}
 
-  const prices: LivePrice[] = [
-    {
-      symbol: 'ETH',
-      priceUsd: ethRound ? Number(ethRound[1]) / Math.pow(10, ethDecimals) : 0,
-      decimals: ethDecimals,
-      valid: !!ethRound && ethRound[1] > 0n,
-    },
-    {
-      symbol: 'BTC',
-      priceUsd: btcRound ? Number(btcRound[1]) / Math.pow(10, btcDecimals) : 0,
-      decimals: btcDecimals,
-      valid: !!btcRound && btcRound[1] > 0n,
-    },
-    {
-      symbol: 'USDC',
-      priceUsd: usdcRound ? Number(usdcRound[1]) / Math.pow(10, usdcDecimals) : 0,
-      decimals: usdcDecimals,
-      valid: !!usdcRound && usdcRound[1] > 0n,
-    },
-  ]
+export function useUsdcPrice() {
+  const { data } = useReadContract({
+    address: CHAINLINK_FEEDS.usdcUsd,
+    abi: [{
+      name: 'latestAnswer',
+      type: 'function',
+      stateMutability: 'view',
+      inputs: [],
+      outputs: [{ type: 'int256' }],
+    }],
+    functionName: 'latestAnswer',
+    query: { refetchInterval: 60_000 },
+  })
+  if (!data) return null
+  return Number(formatUnits(data as bigint, 8))
+}
 
-  return { prices, isLoading, refetch }
+/**
+ * Hook that returns all tracked prices
+ */
+export function useAllPrices() {
+  const au = useAuPrice()
+  const ag = useAgPrice()
+  const eth = useEthPrice()
+  const usdc = useUsdcPrice()
+
+  return {
+    au,
+    ag,
+    eth,
+    usdc,
+    aero: null, // No direct feed yet
+    loaded: au !== null && eth !== null,
+  }
 }

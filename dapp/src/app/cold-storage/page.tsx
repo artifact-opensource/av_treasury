@@ -19,7 +19,7 @@ export default function ColdStoragePage() {
 
   // Check if AnvilWallet contract is deployed (has code)
   const { data: ownerData, isLoading: isLoadingOwner, refetch: refetchHw } = useReadContract({
-    address: AV_CONTRACTS.anvilWallet,
+    address: AV_CONTRACTS.treasurySafe,
     abi: ANVIL_WALLET_ABI,
     functionName: 'owner',
     query: {
@@ -29,7 +29,7 @@ export default function ColdStoragePage() {
 
   // Check hardware wallet address
   const { data: hwAddress } = useReadContract({
-    address: AV_CONTRACTS.anvilWallet,
+    address: AV_CONTRACTS.treasurySafe,
     abi: ANVIL_WALLET_ABI,
     functionName: 'hardwareWallet',
     query: {
@@ -39,7 +39,7 @@ export default function ColdStoragePage() {
 
   // Check if hardware wallet is set
   const { data: isHwSet } = useReadContract({
-    address: AV_CONTRACTS.anvilWallet,
+    address: AV_CONTRACTS.treasurySafe,
     abi: ANVIL_WALLET_ABI,
     functionName: 'isHardwareWalletSet',
     query: {
@@ -52,7 +52,7 @@ export default function ColdStoragePage() {
     address: AV_CONTRACTS.auToken,
     abi: AU_TOKEN_ABI,
     functionName: 'balanceOf',
-    args: [AV_CONTRACTS.anvilWallet],
+    args: [AV_CONTRACTS.treasurySafe],
     query: {
       enabled: detectionRun && isHwSet === true,
     },
@@ -60,7 +60,7 @@ export default function ColdStoragePage() {
 
   // Check if cold transfers are enabled
   const { data: coldTransferEnabled } = useReadContract({
-    address: AV_CONTRACTS.anvilWallet,
+    address: AV_CONTRACTS.treasurySafe,
     abi: ANVIL_WALLET_ABI,
     functionName: 'coldTransferEnabled',
     query: {
@@ -79,7 +79,7 @@ export default function ColdStoragePage() {
   const handleSendFromCold = useCallback(() => {
     if (!sendTo || !sendAmount) return
     writeContract({
-      address: AV_CONTRACTS.anvilWallet,
+      address: AV_CONTRACTS.treasurySafe,
       abi: ANVIL_WALLET_ABI,
       functionName: 'sendFromCold',
       args: [sendTo as Address, BigInt(parseFloat(sendAmount) * 1e18)],
@@ -205,7 +205,7 @@ export default function ColdStoragePage() {
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-xs text-muted-foreground uppercase mb-1">Contract Address</div>
-                  <div className="font-mono text-sm">{formatAddress(AV_CONTRACTS.anvilWallet)}</div>
+                  <div className="font-mono text-sm">{formatAddress(AV_CONTRACTS.treasurySafe)}</div>
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-xs text-muted-foreground uppercase mb-1">Transfer Mode</div>
@@ -395,7 +395,7 @@ export default function ColdStoragePage() {
               No AnvilWallet contract was found at the configured address:
             </p>
             <div className="rounded-lg border border-border bg-background p-3 font-mono text-xs break-all">
-              {AV_CONTRACTS.anvilWallet}
+              {AV_CONTRACTS.treasurySafe}
             </div>
             <p>
               This could mean:

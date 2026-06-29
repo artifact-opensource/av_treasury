@@ -3,7 +3,7 @@
 import { useAccount } from 'wagmi'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { useOraclePrices } from '@/hooks/use-oracle'
-import { useLivePrices } from '@/hooks/use-live-prices'
+import { useAllPrices as useLivePrices } from '@/hooks/use-live-prices'
 import { formatTokenAmount, formatUsd } from '@/lib/utils'
 import { AV_CONTRACTS } from '@/lib/constants'
 import { ArrowRight, Droplets, Coins, Vote, TrendingUp, BarChart3 } from 'lucide-react'
@@ -13,7 +13,16 @@ export default function DashboardPage() {
   const { isConnected, address } = useAccount()
   const { auBalance, agBalance, votingPower, auSupply, agSupply, isLoading: portfolioLoading } = usePortfolio()
   const { au, ag, tvl, isLoading: oracleLoading } = useOraclePrices()
-  const { prices: livePrices, isLoading: liveLoading } = useLivePrices()
+  const prices = useLivePrices()
+  const liveLoading = !prices.loaded
+
+  // Transform prices into array for display
+  const livePrices = [
+    { symbol: 'Au', priceUsd: prices.au, valid: prices.au !== null },
+    { symbol: 'Ag', priceUsd: prices.ag, valid: prices.ag !== null },
+    { symbol: 'ETH', priceUsd: prices.eth, valid: prices.eth !== null },
+    { symbol: 'USDC', priceUsd: prices.usdc, valid: prices.usdc !== null },
+  ]
 
   if (!isConnected) {
     return (
@@ -92,7 +101,7 @@ export default function DashboardPage() {
               <div>
                 <div className="text-sm font-medium">{p.symbol}</div>
                 <div className="text-xs text-muted-foreground">
-                  {p.valid ? `$${p.priceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
+                  {p.valid && p.priceUsd != null ? `$${p.priceUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                 </div>
               </div>
             </div>

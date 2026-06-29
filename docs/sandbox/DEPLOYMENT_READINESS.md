@@ -1,3 +1,12 @@
+---
+title: Deployment Readiness
+date: 2026-06-29
+status: canonical
+description: Deployment pipeline assessment from testnet to mainnet, including readiness scoring.
+category: sandbox
+related: [sandbox/CRITICAL_PATH.md, sandbox/CONTRACT_INVENTORY.md, sandbox/SECURITY_POSTURE.md]
+---
+
 # AV TREASURY — Deployment Readiness
 
 **Date:** 2026-06-24  

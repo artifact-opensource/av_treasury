@@ -1,3 +1,12 @@
+---
+title: Contract Dependency Graph
+date: 2026-06-29
+status: canonical
+description: ASCII and Mermaid dependency graphs for all 14 AV Treasury contracts.
+category: sandbox
+related: [sandbox/CONTRACT_INVENTORY.md, sandbox/CRITICAL_PATH.md, sandbox/DEPLOYMENT_READINESS.md]
+---
+
 # AV TREASURY — Contract Dependency Graph
 
 **Date:** 2026-06-24  

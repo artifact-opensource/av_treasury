@@ -1,3 +1,12 @@
+---
+title: Flywheel Trace
+date: 2026-06-29
+status: canonical
+description: Step-by-step exhaustive trace of the complete AV Treasury flywheel mechanism.
+category: sandbox
+related: [sandbox/ECONOMIC_MODEL.md, sandbox/SIMULATION_RESULTS.md, central-banking/05-flywheel-mechanics.md]
+---
+
 # AV TREASURY — Flywheel Trace
 
 **Date:** 2026-06-24  

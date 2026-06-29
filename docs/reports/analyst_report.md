@@ -1,3 +1,12 @@
+---
+title: Full System Review — Analyst Report
+date: 2026-06-29
+status: canonical
+description: Comprehensive analyst review of the entire AV Treasury system, covering all contracts and mechanisms.
+category: reports
+related: [reports/formal_verification_report.md, reports/pentest_report.md, reports/simulation_report.md, reports/v3_REPORT.md]
+---
+
 FULL SYSTEM REVIEW — AV TREASURY
 
 I've reviewed everything. Here's the complete assessment:

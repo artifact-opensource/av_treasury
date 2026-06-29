@@ -1,3 +1,12 @@
+---
+title: Security Posture
+date: 2026-06-29
+status: canonical
+description: Security audit posture for all 14 AV Treasury contracts, conducted by OWL (ZOO Company).
+category: sandbox
+related: [sandbox/CONTRACT_INVENTORY.md, sandbox/DEPLOYMENT_READINESS.md, reports/pentest_report.md]
+---
+
 # AV TREASURY — Security Posture
 
 **Date:** 2026-06-24  

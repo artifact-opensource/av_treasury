@@ -1,3 +1,12 @@
+---
+title: Contract Inventory
+date: 2026-06-29
+status: canonical
+description: Complete inventory of all 14 AV Treasury contracts across Production and Sandbox layers.
+category: sandbox
+related: [sandbox/CRITICAL_PATH.md, sandbox/DEPENDENCY_GRAPH.md, sandbox/DEPLOYMENT_READINESS.md, sandbox/ECONOMIC_MODEL.md, sandbox/SECURITY_POSTURE.md, sandbox/SIMULATION_RESULTS.md, sandbox/FLYWHEEL_TRACE.md]
+---
+
 # AV TREASURY — Complete Contract Inventory
 
 **Date:** 2026-06-24  

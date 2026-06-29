@@ -1,3 +1,12 @@
+---
+title: Simulation Results
+date: 2026-06-29
+status: canonical
+description: Monte Carlo simulation results (36-month projection) from the AV Treasury economic simulator.
+category: sandbox
+related: [sandbox/ECONOMIC_MODEL.md, sandbox/FLYWHEEL_TRACE.md, sim/index.md, sim/results.md]
+---
+
 # AV TREASURY — Simulation Results
 
 **Date:** 2026-06-24  

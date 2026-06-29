@@ -1,3 +1,12 @@
+---
+title: Critical Path & Timeline
+date: 2026-06-29
+status: canonical
+description: Full critical path from current state to mainnet deployment, including milestones and dependencies.
+category: sandbox
+related: [sandbox/CONTRACT_INVENTORY.md, sandbox/DEPLOYMENT_READINESS.md, sandbox/DEPENDENCY_GRAPH.md]
+---
+
 # AV TREASURY — Critical Path & Timeline
 
 **Date:** 2026-06-24  

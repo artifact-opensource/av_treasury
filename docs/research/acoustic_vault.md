@@ -1,3 +1,12 @@
+---
+title: Acoustic Generative LP Vault
+date: 2026-06-29
+status: canonical
+description: Architecture for an acoustic-generative LP vault combining yield routing with on-chain generative entities.
+category: technical
+related: [research/morphspace.md, research/meta_structure_schema.md, central-banking/10-quasicrystal-nft.md]
+---
+
 # Acoustic Generative LP Vault
 **Document Version:** 1.0.0
 **Status:** Architecture Draft

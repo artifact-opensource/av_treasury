@@ -1,3 +1,12 @@
+---
+title: YIELD-PET Structural Metadata Schema
+date: 2026-06-29
+status: canonical
+description: On-chain metadata schema specification for YIELD-PET generative LP vault entities.
+category: technical
+related: [research/acoustic_vault.md, research/morphspace.md, central-banking/10-quasicrystal-nft.md]
+---
+
 # Project YIELD-PET: Structural Metadata Schema Specification
 **Protocol Standard ID:** ARC-SBT-099
 **Version:** 1.0.0-PROD

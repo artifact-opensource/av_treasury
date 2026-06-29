@@ -1,3 +1,12 @@
+---
+title: AV Treasury — Experimental Workspace
+date: 2026-06-29
+status: complete
+description: Comprehensive workspace documentation covering system architecture, contract specifications, test infrastructure, and deployment strategy.
+category: overview
+related: [README.md, whitepaper/whitepaper.md, whitepaper/vision.md, ETHERSCAN_V2_VERIFICATION.md, dapp-technical-brief.md]
+---
+
 # AV Treasury — Experimental Workspace
 
 > **Last updated:** 2026-06-24  
@@ -309,7 +318,7 @@ forge test --match-path test/invariants/
 | 12 | `onlyGovernanceCanChange` | Only governor can update params |
 | 13 | `reserveAlwaysNonDecreasing` | Reserve never decreases (buybacks mint Au) |
 
-### 5.4 Hardhat Configuration
+### 3.4 Hardhat Configuration
 
 ```javascript
 // hardhat.config.js
@@ -325,7 +334,7 @@ networks: {
 - Gas optimization: 200 runs, via-IR disabled
 - Foundry profile for invariant tests
 
-### 5.5 Deployment Script
+### 3.5 Deployment Script
 
 `scripts/DeploySandbox.s.sol` — Foundry script for deploying the full system to a local or testnet environment.
 
@@ -453,7 +462,7 @@ bash sandbox/orchestrate.sh stop
 
 - **Static Analysis:** Slither (no critical findings)
 - **Invariant Testing:** 25/25 invariant tests pass across 4 suites
-- **Manual Review:** Architecture reviewed againstOlympus DAO, Curve, Aerodrome patterns
+- **Manual Review:** Architecture reviewed against Olympus DAO, Curve, Aerodrome patterns
 - **Fuzz Testing:** 10,000 fuzz inputs tested per invariant
 
 ---

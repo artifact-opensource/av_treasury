@@ -9,6 +9,12 @@ related: [vision.md, ../technical/deployment-plan.md, ../reports/formal_verifica
 
 # AV Treasury Whitepaper
 
+> **HISTORICAL DOCUMENT:** This whitepaper describes the original vision
+> including veAg lock-weighted governance and RSBT soulbound tokens. The
+> deployed system uses AgToken (ERC20Votes) for governance and
+> QuasiCrystalLPNFT (ERC-721) for LP positions. See
+> [docs/central-banking/](../central-banking/index.md) for current specs.
+
 ## A Self-Sustaining Decentralized Economic Organism
 
 ---

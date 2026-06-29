@@ -1,3 +1,12 @@
+---
+title: Economic Model Analysis
+date: 2026-06-29
+status: canonical
+description: Complete economic model analysis including tokenomics, flywheel dynamics, and 36-month Monte Carlo simulation.
+category: sandbox
+related: [sandbox/SIMULATION_RESULTS.md, sandbox/FLYWHEEL_TRACE.md, sim/index.md, sim/results.md]
+---
+
 # AV TREASURY — Economic Model Analysis
 
 **Date:** 2026-06-24  

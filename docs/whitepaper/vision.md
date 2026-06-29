@@ -9,6 +9,12 @@ related: [whitepaper.md, ../technical/deployment-plan.md, ../sim/index.md]
 
 # AV Treasury — Vision
 
+> **HISTORICAL DOCUMENT:** This vision describes the original design
+> including veAg lock-weighted governance and RSBT soulbound tokens. The
+> deployed system uses AgToken (ERC20Votes) for governance and
+> QuasiCrystalLPNFT (ERC-721) for LP positions. See
+> [docs/central-banking/](../central-banking/index.md) for current specs.
+
 > A decentralized central banking protocol for the on-chain economy.
 > The why behind every contract, every mechanism, every line of code.
 

@@ -1,3 +1,12 @@
+---
+title: Comprehensive Analyst Report — v3
+date: 2026-06-29
+status: canonical
+description: Comprehensive v3 analyst report covering all 14 contracts (Production + Sandbox) with detailed mechanism analysis.
+category: reports
+related: [reports/analyst_report.md, reports/simulation_report.md, reports/formal_verification_report.md, reports/pentest_report.md]
+---
+
 # AV TREASURY — COMPREHENSIVE ANALYST REPORT
 
 **Date:** 2026-06-24  

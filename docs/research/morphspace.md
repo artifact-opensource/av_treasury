@@ -1,3 +1,13 @@
+---
+title: Morphspace — Continuous Character Morphing
+date: 2026-06-29
+status: canonical
+description: Parametric geometry and generative vector fields for yield-driven on-chain character morphing.
+category: technical
+related: [research/acoustic_vault.md, research/meta_structure_schema.md, central-banking/10-quasicrystal-nft.md]
+---
+
+# Morphspace — Continuous Character Morphing
 
 ## 1. Infinite Character Morphing: The Continuous Morphspace
 To move beyond basic modular trait swapping (which hits a ceiling no matter how many variations you have), we use **Parametric Geometry and Generative Vector Fields**. The DNA seed doesn't choose a predefined head or body shape; instead, it acts as a set of continuous coefficients inside a geometric coordinate formula.

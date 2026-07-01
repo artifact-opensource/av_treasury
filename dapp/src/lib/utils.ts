@@ -1,35 +1,26 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx'
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return clsx(inputs)
 }
 
-export function formatAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
-}
-
-export function formatTokenAmount(amount: bigint, decimals: number = 18, displayDecimals: number = 4): string {
-  const divisor = BigInt(10 ** decimals)
-  const whole = amount / divisor
-  const remainder = amount % divisor
-  const decimal = Number(remainder) / Number(divisor)
-  return `${whole.toLocaleString()}.${decimal.toFixed(displayDecimals).slice(2)}`
-}
-
-export function formatUsd(amount: number): string {
+export function formatUsd(value: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount)
+  }).format(value)
 }
 
-export function formatPercent(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+export function formatTokenAmount(value: bigint | number, decimals: number = 18): string {
+  const num = typeof value === 'bigint' ? Number(value) / 10 ** decimals : value
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(num)
 }
 
-export function bpsToPercent(bps: number): number {
-  return bps / 100
+export function formatAddress(address: string): string {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }

@@ -3,7 +3,7 @@
 import { useAccount } from 'wagmi'
 import { usePortfolio } from '@/hooks/use-portfolio'
 import { useOraclePrices } from '@/hooks/use-oracle'
-import { useAllPrices as useLivePrices } from '@/hooks/use-live-prices'
+import { useLivePrices } from '@/hooks/use-live-prices'
 import { formatTokenAmount, formatUsd } from '@/lib/utils'
 import { AV_CONTRACTS } from '@/lib/constants'
 import { ArrowRight, Droplets, Coins, Vote, TrendingUp, BarChart3 } from 'lucide-react'
@@ -14,7 +14,7 @@ export default function DashboardPage() {
   const { auBalance, agBalance, votingPower, auSupply, agSupply, isLoading: portfolioLoading } = usePortfolio()
   const { au, ag, tvl, isLoading: oracleLoading } = useOraclePrices()
   const prices = useLivePrices()
-  const liveLoading = !prices.loaded
+  const liveLoading = prices.isLoading
 
   // Transform prices into array for display
   const livePrices = [

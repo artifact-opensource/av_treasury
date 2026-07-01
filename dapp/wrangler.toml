@@ -1,0 +1,7 @@
+name = "av-treasury-dapp"
+account_id = "c11221211b27b35d542b9df6ccfb35df"
+compatibility_date = "2024-06-01"
+
+[[pages]]
+bucket = "./out"
+pages_build_output_dir = "out"

@@ -1,118 +1,117 @@
-'use client'
+"use client"
 
-import { useReadContract } from 'wagmi'
-import { formatUnits } from 'viem'
-import { AV_CONTRACTS, CHAINLINK_FEEDS, TOKENS } from '@/lib/constants'
-import { AV_ORACLE_ABI as oracleAbi } from '@/lib/abis'
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { TokenMetaData } from '../types/coingecko'
 
-/**
- * Fetch metal spot price from CoinGecko (no API key needed)
- */
-async function fetchCgPrice(symbol: 'au' | 'ag'): Promise<number | null> {
-  try {
-    const metal = symbol === 'au' ? 'XAU' : 'XAG'
-    const res = await fetch(`https://api.gold-api.com/price/${metal}`, { cache: 'no-store' })
-    if (!res.ok) return null
-    const json = await res.json()
-    return json?.price ?? null
-  } catch {
-    return null
-  }
+interface PriceData {
+  au: TokenMetaData | null
+  ag: TokenMetaData | null
+  [key: string]: TokenMetaData | null | any
 }
 
-/**
- * Try on-chain oracle first, fall back to CoinGecko/metals API
- */
-function useMetalPrice(token: `0x${string}`, symbol: 'au' | 'ag') {
-  const [fallbackPrice, setFallbackPrice] = useState<number | null>(null)
+async function fetchCoinGeckoPrices(): Promise<PriceData> {
+  try {
+    const coingeckoResponse = await fetch(
+      'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&symbols=au,ag,eth,usdc&order=market_cap_desc&per_page=50&page=1&sparkline=false',
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'User-Agent': 'AV-Treasury-Dapp/1.0'
+        }
+      }
+    )
 
-  const { data } = useReadContract({
-    address: AV_CONTRACTS.oracle,
-    abi: oracleAbi,
-    functionName: 'getPrice',
-    args: [token],
-    query: { refetchInterval: 30_000 },
-  })
-
-  let oraclePrice: number | null = null
-  if (data) {
-    const result = data as readonly [bigint, number]
-    const price = Number(formatUnits(result[0], 18))
-    if (price > 0) {
-      oraclePrice = price
+    if (!coingeckoResponse.ok) {
+      throw new Error(`CoinGecko API error: ${coingeckoResponse.status}`)
     }
-  }
 
-  // Fetch fallback when oracle fails
-  useEffect(() => {
-    if (oraclePrice === null) {
-      fetchCgPrice(symbol).then(price => {
-        if (price !== null) setFallbackPrice(price)
+    const coingeckoData = await coingeckoResponse.json()
+
+    const prices: PriceData = {
+      au: null,
+      ag: null,
+      eth: null,
+      usdc: null
+    }
+
+    if (coingeckoData && Array.isArray(coingeckoData)) {
+      coingeckoData.forEach((token: TokenMetaData) => {
+        const symbol = token.symbol.toLowerCase()
+        if (symbol === 'au' || symbol === 'ag' || symbol === 'eth' || symbol === 'usdc') {
+          prices[symbol] = token
+        }
       })
     }
-  }, [oraclePrice, symbol])
 
-  return oraclePrice ?? fallbackPrice
-}
-
-export function useAuPrice() {
-  return useMetalPrice(TOKENS.au, 'au')
-}
-
-export function useAgPrice() {
-  return useMetalPrice(TOKENS.ag, 'ag')
-}
-
-export function useEthPrice() {
-  const { data } = useReadContract({
-    address: CHAINLINK_FEEDS.ethUsd,
-    abi: [{
-      name: 'latestAnswer',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [],
-      outputs: [{ type: 'int256' }],
-    }],
-    functionName: 'latestAnswer',
-    query: { refetchInterval: 60_000 },
-  })
-  if (!data) return null
-  return Number(formatUnits(data as bigint, 8))
-}
-
-export function useUsdcPrice() {
-  const { data } = useReadContract({
-    address: CHAINLINK_FEEDS.usdcUsd,
-    abi: [{
-      name: 'latestAnswer',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [],
-      outputs: [{ type: 'int256' }],
-    }],
-    functionName: 'latestAnswer',
-    query: { refetchInterval: 60_000 },
-  })
-  if (!data) return null
-  return Number(formatUnits(data as bigint, 8))
-}
-
-/**
- * Hook that returns all tracked prices
- */
-export function useAllPrices() {
-  const au = useAuPrice()
-  const ag = useAgPrice()
-  const eth = useEthPrice()
-  const usdc = useUsdcPrice()
-
-  return {
-    au,
-    ag,
-    eth,
-    usdc,
-    aero: null,
-    loaded: au !== null && eth !== null,
+    return prices
+  } catch (error) {
+    console.error('Error fetching CoinGecko prices:', error)
+    return {
+      au: null,
+      ag: null,
+      eth: null,
+      usdc: null
+    }
   }
 }
+
+async function fetchProductPrices(): Promise<Record<string, any>> {
+  try {
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=artifact-utility,artifact-governance&vs_currencies=usd&include_24hr_change=true',
+      {
+        next: { revalidate: 60 },
+        headers: {
+          'User-Agent': 'AV-Treasury-Dapp/1.0'
+        }
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching product prices:', error)
+    return {}
+  }
+}
+
+export function useAllPrices() {
+  const { data: coingeckoData, isLoading: cgLoading, error: cgError } = useQuery({
+    queryKey: ['coingecko-prices'],
+    queryFn: fetchCoinGeckoPrices,
+    refetchInterval: 60000,
+    staleTime: 30000,
+  })
+
+  const { data: productData, isLoading: prodLoading, error: prodError } = useQuery({
+    queryKey: ['product-prices'],
+    queryFn: fetchProductPrices,
+    refetchInterval: 60000,
+    staleTime: 30000,
+  })
+
+  const loaded = !cgLoading && !prodLoading
+
+  return {
+    loaded,
+    au: coingeckoData?.au?.current_price ?? 0,
+    ag: coingeckoData?.ag?.current_price ?? 0,
+    eth: coingeckoData?.eth?.current_price ?? 0,
+    usdc: coingeckoData?.usdc?.current_price ?? 1,
+    artu: productData?.['artifact-utility']?.usd ?? 0,
+    artg: productData?.['artifact-governance']?.usd ?? 0,
+    changes: {
+      au: coingeckoData?.au?.price_change_percentage_24h ?? 0,
+      ag: coingeckoData?.ag?.price_change_percentage_24h ?? 0,
+      artu: productData?.['artifact-utility']?.usd_24h_change ?? 0,
+      artg: productData?.['artifact-governance']?.usd_24h_change ?? 0,
+    },
+    isLoading: cgLoading || prodLoading,
+    error: cgError || prodError,
+  }
+}
+
+export { useAllPrices as useLivePrices }

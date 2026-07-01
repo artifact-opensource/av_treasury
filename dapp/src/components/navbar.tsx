@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
-import { Wallet, ArrowLeftRight, Droplets, PieChart, Vote, Coins, HardDrive } from 'lucide-react'
+import { Wallet, ArrowLeftRight, Droplets, PieChart, Vote, Coins, HardDrive, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatAddress } from '@/lib/utils'
 
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/swap', label: 'Swap', icon: ArrowLeftRight },
   { href: '/liquidity', label: 'Liquidity', icon: Droplets },
   { href: '/stake', label: 'Stake', icon: Coins },
+  { href: '/markets', label: 'Markets', icon: BarChart3 },
   { href: '/cold-storage', label: 'Cold Storage', icon: HardDrive },
   { href: '/governance', label: 'Govern', icon: Vote },
 ]

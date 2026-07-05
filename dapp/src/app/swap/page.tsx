@@ -1,430 +1,459 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useReadContracts } from 'wagmi'
+import { useState, useEffect, useCallback } from 'react'
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useChainId, useSwitchChain } from 'wagmi'
 import { base } from 'wagmi/chains'
-import { ArrowDownUp, Settings, Loader2, ExternalLink, Search, ChevronDown, Info } from 'lucide-react'
-import { AERODROME_ROUTER_ABI, ERC20_ABI } from '@/lib/abis'
-import { AERODROME, TOKENS, TOKEN_META, EXPLORER } from '@/lib/constants'
-import { formatTokenAmount, cn } from '@/lib/utils'
+import { parseUnits, formatUnits, erc20Abi, maxUint256 } from 'viem'
+import { useLivePrices as useAllPrices } from '@/hooks/use-live-prices'
+import { TOKENS, TOKEN_META, AERODROME, AV_CONTRACTS, EXPLORER } from '@/lib/constants'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2, ArrowLeftRight, ChevronUp, ChevronDown, ExternalLink, Wallet, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { TradingViewChart } from '@/components/trading-view-chart'
 
-// ─── Extended Token List (searchable) ─────────────────────────────
-interface TokenInfo {
-  key: string
+const ERC20_ABI = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+] as const
+
+const ROUTER_ABI = [
+  'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts)',
+  'function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts)',
+] as const
+
+type TokenKey = keyof typeof TOKENS
+type TokenInfo = {
+  key: TokenKey
   address: `0x${string}`
   symbol: string
   name: string
-  icon: string
   decimals: number
-  isNative?: boolean
+  logo: string
+  coingeckoId: string
 }
 
-const ALL_TOKENS: TokenInfo[] = [
-  { key: 'eth', address: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE' as `0x${string}`, symbol: 'ETH', name: 'Ethereum', icon: '💜', decimals: 18, isNative: true },
-  { key: 'weth', address: TOKENS.weth, symbol: 'WETH', name: 'Wrapped ETH', icon: '💜', decimals: 18 },
-  { key: 'usdc', address: TOKENS.usdc, symbol: 'USDC', name: 'USD Coin', icon: '💵', decimals: 6 },
-  { key: 'usdt', address: '0xfde4C96c8593536E31F229EA8f37b2ADa269FF73' as `0x${string}`, symbol: 'USDT', name: 'Tether', icon: '💲', decimals: 6 },
-  { key: 'dai', address: '0x50c572594910f676f7760ec3e7f480616923b61B' as `0x${string}`, symbol: 'DAI', name: 'Dai Stablecoin', icon: '🟡', decimals: 18 },
-  { key: 'wbtc', address: '0xc028e103eB2A2e3b3Ff7D7D3A0E5Bf1C1C3Dd1e' as `0x${string}`, symbol: 'WBTC', name: 'Wrapped Bitcoin', icon: '🟠', decimals: 8 },
-  { key: 'aero', address: '0x940181a94A35A4519B9f1E322c818B2C76230030' as `0x${string}`, symbol: 'AERO', name: 'Aerodrome', icon: '🚀', decimals: 18 },
-  { key: 'cbeth', address: '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22' as `0x${string}`, symbol: 'cbETH', name: 'Coinbase Wrapped ETH', icon: '🔵', decimals: 18 },
-  { key: 'au', address: TOKENS.au, symbol: 'Au', name: 'Artifact Utility', icon: '🥇', decimals: 18 },
-  { key: 'ag', address: TOKENS.ag, symbol: 'Ag', name: 'Artifact Governance', icon: '🔘', decimals: 18 },
-]
+const ALL_TOKENS: TokenInfo[] = Object.entries(TOKEN_META).map(([key, meta]) => ({
+  key: key as TokenKey,
+  address: TOKENS[key as TokenKey],
+  symbol: meta.symbol,
+  name: meta.name,
+  decimals: meta.decimals,
+  logo: meta.logo,
+  coingeckoId: meta.coingeckoId,
+}))
 
-// ─── Popular tokens for quick select ──────────────────────────────
-const POPULAR_TOKENS = ['ETH', 'USDC', 'WETH', 'AERO', 'DAI']
-
-export default function SwapPage() {
-  const { address, isConnected } = useAccount()
-  const [fromToken, setFromToken] = useState<TokenInfo>(ALL_TOKENS[0]) // ETH
-  const [toToken, setToToken] = useState<TokenInfo>(ALL_TOKENS[1]) // WETH
-  const [amountIn, setAmountIn] = useState('')
-  const [slippage, setSlippage] = useState(0.5)
-  const [showSettings, setShowSettings] = useState(false)
-  const [showFromSearch, setShowFromSearch] = useState(false)
-  const [showToSearch, setShowToSearch] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const fromDecimals = fromToken.decimals
-  const toDecimals = toToken.decimals
-  const amountInBigInt = parseInput(amountIn, fromDecimals)
-
-  // Swap path
-  const path = useMemo(() => buildSwapPath(fromToken.address, toToken.address), [fromToken, toToken])
-
-  // Quote
-  const { data: amountsOut, isLoading: isQuoting } = useReadContract({
-    address: AERODROME.routerV2,
-    abi: AERODROME_ROUTER_ABI,
-    functionName: 'getAmountsOut',
-    args: [amountInBigInt, path],
-    chainId: base.id,
-    query: { enabled: amountInBigInt > 0n && path.length >= 2 },
-  })
-
-  const amountOut = (amountsOut as bigint[] | undefined)?.[path.length - 1] ?? 0n
-  const slippageBps = BigInt(Math.round(slippage * 100))
-  const amountOutMin = amountOut > 0n ? amountOut - (amountOut * slippageBps) / 10000n : 0n
-
-  // Balances
-  const { data: balances } = useReadContracts({
-    contracts: fromToken.isNative
-      ? [{ address: toToken.address, abi: ERC20_ABI, functionName: 'balanceOf' as const, args: [address!] }]
-      : [
-          { address: fromToken.address, abi: ERC20_ABI, functionName: 'balanceOf' as const, args: [address!] },
-          { address: toToken.address, abi: ERC20_ABI, functionName: 'balanceOf' as const, args: [address!] },
-        ],
-    query: { enabled: !!address && !fromToken.isNative ? true : !!address },
-  })
-
-  // Native ETH balance
-  const { data: nativeBalance } = useReadContract({
-    address: '0x0000000000000000000000000000000000000000' as `0x${string}`,
-    abi: [{ functionName: 'balanceOf', type: 'function', stateMutability: 'view', inputs: [{ name: 'addr', type: 'address' }], outputs: [{ type: 'uint256' }] }],
-    functionName: 'balanceOf',
-    args: [address!],
-    query: { enabled: !!address && fromToken.isNative },
-  })
-
-  const fromBalance = fromToken.isNative
-    ? (nativeBalance as bigint) ?? 0n
-    : (balances?.[0]?.result as bigint) ?? 0n
-  const toBalance = fromToken.isNative
-    ? (balances?.[0]?.result as bigint) ?? 0n
-    : (balances?.[1]?.result as bigint) ?? 0n
-
-  // Allowance
-  const { data: allowance } = useReadContract({
-    address: fromToken.address,
-    abi: ERC20_ABI,
-    functionName: 'allowance',
-    args: [address!, AERODROME.routerV2],
-    query: { enabled: !!address && amountInBigInt > 0n && !fromToken.isNative },
-  })
-
-  // Approve
-  const { data: approveHash, writeContract: approveWrite, isPending: isApproving } = useWriteContract()
-  const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({ hash: approveHash })
-
-  // Swap
-  const { data: swapHash, writeContract: swapWrite, isPending: isSwapping } = useWriteContract()
-  const { isLoading: isSwapConfirming, isSuccess: isSwapSuccess } = useWaitForTransactionReceipt({ hash: swapHash })
-
-  const needsApproval = !fromToken.isNative && allowance !== undefined && amountInBigInt > 0n && (allowance as bigint) < amountInBigInt
-
-  const handleApprove = useCallback(() => {
-    approveWrite({
-      address: fromToken.address,
-      abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [AERODROME.routerV2, BigInt(2) ** BigInt(256) - BigInt(1)],
-    })
-  }, [fromToken.address, approveWrite])
-
-  const handleSwap = useCallback(() => {
-    if (amountInBigInt === 0n || !address) return
-    swapWrite({
-      address: AERODROME.routerV2,
-      abi: AERODROME_ROUTER_ABI,
-      functionName: 'swapExactTokensForTokens',
-      args: [amountInBigInt, amountOutMin, path, address, BigInt(Math.floor(Date.now() / 1000) + 1200)],
-    })
-  }, [amountInBigInt, amountOutMin, path, address, swapWrite])
-
-  const flipTokens = useCallback(() => {
-    setFromToken(toToken)
-    setToToken(fromToken)
-    setAmountIn('')
-  }, [fromToken, toToken])
-
-  // Token search filter
-  const filteredTokens = useMemo(() => {
-    if (!searchQuery) return ALL_TOKENS
-    const q = searchQuery.toLowerCase()
-    return ALL_TOKENS.filter(t =>
-      t.symbol.toLowerCase().includes(q) ||
-      t.name.toLowerCase().includes(q) ||
-      t.address.toLowerCase().includes(q)
-    )
-  }, [searchQuery])
-
-  const isBusy = isApproving || isApproveConfirming || isSwapping || isSwapConfirming
-  const txHash = swapHash || approveHash
-
-  if (!isConnected) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <ArrowDownUp className="h-8 w-8 text-primary" />
-        </div>
-        <p className="text-muted-foreground">Connect your wallet to swap tokens</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="max-w-lg mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Swap</h1>
-        <button onClick={() => setShowSettings(!showSettings)} className="rounded-lg p-2 hover:bg-accent transition-colors">
-          <Settings className="h-5 w-5 text-muted-foreground" />
-        </button>
-      </div>
-
-      {showSettings && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-          <div className="text-sm font-medium">Slippage Tolerance</div>
-          <div className="flex gap-2">
-            {[0.1, 0.5, 1.0, 3.0].map((s) => (
-              <button key={s} onClick={() => setSlippage(s)} className={cn('rounded-lg px-3 py-1.5 text-sm', slippage === s ? 'bg-primary text-primary-foreground' : 'bg-accent text-foreground')}>
-                {s}%
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-        {/* From */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">From</span>
-            <span className="text-muted-foreground">Balance: {formatOutput(fromBalance, fromDecimals)}</span>
-          </div>
-          <div className="flex gap-3 items-center">
-            <div className="relative">
-              <button
-                onClick={() => { setShowFromSearch(!showFromSearch); setShowToSearch(false); setSearchQuery('') }}
-                className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium min-w-[120px] hover:bg-accent transition-colors"
-              >
-                <span>{fromToken.icon}</span>
-                <span>{fromToken.symbol}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-              {showFromSearch && (
-                <TokenSearchDropdown
-                  tokens={filteredTokens}
-                  onSelect={(t) => { setFromToken(t); setShowFromSearch(false); setAmountIn('') }}
-                  onClose={() => setShowFromSearch(false)}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  excludeToken={toToken}
-                />
-              )}
-            </div>
-            <input type="number" placeholder="0.0" value={amountIn} onChange={(e) => setAmountIn(e.target.value)}
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-2.5 text-right text-lg font-mono focus:outline-none focus:ring-1 focus:ring-ring" />
-          </div>
-          <div className="flex gap-2">
-            {['25', '50', '75', '100'].map((pct) => (
-              <button key={pct} onClick={() => { const bal = Number(fromBalance) / 10 ** fromDecimals; setAmountIn((bal * parseInt(pct) / 100).toFixed(Math.min(fromDecimals, 6))); }}
-                className="rounded px-2 py-0.5 text-xs bg-accent hover:bg-accent/80 transition-colors">{pct}%</button>
-            ))}
-          </div>
-        </div>
-
-        {/* Flip */}
-        <div className="flex justify-center">
-          <button onClick={flipTokens} className="rounded-full border border-border p-2.5 hover:bg-accent transition-colors active:rotate-180 duration-300">
-            <ArrowDownUp className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* To */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">To</span>
-            <span className="text-muted-foreground">Balance: {formatOutput(toBalance, toDecimals)}</span>
-          </div>
-          <div className="flex gap-3 items-center">
-            <div className="relative">
-              <button
-                onClick={() => { setShowToSearch(!showToSearch); setShowFromSearch(false); setSearchQuery('') }}
-                className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium min-w-[120px] hover:bg-accent transition-colors"
-              >
-                <span>{toToken.icon}</span>
-                <span>{toToken.symbol}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-              {showToSearch && (
-                <TokenSearchDropdown
-                  tokens={filteredTokens}
-                  onSelect={(t) => { setToToken(t); setShowToSearch(false); setAmountIn('') }}
-                  onClose={() => setShowToSearch(false)}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  excludeToken={fromToken}
-                />
-              )}
-            </div>
-            <div className="flex-1 rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-right text-lg font-mono">
-              {isQuoting ? <Loader2 className="h-5 w-5 animate-spin inline" /> : amountOut > 0n ? formatOutput(amountOut, toDecimals) : '0.0'}
-            </div>
-          </div>
-        </div>
-
-        {/* Rate Info */}
-        {amountOut > 0n && amountInBigInt > 0n && (
-          <div className="text-xs text-muted-foreground space-y-1 border-t border-border pt-3">
-            <div className="flex justify-between">
-              <span>Rate</span>
-              <span>1 {fromToken.symbol} = {formatOutput(amountOut * BigInt(10 ** fromDecimals) / amountInBigInt, toDecimals)} {toToken.symbol}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Min Received</span>
-              <span>{formatOutput(amountOutMin, toDecimals)} {toToken.symbol}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Price Impact</span>
-              <span>
-                {(() => {
-                  if (amountInBigInt === 0n) return '<0.01%'
-                  const rate = Number(amountOut) / Number(amountInBigInt) * (10 ** fromDecimals / 10 ** toDecimals)
-                  const impact = (rate - 1) * 100
-                  return impact > 0.01 ? `${impact.toFixed(2)}%` : '<0.01%'
-                })()}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Route</span>
-              <span>{path.map((p) => findTokenSymbol(p)).join(' → ')}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Action */}
-        {needsApproval ? (
-          <button onClick={handleApprove} disabled={isBusy} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-            {isBusy ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Approving...</span> : `Approve ${fromToken.symbol}`}
-          </button>
-        ) : (
-          <button onClick={handleSwap} disabled={isBusy || amountInBigInt === 0n} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-            {isSwapping || isSwapConfirming ? <span className="flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Swapping...</span>
-              : isSwapSuccess ? 'Swap Complete!' : `Swap ${fromToken.symbol} → ${toToken.symbol}`}
-          </button>
-        )}
-
-        {/* TX Link */}
-        {txHash && (
-          <a href={`${EXPLORER.url}/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-            View on BaseScan <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Token Search Dropdown ────────────────────────────────────────
-function TokenSearchDropdown({
-  tokens,
+function TokenSelector({
+  label,
+  token,
+  amount,
+  setAmount,
+  balance,
+  usdValue,
+  price,
+  onMax,
   onSelect,
-  onClose,
-  searchQuery,
-  setSearchQuery,
-  excludeToken,
 }: {
-  tokens: TokenInfo[]
-  onSelect: (token: TokenInfo) => void
-  onClose: () => void
-  searchQuery: string
-  setSearchQuery: (q: string) => void
-  excludeToken: TokenInfo
+  label: string
+  token: TokenInfo
+  amount: string
+  setAmount: (v: string) => void
+  balance: { value: bigint; decimals: number; formatted: string } | undefined
+  usdValue: number
+  price: number
+  onMax?: () => void
+  onSelect: (key: TokenKey) => void
 }) {
   return (
-    <div className="absolute top-full left-0 mt-1 z-50 w-72 rounded-xl border border-border bg-card shadow-xl overflow-hidden">
-      <div className="p-2 border-b border-border">
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search by name or paste address"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm focus:outline-none"
-            autoFocus
-          />
-        </div>
-      </div>
-      <div className="max-h-64 overflow-y-auto">
-        {/* Popular tokens */}
-        {!searchQuery && (
-          <div className="p-2">
-            <div className="text-xs text-muted-foreground px-2 py-1 mb-1">Popular</div>
-            <div className="flex gap-1 flex-wrap px-2 mb-2">
-              {POPULAR_TOKENS.map(sym => {
-                const t = ALL_TOKENS.find(t => t.symbol === sym)
-                if (!t || t.symbol === excludeToken.symbol) return null
-                return (
-                  <button key={sym} onClick={() => onSelect(t)} className="flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs hover:bg-primary/20 transition-colors">
-                    {t.icon} {t.symbol}
-                  </button>
-                )
-              })}
-            </div>
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-muted-foreground">{label}</label>
+      <Select value={token.key} onValueChange={onSelect as any}>
+        <SelectTrigger className="w-full justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <img src={token.logo} alt={token.symbol} className="h-5 w-5 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <span className="font-medium">{token.symbol}</span>
           </div>
-        )}
-        <div className="text-xs text-muted-foreground px-3 py-1">All Tokens</div>
-        {tokens.filter(t => t.address !== excludeToken.address).map((token) => (
-          <button
-            key={token.key}
-            onClick={() => onSelect(token)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-accent transition-colors text-left"
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </SelectTrigger>
+        <SelectContent>
+          {ALL_TOKENS.map(t => (
+            <SelectItem key={t.key} value={t.key}>
+              <div className="flex items-center gap-2">
+                <img src={t.logo} alt={t.symbol} className="h-5 w-5 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                <span>{t.symbol}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <div className="relative">
+        <Input
+          type="number"
+          placeholder="0.0"
+          value={amount}
+          onChange={e => setAmount(e.target.value)}
+          className="text-right pr-10"
+          inputMode="decimal"
+          step="0.000001"
+        />
+        {onMax && balance && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs h-6 px-2"
+            onClick={onMax}
           >
-            <span className="text-lg">{token.icon}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium">{token.symbol}</div>
-              <div className="text-xs text-muted-foreground truncate">{token.name}</div>
-            </div>
-            <div className="text-xs text-muted-foreground font-mono">
-              {token.address.slice(0, 6)}...{token.address.slice(-4)}
-            </div>
-          </button>
-        ))}
-        {tokens.filter(t => t.address !== excludeToken.address).length === 0 && (
-          <div className="px-3 py-4 text-center text-sm text-muted-foreground">No tokens found</div>
+            Max
+          </Button>
+        )}
+      </div>
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>Balance: {balance?.formatted ?? '0'} {token.symbol}</span>
+        {price > 0 && <span>≈ ${usdValue.toFixed(2)}</span>}
+      </div>
+    </div>
+  )
+}
+
+function MarketInfoRow({ label, value, change }: { label: string; value: number; change?: number }) {
+  const isPositive = (change ?? 0) >= 0
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2 text-right">
+        <span className="font-medium">${value.toFixed(value < 1 ? 6 : 2)}</span>
+        {change !== undefined && (
+          <span className={cn('text-xs font-medium', isPositive ? 'text-green-500' : 'text-red-500')}>
+            {isPositive ? '+' : ''}{change.toFixed(2)}%
+          </span>
         )}
       </div>
     </div>
   )
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────
-function parseInput(val: string, dec: number): bigint {
-  if (!val || val === '.') return 0n
-  const [intPart, fracPart = ''] = val.split('.')
-  const padded = (fracPart + '0'.repeat(dec)).slice(0, dec)
-  return BigInt(intPart + padded)
-}
+export default function SwapPage() {
+  const { address, isConnected, chainId } = useAccount()
+  const { switchChain } = useSwitchChain()
+  const prices = useAllPrices()
+  const [fromToken, setFromToken] = useState<TokenKey>('weth')
+  const [toToken, setToToken] = useState<TokenKey>('au')
+  const [fromAmount, setFromAmount] = useState('')
+  const [toAmount, setToAmount] = useState('')
+  const [slippage, setSlippage] = useState('0.5')
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [txHash, setTxHash] = useState<string | null>(null)
 
-function formatOutput(val: bigint, dec: number): string {
-  if (val === 0n) return '0.0'
-  const str = val.toString().padStart(dec + 1, '0')
-  const intPart = str.slice(0, -dec) || '0'
-  const fracPart = str.slice(-dec).replace(/0+$/, '')
-  return fracPart ? `${intPart}.${fracPart}` : intPart
-}
+  const fromTokenInfo = ALL_TOKENS.find(t => t.key === fromToken)!
+  const toTokenInfo = ALL_TOKENS.find(t => t.key === toToken)!
 
-function buildSwapPath(from: `0x${string}`, to: `0x${string}`): `0x${string}`[] {
-  if (from.toLowerCase() === to.toLowerCase()) return [from]
+  const { writeContract, data: writeData, isPending: isWriting, reset: resetWrite } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash: writeData })
 
-  const weth = TOKENS.weth.toLowerCase()
+  const { data: fromBalance } = useBalance({
+    address: fromTokenInfo.address as `0x${string}`,
+    query: { enabled: isConnected && !!address },
+  })
 
-  // Direct: same as before for known pairs
-  const knownDirect: [string, string][] = []
-  const fromLower = from.toLowerCase()
-  const toLower = to.toLowerCase()
+  const { data: toBalance } = useBalance({
+    address: toTokenInfo.address as `0x${string}`,
+    query: { enabled: isConnected && !!address },
+  })
 
-  // If either is WETH, direct pair
-  if (fromLower === weth || toLower === weth) return [from, to]
+  const { data: fromAllowance } = useReadContract({
+    address: fromTokenInfo.address as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: [address!, AERODROME.router],
+    query: { enabled: isConnected && !!address && fromToken !== 'weth' },
+  })
 
-  // Route through WETH
-  return [from, TOKENS.weth as `0x${string}`, to]
-}
+  const getAmountOut = useCallback(async (amountIn: string): Promise<string | null> => {
+    if (!amountIn || parseFloat(amountIn) <= 0) return null
+    try {
+      setIsCalculating(true)
+      const amountInWei = parseUnits(amountIn, fromTokenInfo.decimals)
+      const path = [fromTokenInfo.address, toTokenInfo.address]
+      const amounts = await writeContract({
+        address: AERODROME.router,
+        abi: ROUTER_ABI,
+        functionName: 'getAmountsOut',
+        args: [amountInWei, path],
+      })
+      if (amounts && amounts[1]) {
+        const amountOut = formatUnits(amounts[1], toTokenInfo.decimals)
+        return amountOut
+      }
+    } catch (err) {
+      console.error('Quote error:', err)
+      setError('Failed to get quote')
+    } finally {
+      setIsCalculating(false)
+    }
+    return null
+  }, [fromTokenInfo, toTokenInfo, writeContract])
 
-function findTokenSymbol(tokenAddr: `0x${string}`): string {
-  const t = ALL_TOKENS.find(t => t.address.toLowerCase() === tokenAddr.toLowerCase())
-  return t?.symbol ?? tokenAddr.slice(0, 6) + '...'
+  useEffect(() => {
+    let mounted = true
+    const calculate = async () => {
+      const out = await getAmountOut(fromAmount)
+      if (mounted && out) setToAmount(out)
+    }
+    const timeout = setTimeout(calculate, 300)
+    return () => { mounted = false; clearTimeout(timeout) }
+  }, [fromAmount, fromToken, toToken, getAmountOut])
+
+  const handleSwap = async () => {
+    if (!address) return setError('Connect wallet first')
+    if (!fromAmount || parseFloat(fromAmount) <= 0) return setError('Enter amount')
+    if (chainId !== base.id) return switchChain({ chainId: base.id })
+
+    try {
+      setError(null)
+      const amountInWei = parseUnits(fromAmount, fromTokenInfo.decimals)
+      const path = [fromTokenInfo.address, toTokenInfo.address]
+      const amounts = await writeContract({
+        address: AERODROME.router,
+        abi: ROUTER_ABI,
+        functionName: 'getAmountsOut',
+        args: [amountInWei, path],
+      })
+      if (!amounts || !amounts[1]) return setError('Quote failed')
+      const minAmountOut = (amounts[1] * 9950n) / 10000n
+
+      if (fromToken !== 'weth') {
+        const allowance = fromAllowance ?? 0n
+        if (allowance < amountInWei) {
+          writeContract({
+            address: fromTokenInfo.address as `0x${string}`,
+            abi: ERC20_ABI,
+            functionName: 'approve',
+            args: [AERODROME.router, maxUint256],
+          })
+          return
+        }
+      }
+
+      writeContract({
+        address: AERODROME.router,
+        abi: ROUTER_ABI,
+        functionName: 'swapExactTokensForTokens',
+        args: [amountInWei, minAmountOut, path, address, BigInt(Date.now() + 1800000)],
+      })
+    } catch (err) {
+      console.error('Swap error:', err)
+      setError('Swap failed')
+    }
+  }
+
+  const handleMax = () => {
+    if (fromBalance) setFromAmount(formatUnits(fromBalance.value, fromTokenInfo.decimals))
+  }
+
+  const handleSwitch = () => {
+    setFromToken(toToken)
+    setToToken(fromToken)
+    setFromAmount(toAmount)
+    setToAmount(fromAmount)
+  }
+
+  const isWrongChain = chainId !== base.id && isConnected
+  const canSwap = isConnected && !isWrongChain && parseFloat(fromAmount) > 0 && !isWriting && !isConfirming
+
+  const fromPrice = prices[fromToken as keyof typeof prices] as number
+  const toPrice = prices[toToken as keyof typeof prices] as number
+  const fromUsd = fromPrice * parseFloat(fromAmount || '0')
+  const toUsd = toPrice * parseFloat(toAmount || '0')
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Swap</h1>
+          <p className="text-muted-foreground mt-1">Exchange tokens on Aerodrome Finance</p>
+        </div>
+
+        {isWrongChain && (
+          <div className="mb-6 p-4 border border-destructive/50 bg-destructive/10 text-destructive rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span>Wrong network: Please switch to Base</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => switchChain({ chainId: base.id })}>
+              Switch to Base
+            </Button>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 border border-destructive/50 bg-destructive/10 text-destructive rounded-lg flex items-center justify-between" onClick={() => setError(null)}>
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4" />
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
+
+        {isConfirmed && txHash && (
+          <div className="mb-6 p-4 border border-green-500/50 bg-green-500/10 text-green-500 rounded-lg flex items-center justify-between" onClick={() => { setTxHash(null); resetWrite() }}>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <span>Swap confirmed!</span>
+            </div>
+            <a href={`${EXPLORER}/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm underline">
+              View on BaseScan <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-card border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Trade</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-12 gap-4">
+                  <div className="col-span-12 lg:col-span-6">
+                    <TokenSelector
+                      label="From"
+                      token={fromTokenInfo}
+                      amount={fromAmount}
+                      setAmount={setFromAmount}
+                      balance={fromBalance}
+                      usdValue={fromUsd}
+                      price={fromPrice}
+                      onMax={handleMax}
+                      onSelect={setFromToken}
+                    />
+                  </div>
+                  <div className="col-span-12 lg:col-span-6">
+                    <TokenSelector
+                      label="To"
+                      token={toTokenInfo}
+                      amount={toAmount}
+                      setAmount={setToAmount}
+                      balance={toBalance}
+                      usdValue={toUsd}
+                      price={toPrice}
+                      onSelect={setToToken}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSwitch}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-center gap-2"
+                  disabled={isCalculating || isWriting || isConfirming}
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                  <span>Switch tokens</span>
+                </Button>
+
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Slippage tolerance</span>
+                  <Select value={slippage} onValueChange={setSlippage}>
+                    <SelectTrigger className="w-auto">
+                      <SelectValue placeholder="0.5%" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0.1">0.1%</SelectItem>
+                      <SelectItem value="0.5">0.5%</SelectItem>
+                      <SelectItem value="1">1%</SelectItem>
+                      <SelectItem value="2">2%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  onClick={handleSwap}
+                  disabled={!canSwap}
+                  className="w-full py-3 text-lg"
+                  size="default"
+                >
+                  {isWriting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Approving...
+                    </>
+                  ) : isConfirming ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Confirming...
+                    </>
+                  ) : (
+                    `Swap ${fromTokenInfo.symbol} → ${toTokenInfo.symbol}`
+                  )}
+                </Button>
+
+                {fromUsd > 0 && toUsd > 0 && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    ≈ ${fromUsd.toFixed(2)} → ≈ ${toUsd.toFixed(2)}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Price Chart</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TradingViewChart
+                  symbol={toTokenInfo.coingeckoId}
+                  interval="60"
+                  height={400}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-1 space-y-4">
+            <Card className="bg-card border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Market Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <MarketInfoRow label="Au Price" value={prices.au} change={prices.changes?.au} />
+                <MarketInfoRow label="Ag Price" value={prices.ag} change={prices.changes?.ag} />
+                <MarketInfoRow label="ARTU Price" value={prices.artu} change={prices.changes?.artu} />
+                <MarketInfoRow label="ARTG Price" value={prices.artg} change={prices.changes?.artg} />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">Your Balances</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {ALL_TOKENS.map(token => {
+                  const balance = token.key === fromToken ? fromBalance : token.key === toToken ? toBalance : undefined
+                  return (
+                    <div key={token.key} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <img src={token.logo} alt={token.symbol} className="h-5 w-5 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                        <span className="font-medium">{token.symbol}</span>
+                      </div>
+                      <span className="text-muted-foreground">
+                        {balance ? formatUnits(balance.value, balance.decimals) : '0'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

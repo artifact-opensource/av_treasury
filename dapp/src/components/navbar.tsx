@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
-import { Wallet, ArrowLeftRight, Droplets, PieChart, Vote, Coins, HardDrive, BarChart3 } from 'lucide-react'
+import { Wallet, ArrowLeftRight, Droplets, PieChart, Vote, Coins, HardDrive, BarChart3, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatAddress } from '@/lib/utils'
 
@@ -12,9 +13,8 @@ const NAV_ITEMS = [
   { href: '/swap', label: 'Swap', icon: ArrowLeftRight },
   { href: '/liquidity', label: 'Liquidity', icon: Droplets },
   { href: '/stake', label: 'Stake', icon: Coins },
-  { href: '/markets', label: 'Markets', icon: BarChart3 },
-  { href: '/cold-storage', label: 'Cold Storage', icon: HardDrive },
   { href: '/governance', label: 'Govern', icon: Vote },
+  { href: '/cold-storage', label: 'Cold Storage', icon: HardDrive },
 ]
 
 export function Navbar() {
@@ -22,6 +22,7 @@ export function Navbar() {
   const { address, isConnected } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
+  const [showConnectModal, setShowConnectModal] = useState(false)
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
@@ -30,11 +31,11 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">AV</span>
+                <span className="text-primary-foreground font-bold text-sm">T</span>
               </div>
-              <span className="font-semibold text-lg hidden sm:block">AV Treasury</span>
+              <span className="font-semibold text-lg hidden sm:block">Treasury</span>
             </Link>
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href
@@ -71,13 +72,36 @@ export function Navbar() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => connect({ connector: connectors[0] })}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowConnectModal(!showConnectModal)}
+                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Wallet className="h-4 w-4" />
+                  Connect Wallet
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", showConnectModal && "rotate-180")} />
+                </button>
+
+                {showConnectModal && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card p-1 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                    {connectors.map((connector) => (
+                      <button
+                        key={connector.id}
+                        onClick={() => {
+                          connect({ connector });
+                          setShowConnectModal(false);
+                        }}
+                        className="flex w-full items-center gap-3 px-3 py-2 text-sm rounded-lg text-foreground hover:bg-accent transition-colors"
+                      >
+                        <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                          {connector.name[0]}
+                        </div>
+                        {connector.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

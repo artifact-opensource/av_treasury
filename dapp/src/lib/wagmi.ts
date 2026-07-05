@@ -1,31 +1,28 @@
 'use client'
 
-import { http, createConfig } from 'wagmi'
-import { base } from 'wagmi/chains'
-import { coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { createConfig, http } from 'wagmi'
+import { base, mainnet } from 'wagmi/chains'
+import { injected, metaMask, walletConnect, coinbaseWallet } from 'wagmi/connectors'
 
-const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? ''
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id'
 
-export const wagmiConfig = createConfig({
-  chains: [base],
+export const config = createConfig({
+  chains: [base, mainnet],
   connectors: [
-    coinbaseWallet({
-      appName: 'AV Treasury',
-      preference: 'smartWalletOnly',
-    }),
-    walletConnect({
-      projectId: walletConnectProjectId,
-      showQrModal: true,
-    }),
+    injected({ target: 'metaMask' }),
+    metaMask(),
+    coinbaseWallet({ appName: 'AV Treasury', appChainIds: [base.id] }),
+    walletConnect({ projectId, showQrModal: true }),
   ],
   transports: {
     [base.id]: http('https://mainnet.base.org'),
+    [mainnet.id]: http('https://eth.llamarpc.com'),
   },
   ssr: true,
 })
 
 declare module 'wagmi' {
   interface Register {
-    config: typeof wagmiConfig
+    config: typeof config
   }
 }

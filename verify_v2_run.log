@@ -1,0 +1,228 @@
+
+=== AgToken (0x1D31719389Bd8b17277Ba367c26b830aE34D3674) ===
+    contract: contracts/av_suite/AgToken.sol:AgToken
+    ✅ already verified on Etherscan
+
+=== AuToken (0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08) ===
+    contract: contracts/av_suite/AuToken.sol:AuToken
+    ✅ already verified on Etherscan
+
+=== PID_Emission_Controller (0xB8F240870DBc1cD5F9262F8180350A29ea404268) ===
+    contract: contracts/PID_Emission_Controller_v3.sol:PID_Emission_Controller_v3
+    ✅ already verified on Etherscan
+
+=== TreasuryAMO (0xF096cD4D24811B0F824c929907196bCB796bca88) ===
+    contract: contracts/av_suite/TreasuryAMO.sol:TreasuryAMO
+    ✅ already verified on Etherscan
+
+=== TreasuryFlashBuy (0xf6383860837E6cb983F9Af8Def92fc08F15Be65b) ===
+    contract: contracts/av_suite/TreasuryFlashBuy.sol:TreasuryFlashBuy
+    🔄 V2 submitted. GUID=jitetq5zhlkculmmrbem9m372wme4qxqtudihvkkunaztqzg8h
+    ⚠️ V2 result: Fail - Unable to verify. Compiled contract deployment bytecode does NOT match the transaction deployment bytecode.  -> falling back to hardhat
+    🔧 hardhat fallback:
+null,"arrayLength":null,"arrayChildren":null,"baseType":"uint256","_isParamType":true}],"values":[]}, code=INVALID_ARGUMENT, version=abi/5.8.0)
+        at Logger.makeError (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/logger/src.ts/index.ts:269:28)
+        at Logger.throwError (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/logger/src.ts/index.ts:281:20)
+        at AbiCoder.encode (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/abi-coder.ts:101:20)
+        at Interface._encodeParams (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/interface.ts:323:31)
+        at Interface.encodeDeploy (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/interface.ts:327:21)
+        at encodeArguments (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/ABIEncoder.ts:21:8)
+        at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:308:34)
+        at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+        at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+        at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+
+
+=== OracleFlashBuy (0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc) ===
+    contract: contracts/av_suite/OracleFlashBuy.sol:OracleFlashBuy
+    🔄 V2 submitted. GUID=zzgk9piaggfcpwdnutcr1fz3rjsnncscbe1fvxtbk8xc2suq3j
+    ✅ V2 verified: Pass - Verified
+
+=== QuasiCrystalOracle (0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD) ===
+    contract: contracts/av_suite/QuasiCrystalOracle.sol:QuasiCrystalOracle
+    ⚠️ V2 submit failed: no build-info for contracts/av_suite/QuasiCrystalOracle.sol:QuasiCrystalOracle  -> falling back to hardhat
+    🔧 hardhat fallback:
+null,"arrayLength":null,"arrayChildren":null,"baseType":"address","_isParamType":true}],"values":[]}, code=INVALID_ARGUMENT, version=abi/5.8.0)
+        at Logger.makeError (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/logger/src.ts/index.ts:269:28)
+        at Logger.throwError (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/logger/src.ts/index.ts:281:20)
+        at AbiCoder.encode (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/abi-coder.ts:101:20)
+        at Interface._encodeParams (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/interface.ts:323:31)
+        at Interface.encodeDeploy (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/interface.ts:327:21)
+        at encodeArguments (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/ABIEncoder.ts:21:8)
+        at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:308:34)
+        at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+        at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+        at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+
+
+=== AvOracleV5 (0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB) ===
+    contract: contracts/av_suite/AvOracleV5.sol:AvOracleV5
+    ⚠️ V2 submit failed: no build-info for contracts/av_suite/AvOracleV5.sol:AvOracleV5  -> falling back to hardhat
+    🔧 hardhat fallback:
+null,"arrayLength":null,"arrayChildren":null,"baseType":"uint256","_isParamType":true}],"values":[]}, code=INVALID_ARGUMENT, version=abi/5.8.0)
+        at Logger.makeError (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/logger/src.ts/index.ts:269:28)
+        at Logger.throwError (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/logger/src.ts/index.ts:281:20)
+        at AbiCoder.encode (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/abi-coder.ts:101:20)
+        at Interface._encodeParams (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/interface.ts:323:31)
+        at Interface.encodeDeploy (/home/adam/Projects/ARC/av_treasury/node_modules/@ethersproject/abi/src.ts/interface.ts:327:21)
+        at encodeArguments (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/ABIEncoder.ts:21:8)
+        at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:308:34)
+        at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+        at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+        at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+
+
+=== AVLPStaking_v2 (0x8F638B6C2EBD61A638561B6993930CF25D53ACB9) ===
+    contract: contracts/av_suite/AVLPStaking_v2.sol:AVLPStaking_v2
+    🔄 V2 submitted. GUID=gwdce8c1fmzpbjcxbhpas4uhefbygkhvzus4fsan9kyyezdz3p
+    ⚠️ V2 result: Fail - Unable to verify. Compiled contract deployment bytecode does NOT match the transaction deployment bytecode.  -> falling back to hardhat
+    🔧 hardhat fallback:
+unning the verify subtask from within Hardhat instead:
+
+  await run("verify:verify", {
+    <other args>,
+    contract: "contracts/Example.sol:ExampleContract"
+  };
+    at inferContract (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:607:11)
+    at SimpleTaskDefinition.action (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:742:31)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:279:60)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at main (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+
+
+=== Governor (0x5F061c177b76753686122185989C2332C1d0e8b1) ===
+    contract: contracts/av_suite/Governor.sol:Governor
+    ✅ already verified on Etherscan
+
+=== TimeLock (0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be) ===
+    contract: contracts/av_suite/TimeLock.sol:TimeLock
+    ✅ already verified on Etherscan
+
+=== TreasurySafe (0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e) ===
+    contract: contracts/av_suite/TreasurySafe.sol:TreasurySafe
+    ✅ already verified on Etherscan
+
+=== SlipstreamRouter (0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43) ===
+    contract: contracts/av_suite/SlipstreamRouter.sol:SlipstreamRouter
+    ✅ already verified on Etherscan
+
+=== auLP_NFT (0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8) ===
+    contract: contracts/av_suite/AuLPNFT.sol:AuLPNFT
+    ✅ already verified on Etherscan
+
+=== FlashLoan (0x4DDD1873964E5C2E3BE6712E199812903E6696B9) ===
+    contract: contracts/av_suite/FlashLoan.sol:FlashLoan
+    ✅ already verified on Etherscan
+
+=== DexSimulator (0x2C1bD0e498cEA315dA7486a41FB3Dd991DA302B2) ===
+    contract: contracts/av_suite/DexSimulator.sol:DexSimulator
+    ✅ already verified on Etherscan
+
+=== OnChainBase64 (0x4F7c83B6e0B9a2D1c3E4f5A6b7C8d9E0f1A2b3C4) ===
+    contract: contracts/av_suite/OnChainBase64.sol:OnChainBase64
+    ⚠️ V2 submit failed: Unable to locate ContractCode at 0x4F7c83B6e0B9a2D1c3E4f5A6b7C8d9E0f1A2b3C4  -> falling back to hardhat
+    🔧 hardhat fallback:
+
+DEPRECATION WARNING: 'hardhat-etherscan' has been deprecated in favor of 'hardhat-verify'. You can find more information about the migration in the readme.
+Error in plugin @nomiclabs/hardhat-etherscan: 0x4F7c83B6e0B9a2D1c3E4f5A6b7C8d9E0f1A2b3C4 is an invalid address.
+HardhatEtherscanPluginError: 0x4F7c83B6e0B9a2D1c3E4f5A6b7C8d9E0f1A2b3C4 is an invalid address.
+    at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:194:11)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at main (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+
+
+=== QuasiCrystalSVG (0x9a1B2c3D4e5F6a7B8c9D0e1F2a3B4c5D6e7F8a9B) ===
+    contract: contracts/av_suite/QuasiCrystalSVG.sol:QuasiCrystalSVG
+    ⚠️ V2 submit failed: Unable to locate ContractCode at 0x9a1B2c3D4e5F6a7B8c9D0e1F2a3B4c5D6e7F8a9B  -> falling back to hardhat
+    🔧 hardhat fallback:
+
+DEPRECATION WARNING: 'hardhat-etherscan' has been deprecated in favor of 'hardhat-verify'. You can find more information about the migration in the readme.
+Error in plugin @nomiclabs/hardhat-etherscan: 0x9a1B2c3D4e5F6a7B8c9D0e1F2a3B4c5D6e7F8a9B is an invalid address.
+HardhatEtherscanPluginError: 0x9a1B2c3D4e5F6a7B8c9D0e1F2a3B4c5D6e7F8a9B is an invalid address.
+    at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:194:11)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at main (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+
+
+=== NFTDescriptor (0x4d5E6f7A8b9C0d1E2f3A4b5C6d7E8f9A0b1C2D3E) ===
+    contract: contracts/av_suite/NFTDescriptor.sol:NFTDescriptor
+    ⚠️ V2 submit failed: no build-info for contracts/av_suite/NFTDescriptor.sol:NFTDescriptor  -> falling back to hardhat
+    🔧 hardhat fallback:
+
+DEPRECATION WARNING: 'hardhat-etherscan' has been deprecated in favor of 'hardhat-verify'. You can find more information about the migration in the readme.
+Error in plugin @nomiclabs/hardhat-etherscan: 0x4d5E6f7A8b9C0d1E2f3A4b5C6d7E8f9A0b1C2D3E is an invalid address.
+HardhatEtherscanPluginError: 0x4d5E6f7A8b9C0d1E2f3A4b5C6d7E8f9A0b1C2D3E is an invalid address.
+    at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:194:11)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at main (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+
+
+=== ProxyAdmin (0x1a0E2Bb3D3E9E0C9a8F5c4B2d1E0a9F8c7B6a5D4) ===
+    contract: contracts/av_suite/ProxyAdmin.sol:ProxyAdmin
+    ⚠️ V2 submit failed: no build-info for contracts/av_suite/ProxyAdmin.sol:ProxyAdmin  -> falling back to hardhat
+    🔧 hardhat fallback:
+
+DEPRECATION WARNING: 'hardhat-etherscan' has been deprecated in favor of 'hardhat-verify'. You can find more information about the migration in the readme.
+Error in plugin @nomiclabs/hardhat-etherscan: 0x1a0E2Bb3D3E9E0C9a8F5c4B2d1E0a9F8c7B6a5D4 is an invalid address.
+HardhatEtherscanPluginError: 0x1a0E2Bb3D3E9E0C9a8F5c4B2d1E0a9F8c7B6a5D4 is an invalid address.
+    at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:194:11)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at main (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+
+
+=== ProxyHelper (0xFEa9f6BBA44DBCB2b2F9e2C8d9e0F1a2B3c4D5e6) ===
+    contract: contracts/av_suite/ProxyHelper.sol:ProxyHelper
+    ⚠️ V2 submit failed: Unable to locate ContractCode at 0xFEa9f6BBA44DBCB2b2F9e2C8d9e0F1a2B3c4D5e6  -> falling back to hardhat
+    🔧 hardhat fallback:
+
+DEPRECATION WARNING: 'hardhat-etherscan' has been deprecated in favor of 'hardhat-verify'. You can find more information about the migration in the readme.
+Error in plugin @nomiclabs/hardhat-etherscan: 0xFEa9f6BBA44DBCB2b2F9e2C8d9e0F1a2B3c4D5e6 is an invalid address.
+HardhatEtherscanPluginError: 0xFEa9f6BBA44DBCB2b2F9e2C8d9e0F1a2B3c4D5e6 is an invalid address.
+    at SimpleTaskDefinition.verifySubtask [as action] (/home/adam/Projects/ARC/av_treasury/node_modules/@nomiclabs/hardhat-etherscan/src/index.ts:194:11)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at Environment._runTaskDefinition (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:351:14)
+    at Environment.run (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/core/runtime-environment.ts:184:14)
+    at main (/home/adam/Projects/ARC/av_treasury/node_modules/hardhat/src/internal/cli/cli.ts:325:7)
+
+
+
+================ SUMMARY ================
+  AgToken                  verified
+  AuToken                  verified
+  PID_Emission_Controller  verified
+  TreasuryAMO              verified
+  TreasuryFlashBuy         fallback
+  OracleFlashBuy           verified
+  QuasiCrystalOracle       fallback
+  AvOracleV5               fallback
+  AVLPStaking_v2           fallback
+  Governor                 verified
+  TimeLock                 verified
+  TreasurySafe             verified
+  SlipstreamRouter         verified
+  auLP_NFT                 verified
+  FlashLoan                verified
+  DexSimulator             verified
+  OnChainBase64            fallback
+  QuasiCrystalSVG          fallback
+  NFTDescriptor            fallback
+  ProxyAdmin               fallback
+  ProxyHelper              fallback

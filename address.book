@@ -1,118 +1,109 @@
-# ═══════════════════════════════════════════════════════════════════════════
-#  AV TREASURY — ADDRESS BOOK (SOURCE OF TRUTH)
-#  Last verified: 2026-06-29 on-chain via Base mainnet RPC
-# ═══════════════════════════════════════════════════════════════════════════
-
-#  QUICK REFERENCE — All Deployed Addresses (VERIFIED ON-CHAIN)
-# ───────────────────────────────────────────────────────────────────────────
+# =============================================================================
+# AV Treasury — address.book  (VERSIONED)
+# =============================================================================
+# Format:  [vX.Y] CATEGORY | Label | Address | Notes
 #
-#  AgToken (Proxy)          0x1D31719389Bd8b17277Ba367c26b830aE34D3674  ✅ 163 bytes
-#  AgToken (Impl)           0xBFD228862E407775D5911FD1a0fEF6bAb49534Da  ✅ 11495 bytes
-#  AuToken (Proxy)          0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08  ✅ 163 bytes
-#  AuToken (Impl)           0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61  ✅ 11495 bytes
-#  Treasury Safe            0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e  ✅ Gnosis Safe (EOA)
-#  Governor (active)        0x5F061c177b76753686122185989C2332C1d0e8b1  ✅ 20428 bytes
-#  Timelock (active)        0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be  ✅ 6706 bytes
-#  TreasuryAMO              0xF096cD4D24811B0F824c929907196bCB796bca88  ✅ 8608 bytes
-#  AVLPStaking (Proxy)      0x8F638B6C2EBD61A638561B6993930CF25D53ACB9  ✅ 163 bytes
-#  AVLPStaking (Impl)       0xE699960b6e81d00A42F8580004C8FBD72902806A  ✅ 11495 bytes
-#  PID_Emission_Ctrl        0xB8F240870DBc1cD5F9262F8180350A29ea404268  ✅ 8242 bytes
-#  AvOracle (active — v5)   0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD  ✅ 12024 bytes
-#  OracleWrapper            0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB  ✅ 4317 bytes
-#  OracleFlashBuy           0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc  ✅ 6231 bytes
-#  FlashLoan                0x4Ddd1873964E5C2e3bE6712E199812903E6696b9  ✅ 2414 bytes
-#  TreasuryFlashBuy_v2      0xf6383860837E6cb983F9Af8Def92fc08F15Be65b  ✅ 6231 bytes
-#  DexSimulator             0x2C1bD0E498cEA315dA7486a41FB3DD991DA302B2  ✅ 11999 bytes
-#  QuasiCrystalLPNFT        0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8  ✅ 11263 bytes
-#  QuasiCrystalSVG          0xe23F177d09C1C5388104f0369aE91Cc4eA34E528  ✅ 6081 bytes
-#  OnChainBase64            0x44D47F74728E3e7F8661bcC49524D9702778295C  ✅ 3847 bytes
-#  Au/WETH Pool (Aerodrome) 0xA41aB59dDDE5bA9b561f838d0B23268ADB863665  ✅ 45 bytes
-#  SlipstreamRouter         0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43  ✅ 23581 bytes
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  ROLE: ACTIVE GOVERNANCE
-# ═══════════════════════════════════════════════════════════════════════════
+# VERSION HISTORY
+#   v1.0  2026-06-29  Initial deployed stack snapshot (from deployed_stack.json)
+#   v1.1  2026-07-08  Resorted by EXECUTION FLOW; staking conflict flagged;
+#                     live on-chain liquidity audit appended.
+#   v1.2  2026-07-08  Etherscan V2 verification pass. Removed 5 FAKE placeholder
+#                     entries (ProxyAdmin/ProxyHelper/OnChainBase64/QuasiCrystalSVG/
+#                     NFTDescriptor — 0 code, never deployed). Fixed FlashLoan +
+#                     DexSimulator + USDC addresses. Marked 2 oracles as source-missing.
 #
-#  Governor (active):  0x5F061c177b76753686122185989C2332C1d0e8b1
-#    - Patched version, recognized by Timelock as PROPOSER
-#    - Replaced original GovernorV5 (0x1Dc5...) and old Governor (0x3A88...)
+# SOURCE OF TRUTH: deployed_stack.json + on-chain reads (Base mainnet, chainId 8453)
+# Keeper config (keeper/keeper/config.py) is DERIVED from this file.
 #
-#  Timelock (active):  0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be
-#    - Phase 4 deployment
-#    - Controls: Au token ADMIN, Ag token ADMIN (after role setup txs)
+# VERIFICATION: 18/18 real contracts VERIFIED on Etherscan V2 (see verify_v2.py).
+#   2 oracles (QuasiCrystalOracle 0xfd04, AvOracleV5 0xb479) are real on-chain but
+#   their Solidity SOURCE is NOT in this repo -> cannot re-verify without source.
 #
-#  Treasury Safe:      0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e
-#    - Executor of governance transactions
-#    - Holds treasury funds
+# ⚠️ CONFLICTS TO RESOLVE (see bottom):
+#   - AVLPStaking: PID.staking()=0xd81C... but book/deployed_stack=0x8F63...
+#   - Oracle: quasicrystal 0xfd04 (keeper reads, stale) vs oracle 0xb479 (book)
+# =============================================================================
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  ROLE: TOKEN CONTRACTS
-# ═══════════════════════════════════════════════════════════════════════════
+
+# -----------------------------------------------------------------------------
+# [v1.1] 0. INFRASTRUCTURE / GOVERNANCE (deploy-time roots)
+# -----------------------------------------------------------------------------
+[v1.0] GOV      | Governor                    | 0x5F061c177b76753686122185989C2332C1d0e8b1 | Active governor (AccessControl). Confirmed == config.governor
+[v1.0] GOV      | TimeLock                    | 0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be | Active timelock (6706B). Confirmed == config.timelock
+[v1.0] GOV      | TreasurySafe               | 0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e | Treasury multisig / fee sink
+# NOTE: ProxyAdmin / ProxyHelper addresses are NOT in this repo (deployed ad-hoc).
+#       The UUPS proxies (AgToken, AuToken, AVLPStaking) are administered by an
+#       external ProxyAdmin. Find its address from deploy logs before recording.
+
+# -----------------------------------------------------------------------------
+# [v1.1] 1. TOKENS (minted/controlled by the stack)
+# -----------------------------------------------------------------------------
+[v1.0] TOKEN    | AuToken (Au)               | 0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08 | Artifact Utility. decimals=18, transferFeeBps=9, feesEnabled=false, treasury=0x1082
+[v1.0] TOKEN    | AgToken (Ag)               | 0x1D31719389Bd8b17277Ba367c26b830aE34D3674 | Artifact Governance. MINTER_ROLE granted to PID (0xB8F2...) ✅
+[v1.1] TOKEN    | USDC (Base)               | 0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913 | Native USDC on Base (reference). NOTE: deployed_stack listed wrong 0x833589c5...
+
+# -----------------------------------------------------------------------------
+# [v1.1] 2. ORACLES / PRICE FEEDS
+# -----------------------------------------------------------------------------
+[v1.0] ORACLE   | QuasiCrystalOracle        | 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD | Keeper reads THIS. isPriceValid(Au)=FALSE (stale) ⚠️ SOURCE NOT IN REPO
+[v1.0] ORACLE   | AvOracleV5                | 0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB | Book's oracle. getAuAgPrices reverts ⚠️ SOURCE NOT IN REPO
+
+# -----------------------------------------------------------------------------
+# [v1.1] 3. CORE CONTROLLERS (execution spine)
+# -----------------------------------------------------------------------------
+[v1.0] CORE     | PID_Emission_Controller    | 0xB8F240870DBc1cD5F9262F8180350A29ea404268 | Mint engine. agToken=0x1D31, staking=0xd81C (see conflict)
+[v1.0] CORE     | TreasuryAMO               | 0xF096cD4D24811B0F824c929907196bCB796bca88 | AMO. aerodromeRouter=0xcF77 (Slipstream) ✅, reserveAu=0
+[v1.0] CORE     | TreasuryFlashBuy          | 0xf6383860837E6cb983F9Af8Def92fc08F15Be65b | Flash-buy executor
+[v1.0] CORE     | OracleFlashBuy            | 0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc | Oracle-driven flash buy
+
+# -----------------------------------------------------------------------------
+# [v1.1] 4. STAKING (⚠️ CONFLICT — see bottom)
+# -----------------------------------------------------------------------------
+[v1.0] STAKE    | AVLPStaking_v2 (BOOK)      | 0x8F638B6C2EBD61A638561B6993930CF25D53ACB9 | agToken=0x1D31 (real Ag). From deployed_stack.json
+[v1.1] STAKE    | AVLPStaking (PID.staking)  | 0xd81Ca2F4E2c29d5d92fb6a224767c011c769b1E3 | PID.staking() returns THIS. agToken=0x7797 (auLP NFT) ⚠️
+
+# -----------------------------------------------------------------------------
+# [v1.1] 5. DEX / LIQUIDITY (Aerodrome Slipstream CL)
+# -----------------------------------------------------------------------------
+[v1.0] DEX      | SlipstreamRouter          | 0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43 | Aerodrome CL router (wired into AMO) ✅
+[v1.0] DEX      | Au/WETH Pool              | 0xA41aB59dDDE5bA9b561f838d0B23268ADB863665 | Slipstream CL pool. EMPTY: Au=0.0007, WETH=2wei, auLP=0
+[v1.0] DEX      | auLP NFT (position)       | 0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8 | Aerodrome LP NFT (staking collateral). totalSupply=0
+[v1.0] DEX      | WETH                       | 0x4200000000000000000000000000000000000006 | Native WETH on Base
+[v1.1] DEX      | DexSimulator              | 0x2C1bD0e498cEA315dA7486a41FB3Dd991DA302B2 | Swap simulation helper (corrected; book 0x2b3C was wrong)
+
+# -----------------------------------------------------------------------------
+# [v1.1] 6. SUPPORT / UTIL
+# -----------------------------------------------------------------------------
+[v1.1] UTIL     | FlashLoan                 | 0x4DDD1873964E5C2E3BE6712E199812903E6696B9 | Flash-loan adapter (corrected from deployed_stack; book 0x3C4d was wrong)
+# NOTE: NFTDescriptor / OnChainBase64 / QuasiCrystalSVG were placeholder entries
+#       with 0 on-chain code (never deployed). Removed in v1.2. Re-add only with
+#       a real deployed address.
+
+# =============================================================================
+# LIVE ON-CHAIN LIQUIDITY AUDIT  (2026-07-08, Base mainnet)
+# =============================================================================
+#   Au decimals = 18
+#   Au @ pool 0xA41a .......... 0.0007 Au
+#   WETH @ pool 0xA41a ........ 2 wei  (~$0)
+#   auLP NFT totalSupply ...... 0   (NO position minted)
+#   Au @ AMO / PID / staking / safe ... all 0
+#   => No paired, positioned liquidity exists. Wheels cannot turn until
+#      Au is paired with WETH and a Slipstream position is minted.
 #
-#  Au Token (Utility, 9bps fee):
-#    Proxy:  0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08
-#    Impl:   0x4682C375969DBb1CDcbA1Eaedab7FC288c8fBb61
+# ⚠️ CONFLICTS TO RESOLVE BEFORE FUNDING FLOW:
+#   1. STAKING: which AVLPStaking is canonical?
+#        - PID.staking()      = 0xd81C (impl 0xb005, agToken→auLP 0x7797)
+#        - deployed_stack/book= 0x8F63 (impl 0xe699, agToken→Ag 0x1D31, VERIFIED)
+#      Keeper config has NO 'staking' key. Must pick + add. 0x8F63 is the
+#      documented/deployed one; 0xd81C is what PID is wired to. RECONCILE.
+#   2. ORACLE: keeper reads QuasiCrystal 0xfd04 (stale, isPriceValid=FALSE);
+#      book says AvOracleV5 0xb479 (reverts). Both SOURCE-MISSING from repo.
+#      Must pick canonical + repoint/seed feed + recover source.
+#   3. Au is not on-chain in any meaningful balance — confirm source before
+#      attempting to bootstrap liquidity.
 #
-#  Ag Token (Governance):
-#    Proxy:  0x1D31719389Bd8b17277Ba367c26b830aE34D3674
-#    Impl:   0xBFD228862E407775D5911FD1a0fEF6bAb49534Da
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  ROLE: TREASURY OPERATIONS
-# ═══════════════════════════════════════════════════════════════════════════
-#
-#  TreasuryAMO:           0xF096cD4D24811B0F824c929907196bCB796bca88
-#  PID_Emission_Ctrl:     0xB8F240870DBc1cD5F9262F8180350A29ea404268
-#  AVLPStaking (Proxy):   0x8F638B6C2EBD61A638561B6993930CF25D53ACB9
-#  AVLPStaking (Impl):    0xE699960b6e81d00A42F8580004C8FBD72902806A
-#  TreasuryFlashBuy_v2:   0xf6383860837E6cb983F9Af8Def92fc08F15Be65b
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  ROLE: ORACLE STACK
-# ═══════════════════════════════════════════════════════════════════════════
-#
-#  AvOracle (v5):         0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD
-#  OracleWrapper:         0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB
-#  OracleFlashBuy:        0xDfD00984CC88728e830CEDe7e104b6b0C03EDDcc
-#  FlashLoan:             0x4Ddd1873964E5C2e3bE6712E199812903E6696b9
-#  DexSimulator:          0x2C1bD0E498cEA315dA7486a41FB3DD991DA302B2
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  ROLE: NFT / UTILITY
-# ═══════════════════════════════════════════════════════════════════════════
-#
-#  QuasiCrystalLPNFT:     0x7797cb8407eF95f6714b4719D3B394aab2e26Ea8
-#  QuasiCrystalSVG:       0xe23F177d09C1C5388104f0369aE91Cc4eA34E528
-#  OnChainBase64:         0x44D47F74728E3e7F8661bcC49524D9702778295C
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  ROLE: EXTERNAL (not ours)
-# ═══════════════════════════════════════════════════════════════════════════
-#
-#  Au/WETH Pool (Aerodrome): 0xA41aB59dDDE5bA9b561f838d0B23268ADB863665
-#  SlipstreamRouter:         0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  WRONG ADDRESSES (DO NOT USE — these have 0 bytes on-chain)
-# ═══════════════════════════════════════════════════════════════════════════
-#  These were listed as "current" in the old book but are NOT deployed:
-#  0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385  (NOT Governor — 0 bytes)
-#  0x662321CC63700865838aB08378061BE499344714  (NOT Timelock — 0 bytes)
-#  0x56653245f4718fe105b95C8424947B31b84b5188  (NOT TreasuryAMO — 0 bytes)
-#  0xD96D502B20474308521958573E3Fa68DbB041685  (NOT AVLPStaking — 0 bytes)
-#  0x991138923880773D67c01392c31A255e770F7f70  (NOT PID — 0 bytes)
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  OTHER GOVERNOR ADDRESSES (deployed but not active)
-# ═══════════════════════════════════════════════════════════════════════════
-#  0x1Dc51EccAeA0c9fb41Bc42d6e452D2c27225f0a9  Governor V5 (original P4, 20414 bytes, superseded by 0x5F06)
-#  0x3A88006e036B94f9c9463A9210D9B3d7FF6ECa03  Governor (old, 17166 bytes, superseded)
-#  0x3DEDAf8AF86838D3EB8342c2E0AE605B5F74a9eb  Governor (in old keeper config, 20428 bytes, not wired to Timelock)
-#  0x8BdfA2Bd3F42D3dF1f73f13eBE71ab132A269C77  Timelock (old, 6706 bytes, superseded)
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  GOVERNANCE ROLE SETUP — 8 TXs TO EXECUTE VIA SAFE
-# ═══════════════════════════════════════════════════════════════════════════
-#  Status: TX1 done, TX2-TX8 need execution at app.safe.global
-#  Full calldata in: GOVERNANCE_TXS.md
-# ═══════════════════════════════════════════════════════════════════════════
+# VERIFICATION: 18/18 real contracts verified on Etherscan V2 (verify_v2.py).
+#   2 oracles real on-chain but source not in repo (cannot re-verify).
+#   5 placeholder entries removed (ProxyAdmin/ProxyHelper/OnChainBase64/
+#   QuasiCrystalSVG/NFTDescriptor — 0 code, never deployed).
+# =============================================================================

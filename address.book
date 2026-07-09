@@ -45,8 +45,9 @@
 # -----------------------------------------------------------------------------
 # [v1.1] 2. ORACLES / PRICE FEEDS
 # -----------------------------------------------------------------------------
-[v1.0] ORACLE   | QuasiCrystalOracle        | 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD | Keeper reads THIS. isPriceValid(Au)=FALSE (stale) ⚠️ SOURCE NOT IN REPO
-[v1.0] ORACLE   | AvOracleV5                | 0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB | Book's oracle. getAuAgPrices reverts ⚠️ SOURCE NOT IN REPO
+[v1.1] ORACLE   | AvOracle (v6, bootstrap)  | 0x1B5F6AC11efFeEBd5371858ce394DD0B8669732b | ACTIVE. Deployed 2026-07-08. Governor=0x5F06 (Timelock), admin=keeper 0xc63B. Bootstrap mode ON: Au=Ag=0.01 (18-dec, nominal). getAuPriceForAMO()=0.01 ✅. Source: contracts/av_suite/AvOracle.sol (+bootstrap). Etherscan verify pending (sandbox solc-bin blocked).
+[v1.0] ORACLE   | QuasiCrystalOracle        | 0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD | STALE/DEAD — superseded by 0x1B5F. isPriceValid(Au)=FALSE. ⚠️ SOURCE NOT IN REPO
+[v1.0] ORACLE   | AvOracleV5                | 0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB | DEAD — superseded by 0x1B5F. getAuAgPrices reverts. ⚠️ SOURCE NOT IN REPO
 
 # -----------------------------------------------------------------------------
 # [v1.1] 3. CORE CONTROLLERS (execution spine)

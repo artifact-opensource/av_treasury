@@ -101,6 +101,15 @@ contract AvOracle is AccessControl, ReentrancyGuard {
     // TWAP initialization timestamps per token (separate from TWATVL)
     mapping(address => uint256) public twapInitTime;
 
+    // ── Bootstrap mode ───────────────────────────────────────────────────
+    // When enabled, governance-set nominal prices are returned by getPrice()
+    // until a real Chainlink feed or TWAP pool is configured and fresh.
+    // Used to bootstrap the system before a liquid on-chain market exists.
+    bool public bootstrapMode;
+    uint256 public bootstrapValidity; // seconds a bootstrap price stays valid
+    event BootstrapModeSet(bool enabled);
+    event BootstrapPriceSet(address indexed token, uint256 price, uint256 validUntil);
+
     /**
      * @notice Initialize TWAP timestamp for a token (must be called before first getTwapPrice)
      * @dev Sets twapInitTime so that first TWAP observation uses pool.twapDuration
@@ -290,7 +299,12 @@ contract AvOracle is AccessControl, ReentrancyGuard {
     function getPrice(address token) external view returns (uint256 price, PriceSource source) {
         PriceData memory data = cachedPrices[token];
         if (!data.valid) revert NoPriceSource();
-        
+
+        // Bootstrap mode: return governance-set nominal price while valid
+        if (bootstrapMode && block.timestamp <= data.timestamp + bootstrapValidity) {
+            return (data.price, data.source);
+        }
+
         PriceFeed memory feed = priceFeeds[token];
         if (feed.active && data.source == PriceSource.CHAINLINK) {
             // Check staleness
@@ -588,6 +602,50 @@ contract AvOracle is AccessControl, ReentrancyGuard {
      */
     function getTvlSourceCount() external view returns (uint256) {
         return tvlSources.length;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  BOOTSTRAP MODE (governance-set nominal prices before liquid market)
+    // ══════════════════════════════════════════════════════════════════
+
+    /**
+     * @notice Enable or disable bootstrap mode (governor only).
+     * In bootstrap mode, governance-set nominal prices are returned by getPrice()
+     * until a real Chainlink feed or TWAP pool is configured and fresh.
+     */
+    function setBootstrapMode(bool enabled) external onlyRole(GOVERNOR) {
+        bootstrapMode = enabled;
+        emit BootstrapModeSet(enabled);
+    }
+
+    /**
+     * @notice Set a nominal bootstrap price for a token (governor only).
+     * Used to bootstrap the system before a liquid on-chain market exists.
+     * @param token    Token address
+     * @param price    Nominal price in 18 decimals
+     * @param validitySeconds How long this price stays valid (e.g. 30 days)
+     */
+    function setBootstrapPrice(address token, uint256 price, uint256 validitySeconds)
+        external onlyRole(GOVERNOR)
+    {
+        if (price == 0) revert InvalidConfiguration();
+        cachedPrices[token] = PriceData({
+            price: price,
+            timestamp: block.timestamp,
+            source: PriceSource.CHAINLINK,
+            valid: true
+        });
+        bootstrapValidity = validitySeconds;
+        emit BootstrapPriceSet(token, price, block.timestamp + validitySeconds);
+    }
+
+    /**
+     * @notice Convenience wrapper used by the keeper / AMO (v5-compatible interface).
+     * Returns the current Au price from getPrice(auToken).
+     */
+    function getAuPriceForAMO() external view returns (uint256) {
+        (uint256 p,) = this.getPrice(auToken);
+        return p;
     }
 
     // ══════════════════════════════════════════════════════════════════

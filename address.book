@@ -91,11 +91,19 @@
 #      Au is paired with WETH and a Slipstream position is minted.
 #
 # ⚠️ CONFLICTS TO RESOLVE BEFORE FUNDING FLOW:
-#   1. STAKING: which AVLPStaking is canonical?
-#        - PID.staking()      = 0xd81C (impl 0xb005, agToken→auLP 0x7797)
-#        - deployed_stack/book= 0x8F63 (impl 0xe699, agToken→Ag 0x1D31, VERIFIED)
-#      Keeper config has NO 'staking' key. Must pick + add. 0x8F63 is the
-#      documented/deployed one; 0xd81C is what PID is wired to. RECONCILE.
+#   1. STAKING — RESOLVED (2026-07-08): canonical = 0x8F63 (this book is RIGHT).
+#      Both 0xd81C & 0x8F63 are UUPS proxies (163B) → AVLPStaking_v2 impls (both VERIFIED).
+#        - 0x8F63 (impl 0xe699 = CURRENT repo build):
+#            agToken=AgToken 0x1D31 | auToken=AuToken 0x0c5A..A1DD | lpNFT=auLP_NFT 0x7797
+#            → wiring 100% matches this book. CANONICAL.
+#        - 0xd81C (impl 0xb005 = OLD build):
+#            agToken=auLP_NFT 0x7797 | auToken=AgToken 0x1D31 | lpNFT=TreasurySafe 0x1082
+#            → ag/au SWAPPED, lpNFT=treasury. MIS-WIRED / legacy. (no stakes yet)
+#      PROBLEM: PID.staking() is IMMUTABLE (constructor arg, no setter) and points
+#      at the BROKEN 0xd81C. Keeper reads staking via PID → would hit mis-wired proxy.
+#      FIX: deploy fresh PID_Emission_Controller(staking_=0x8F63, agToken_=0x1D31,
+#      targetTVL,kp,ki,kd) + re-grant EMIT_ROLE + repoint keeper to new PID.
+#      (Do NOT just swap 0xd81C's impl — its stored agToken/auToken/lpNFT are wrong.)
 #   2. ORACLE: keeper reads QuasiCrystal 0xfd04 (stale, isPriceValid=FALSE);
 #      book says AvOracleV5 0xb479 (reverts). Both SOURCE-MISSING from repo.
 #      Must pick canonical + repoint/seed feed + recover source.

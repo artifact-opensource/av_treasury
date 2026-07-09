@@ -8,7 +8,7 @@ import stat
 import random
 from pathlib import Path
 from web3 import Web3
-from web3.providers.http import HTTPProvider
+from web3 import HTTPProvider
 
 # ─── Environment ────────────────────────────────────────────────────────────
 _dotenv = Path(__file__).parent.parent / ".env"
@@ -33,6 +33,7 @@ if _dotenv.exists():
 # ─── Network ────────────────────────────────────────────────────────────────
 CHAIN_ID = 8453
 RPC_LIST = [url.strip() for url in os.environ.get("RPC_URL_BASE", "https://mainnet.base.org").split(",")]
+RPC_URL = RPC_LIST[0]  # primary RPC (single-url consumers)
 BLOCK_TIME = 2  # seconds (Base L2)
 
 class RotatingHTTPProvider(HTTPProvider):
@@ -40,7 +41,7 @@ class RotatingHTTPProvider(HTTPProvider):
     def __init__(self, urls):
         self.urls = urls
         self.current_index = 0
-        super().__init__(endpoint=self.urls[self.current_index])
+        super().__init__(endpoint_uri=self.urls[self.current_index])
 
     def make_request(self, request):
         try:
@@ -58,9 +59,9 @@ CONTRACTS = {
     "au": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
     "ag": "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
     "treasury_amo": "0xF096cD4D24811B0F824c929907196bCB796bca88",
-    "pid": "0xB8F240870DBc1cD5F9262F8180350A29ea404268",
+    "pid": "0x43E2ecdA40B3a5F1cEC1BBD5e8147B27a3659dfD",
     "governor": "0x5F061c177b76753686122185989C2332C1d0e8b1",
-    "timelock": "0x09058FdD4dD60b4E2F2C4F_ la_C370DA3cB606c09Be",
+    "timelock": "0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be",
     "quasicrystal": "0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD",
     "oracle": "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB",
     "flashbuy": "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b",
@@ -212,3 +213,29 @@ class Settings:
         return errors
 
 settings = Settings()
+
+# ============================================================================
+# REAL DEPLOYED ABIs — rebuilt 2026-07-08 against compiled artifacts (out/)
+# that match on-chain bytecode. The inlined PID_ABI/ORACLE_ABI/etc above were
+# built against wrong contract versions (v3/imagined names that don't exist on
+# the deployed v2/v5 stack) and caused every cycle to revert.
+# Load the verified ABIs from abis/ and override the broken inlined ones.
+# ============================================================================
+import os as _os
+import json as _json
+_abi_dir = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "abis")
+def _load_real_abi(fname):
+    try:
+        with open(_os.path.join(_abi_dir, fname)) as _f:
+            return _json.load(_f)
+    except Exception as _e:
+        print(f"[config] WARNING: could not load real ABI {fname}: {_e}")
+        return []
+
+PID_ABI          = _load_real_abi("real_pid_abi.json")
+ORACLE_ABI       = _load_real_abi("real_oracle_abi.json")
+TREASURY_AMO_ABI = _load_real_abi("real_amo_abi.json")
+FLASHBUY_ABI     = _load_real_abi("real_flashbuy_abi.json")
+# Wrapper ABI (OracleWrapper) — for buyback price reads
+WRAPPER_ABI_PATH = _os.path.join(_abi_dir, "real_wrapper_abi.json")
+WRAPPER_ABI = _load_real_abi("real_wrapper_abi.json") if _os.path.exists(WRAPPER_ABI_PATH) else []

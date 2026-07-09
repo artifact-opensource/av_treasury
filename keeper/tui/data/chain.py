@@ -15,13 +15,15 @@ ENV_PATH = Path(__file__).resolve().parent.parent.parent.parent / ".env"
 load_dotenv(ENV_PATH)
 
 # Contract addresses
+# NOTE: These were previously pointed at a dead "v3" deployment (code=0 on-chain).
+# Reconciled 2026-07-08 to the LIVE v2 stack (matches address.book + keeper/config.py).
 ADDRESSES = {
     "Au": "0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08",
     "Ag":  "0x1D31719389Bd8b17277Ba367c26b830aE34D3674",
-    "TreasuryAMO": "0x56653245f4718fe105b95C8424947B31b84b5188",
-    "PID": "0x99114F594Ff218028309d3E7F47C5873B9917f70",
-    "Governor": "0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385",
-    "Timelock": "0x662321CC63700865838aB08378061BE499344714",
+    "TreasuryAMO": "0xF096cD4D24811B0F824c929907196bCB796bca88",
+    "PID": "0x43E2ecdA40B3a5F1cEC1BBD5e8147B27a3659dfD",
+    "Governor": "0x5F061c177b76753686122185989C2332C1d0e8b1",
+    "Timelock": "0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be",
     "QuasiCrystal": "0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD",
     "Oracle": "0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB",
     "FlashBuy": "0xf6383860837E6cb983F9Af8Def92fc08F15Be65b",

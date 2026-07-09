@@ -71,6 +71,10 @@ REGISTRY = [
                                    "0x4DDD1873964E5C2E3BE6712E199812903E6696B9", []),
     ("DexSimulator",               "contracts/av_suite/DexSimulator.sol:DexSimulator",
                                    "0x2C1bD0e498cEA315dA7486a41FB3Dd991DA302B2", []),
+    # NEW PID (redeployed 2026-07-08): staking fixed to 0x8F63; keeper=admin
+    ("PID_Emission_Controller_NEW","contracts/av_suite/PID_Emission_Controller_v2.sol:PID_Emission_Controller_v2",
+                                   "0x43E2ecdA40B3a5F1cEC1BBD5e8147B27a3659dfD",
+                                   "0x000000000000000000000000c63b7a10bb926b3b25ecb51887945caeb69275550000000000000000000000008f638b6c2ebd61a638561b6993930cf25d53acb90000000000000000000000001d31719389bd8b17277ba367c26b830ae34d3674000000000000000000000000000000000000000000084595161401484a00000000000000000000000000000000000000000000000000000000005af3107a4000000000000000000000000000000000000000000000000000000009184e72a00000000000000000000000000000000000000000000000000000002d79883d2000"),
 ]
 
 # ----------------------------------------------------------------------------
@@ -224,7 +228,7 @@ def submit_v2(fqname, addr, ctor_args):
     }
     # constructor args (ABI-encoded hex, no 0x) — left empty if none
     if ctor_args:
-        params["constructorArguments"] = ctor_args if ctor_args.startswith("0x") else "0x" + ctor_args
+        params["constructorArguements"] = ctor_args if ctor_args.startswith("0x") else "0x" + ctor_args
     r = _post(params)
     if r.get("status") != "1":
         return False, r.get("result", r.get("message"))

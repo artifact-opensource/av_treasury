@@ -1,0 +1,53 @@
+# ═════════════════════════════════════════════════════════════════════════
+# AV TREASURY — TESTNET DEPLOYMENT ADDRESS BOOK
+# Network : Local Hardhat  (chainId 31337)
+# RPC      : http://localhost:8545
+# Deployed : 2026-07-11T20:47:09.233Z
+# Builder  : scripts/deploy_testnet.js (systematic, per DEPLOYMENT_PLAN.md)
+# ═════════════════════════════════════════════════════════════════════════
+
+# ── WALLETS (local testnet dev accounts, 10000 ETH each from node) ──
+Deployer          0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266   # Acct#0  (Safe owner #1, governor admin)
+Keeper            0x70997970C51812dc3A010C7d01b50e0d17dc79C8     # Acct#1  (TreasuryAMO + Flywheel keeper)
+SafeOwner2 (new)  0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC      # Acct#2  (Safe owner #2)
+
+# ── PHASE 1: TOKENS ──
+AuToken (Artifact Utility)    0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512   # UUPS proxy; genesis 1,000,000 minted
+AgToken (Artifact Governance) 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9   # UUPS proxy; NO genesis (emitted via staking/PID)
+MockUSDC          0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e   # 6-decimals, 10M minted
+MockWETH          0x0B306BF915C4d645ff596e518fAf3F9669b97016   # WETH placeholder
+MockAerodromeRouter 0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0 # local AMM (AU/AG/USDC/WETH pools seeded)
+
+# ── PHASE 2: ORACLE ──
+AvOracle (v5)     0xf5059a5D33d5853360D16C683c16e67980206f36
+  bootstrap AU = 0.01 (valid 1y)
+  bootstrap AG = 0.01 (valid 1y)
+
+# ── PHASE 3: TREASURY + WRAPPER ──
+TreasuryAMO        0x4826533B4897376654Bb4d4AD88B7faFD0C98528
+  auToken = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+  reserveToken (ag) = 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+  aerodromeRouter = 0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0
+OracleWrapper      0x0E801D84Fa97b50751Dbf25036d067dCf18858bF
+  avOracle    = 0xf5059a5D33d5853360D16C683c16e67980206f36
+  treasuryAMO = 0x4826533B4897376654Bb4d4AD88B7faFD0C98528
+  flashBuy    = 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf
+  tokenKey AU = 0xa471f807590442741b818b1018c1b9c9127e01ba3cfb48fb953561c88af84891 -> 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+  tokenKey AG = 0x5205189ecc3c0a89194c98418bbfb7d14c0cd56c98c7f6e7f0cf42359c2ec5d7 -> 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+TreasuryFlashBuy_v2 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf
+  treasury  = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+  usdcToken = 0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e
+  agToken   = 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+  auToken   = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+  oracleWrap = 0xf5059a5D33d5853360D16C683c16e67980206f36
+  keeper     = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+  dex        = 0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0
+
+# ── PHASE 4: GOVERNANCE + SAFE + PID + STAKING ──
+TreasurySafe (2-of-2) 0x36C02dA8a0983159322a80FFE9F24b1acfF8B570
+  owners = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+  threshold = 2
+ArtifactTimelock     0x809d550fca64d94Bd9F66E60752A544199cfAC3D   # ArtifactTimelock(TimelockController)
+GovernorContractV5   0x4c5859f0F772848b2D91F1D83E2Fe57935348029
+PIDEmissionControllerV2 0x1fA02b2d6A771842690194Cf62D91bdd92BfE28d
+AVLPStaking_v2       0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f    # UUPS proxy

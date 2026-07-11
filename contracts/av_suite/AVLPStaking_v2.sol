@@ -205,6 +205,19 @@ contract AVLPStaking_v2 is
         emit RateChangeScheduled(_auRate, _agRate, block.timestamp + RATE_DELAY);
     }
 
+    /// @notice Instant rate change (no timelock). Only ADMIN (the PID emission
+    /// controller) may call this so the flywheel can self-tune emission rates
+    /// every epoch without a 48h delay. Governance retains the timelocked
+    /// scheduleRateChange/executeRateChange path for manual overrides.
+    function instantRateChange(uint256 _auRate, uint256 _agRate) external onlyRole(ADMIN_ROLE) {
+        if (_auRate > MAX_AU_RATE) revert Staking_AuRateExceedsCap(_auRate, MAX_AU_RATE);
+        if (_agRate > MAX_AG_RATE) revert Staking_AgRateExceedsCap(_agRate, MAX_AG_RATE);
+        _distributeRewards();
+        auRewardPerBlock = _auRate;
+        agRewardPerBlock = _agRate;
+        emit RewardRatesUpdated(auRewardPerBlock, agRewardPerBlock);
+    }
+
     // ============ AG MULTIPLIER (v3 CRITICAL FIX) ============
     /**
      * @notice Calculate Ag-based multiplier for a staker

@@ -19,6 +19,8 @@ interface IAgToken {
  */
 interface IStaking {
     function totalStakedNFTs() external view returns (uint256);
+    function instantRateChange(uint256 _auRate, uint256 _agRate) external;
+    function auRewardPerBlock() external view returns (uint256);
 }
 
 /**
@@ -533,6 +535,14 @@ contract PID_Emission_Controller_v2 is AccessControl, ReentrancyGuard, Pausable 
 
         // Mint Ag tokens to the staking contract.
         agToken.mint(address(staking), emission);
+
+        // ── FEED THE FLYWHEEL: set the per-block reward rate so the staking
+        //    contract actually distributes the minted rewards. AU rate is
+        //    preserved (set independently); AG rate derived from emission.
+        //    Uses instantRateChange (no timelock) so the flywheel self-tunes.
+        uint256 agRatePerBlock = emission / SECONDS_PER_DAY;
+        uint256 auRatePerBlock = staking.auRewardPerBlock();
+        staking.instantRateChange(auRatePerBlock, agRatePerBlock);
 
         emit AgEmitted(
             emission,

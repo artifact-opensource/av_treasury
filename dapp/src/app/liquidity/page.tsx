@@ -14,7 +14,7 @@ type Tab = 'add' | 'remove' | 'vote' | 'claim'
 
 export default function LiquidityPage() {
   const { isConnected } = useAccount()
-  const [selectedPool, setSelectedPool] = useState(0)
+  const [selectedPool, setSelectedPool] = useState<string>('au-weth')
   const [tab, setTab] = useState<Tab>('add')
 
   const pool = KNOWN_POOLS[selectedPool]
@@ -30,6 +30,8 @@ export default function LiquidityPage() {
     )
   }
 
+  const poolKeys = Object.keys(KNOWN_POOLS)
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -43,17 +45,18 @@ export default function LiquidityPage() {
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="text-sm text-muted-foreground">Select Pool</div>
         <div className="flex flex-wrap gap-2">
-          {KNOWN_POOLS.map((p, i) => {
+          {poolKeys.map((key) => {
+            const p = KNOWN_POOLS[key]
             const [a, b] = p.name.split('/')
-            const metaA = TOKEN_META[a.toLowerCase() as keyof typeof TOKEN_META] ?? { symbol: a, logo: '' }
-            const metaB = TOKEN_META[b.toLowerCase() as keyof typeof TOKEN_META] ?? { symbol: b, logo: '' }
+            const metaA = TOKEN_META[a.toLowerCase() as keyof typeof TOKEN_META] ?? { symbol: a, icon: '' }
+            const metaB = TOKEN_META[b.toLowerCase() as keyof typeof TOKEN_META] ?? { symbol: b, icon: '' }
             return (
-              <button key={i} onClick={() => setSelectedPool(i)}
+              <button key={key} onClick={() => setSelectedPool(key)}
                 className={cn('rounded-lg px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5',
-                  i === selectedPool ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-accent/80'
+                  selectedPool === key ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-accent/80'
                 )}>
-                <img src={metaA.logo} alt={metaA.symbol} className="h-4 w-4 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} />
-                {metaA.symbol} / <img src={metaB.logo} alt={metaB.symbol} className="h-4 w-4 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} /> {metaB.symbol}
+                <img src={metaA.icon} alt={metaA.symbol} className="h-4 w-4 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                {metaA.symbol} / <img src={metaB.icon} alt={metaB.symbol} className="h-4 w-4 rounded-full" onError={(e) => { e.currentTarget.style.display = 'none' }} /> {metaB.symbol}
                 {p.stable && <span className="text-xs opacity-70 ml-1">Stable</span>}
               </button>
             )

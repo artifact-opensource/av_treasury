@@ -71,6 +71,16 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
+      // Interval mining (not automine) — robust for the analytics engine's throughput.
+      mining: { auto: false, interval: 1000 },
+    },
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+      // Interval mining (not automine) — far more robust for sustained RPC load.
+      // Automine causes nonce races (approve+swap from same account) and -32603
+      // transport corruption under the analytics engine's throughput.
+      mining: { auto: false, interval: 1000 },
     },
     base: {
       url: RPC_URL_BASE,

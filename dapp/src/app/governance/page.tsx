@@ -21,7 +21,7 @@ export default function GovernancePage() {
       { address: AV_CONTRACTS.governor, abi: GOVERNOR_ABI, functionName: 'proposalCount' },
       { address: AV_CONTRACTS.governor, abi: GOVERNOR_ABI, functionName: 'votingDelay' },
       { address: AV_CONTRACTS.governor, abi: GOVERNOR_ABI, functionName: 'votingPeriod' },
-      { address: TOKENS.ag, abi: AG_TOKEN_ABI, functionName: 'getVotes', args: [address] },
+      { address: AV_CONTRACTS.agToken, abi: AG_TOKEN_ABI, functionName: 'getVotes', args: [address] },
     ] : [],
     query: { enabled: !!address },
   })

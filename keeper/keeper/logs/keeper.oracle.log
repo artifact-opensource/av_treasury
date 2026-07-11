@@ -12143,3 +12143,5 @@
 2026-07-11 11:42:51,771 | ERROR    | keeper.oracle        | Oracle update error: {'code': -32000, 'message': 'gas required exceeds allowance (15719)'}
 2026-07-11 11:43:00,093 | INFO     | keeper.oracle        | Oracle is stale — updating price
 2026-07-11 11:43:11,354 | ERROR    | keeper.oracle        | Oracle update error: ('gas required exceeds allowance (15719)', 'no data')
+2026-07-11 11:43:52,854 | INFO     | keeper.oracle        | Oracle is stale — updating price
+2026-07-11 11:43:54,162 | ERROR    | keeper.oracle        | Oracle update error: {'code': -32000, 'message': 'gas required exceeds allowance (15719)'}

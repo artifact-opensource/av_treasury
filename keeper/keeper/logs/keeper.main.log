@@ -80535,3 +80535,7 @@ TypeError: '<' not supported between instances of 'ThreatLevel' and 'ThreatLevel
 2026-07-11 11:43:43,198 | INFO     | keeper.main          | Buyback suppressed (halted): would have bought $625
 2026-07-11 11:43:51,606 | WARNING  | keeper.main          | THREAT LEVEL: NORMAL → DEFENSIVE
 2026-07-11 11:43:52,115 | INFO     | keeper.main          | Buyback suppressed (halted): would have bought $156
+2026-07-11 11:43:57,824 | WARNING  | keeper.main          | ⚠️  emission keeper has 1158 errors
+2026-07-11 11:43:57,824 | WARNING  | keeper.main          | ⚠️  oracle keeper has 571 errors
+2026-07-11 11:44:04,536 | WARNING  | keeper.main          | ⚠️  emission keeper has 447 errors
+2026-07-11 11:44:04,537 | WARNING  | keeper.main          | ⚠️  oracle keeper has 562 errors

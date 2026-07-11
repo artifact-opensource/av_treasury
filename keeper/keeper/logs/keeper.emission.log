@@ -33955,3 +33955,5 @@
 2026-07-11 11:43:40,562 | INFO     | keeper.emission      | Executing emission (rate=1010.0070 Ag)
 2026-07-11 11:43:41,499 | ERROR    | keeper.emission      | Emission error: ('gas required exceeds allowance (15719)', 'no data')
 2026-07-11 11:43:44,650 | WARNING  | keeper.emission      | emission check failed: 429 Client Error: Too Many Requests for url: https://mainnet.base.org/
+2026-07-11 11:44:00,813 | INFO     | keeper.emission      | Executing emission (rate=1010.0070 Ag)
+2026-07-11 11:44:01,725 | ERROR    | keeper.emission      | Emission error: ('gas required exceeds allowance (15719)', 'no data')

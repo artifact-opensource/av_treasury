@@ -1,0 +1,262 @@
+2026-07-10 13:14:05,988 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:14:05,988 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:14:58,194 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:14:58,194 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:15:36,473 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:16:06,487 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:16:28,528 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:16:36,495 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:16:58,541 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:17:06,511 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:17:06,511 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → HALTED — 5 active critical threats
+2026-07-10 13:17:28,554 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:17:36,522 | WARNING  | keeper.warden        | Threat level: HALTED → NORMAL — All threats resolved
+2026-07-10 13:17:58,570 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 13:17:58,570 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → HALTED — 5 active critical threats
+2026-07-10 13:18:28,580 | WARNING  | keeper.warden        | Threat level: HALTED → NORMAL — All threats resolved
+2026-07-10 14:50:15,418 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:50:15,418 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:50:25,107 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:50:25,107 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:50:46,898 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:51:11,648 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:51:21,177 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:51:43,019 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:51:52,329 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:52:14,318 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:52:27,038 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:52:27,038 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → HALTED — 5 active critical threats
+2026-07-10 14:52:57,391 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 14:52:57,391 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → HALTED — 5 active critical threats
+2026-07-10 14:53:20,100 | WARNING  | keeper.warden        | Threat level: HALTED → NORMAL — All threats resolved
+2026-07-10 14:53:28,759 | WARNING  | keeper.warden        | Threat level: HALTED → NORMAL — All threats resolved
+2026-07-10 15:03:20,655 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:03:20,655 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:03:52,136 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 15:06:07,646 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 15:06:07,646 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 15:09:09,218 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 15:19:30,544 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:19:30,544 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:20:01,895 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 15:22:23,920 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 15:22:23,920 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 15:25:01,985 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 15:33:51,155 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:33:51,156 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:34:22,724 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 15:36:53,583 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 15:36:53,583 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 15:39:34,166 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 15:57:50,671 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:57:50,671 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 15:58:22,231 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:01:02,033 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:01:02,033 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:03:52,815 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:06:41,087 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:06:41,087 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:09:01,989 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:09:34,259 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:09:34,259 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:14:22,254 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:36:50,610 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:36:50,610 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:37:41,061 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:40:14,582 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:40:14,582 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:42:42,273 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:44:41,536 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:44:41,536 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:46:10,615 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 16:48:12,178 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:49:00,519 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 16:53:06,000 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:53:06,000 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 16:54:13,069 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:17:51,181 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:17:51,182 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:18:22,872 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:20:41,633 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:20:41,634 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:23:41,546 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:25:30,850 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:25:30,850 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:29:01,058 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:29:32,278 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:38:40,653 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:38:40,653 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:39:31,094 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:42:01,445 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:42:01,445 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:43:20,396 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:44:43,267 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:46:38,079 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:46:38,079 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:49:20,640 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 17:50:10,540 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 17:52:50,742 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:52:50,742 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 17:55:29,934 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 18:32:01,318 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 18:32:01,318 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 18:32:35,318 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 18:35:12,503 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:35:12,504 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:37:20,580 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 18:38:10,921 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 18:40:50,652 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:40:50,652 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:41:40,872 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 18:43:15,893 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 18:44:33,503 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:44:33,504 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:48:41,836 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 18:50:31,737 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 18:50:31,737 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 18:53:18,959 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 18:53:50,719 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:11:40,660 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:11:40,660 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:12:30,821 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:15:31,363 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:15:31,363 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:17:45,784 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:21:40,738 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:21:40,738 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:23:00,418 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:24:52,719 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:24:52,719 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:28:20,812 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:29:10,552 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:32:11,194 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:32:11,194 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:34:58,426 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:37:40,040 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:37:40,040 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:40:20,439 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:40:52,980 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:40:52,980 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:45:21,741 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:49:40,922 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:49:40,923 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 19:50:52,893 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 19:53:02,084 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:53:02,085 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 19:56:31,036 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:09:11,826 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:09:11,826 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:09:43,085 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:12:27,058 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:12:27,058 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:15:01,508 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:26:40,548 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:26:40,548 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:27:33,119 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:33:45,093 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:33:45,093 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:34:33,534 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:36:00,744 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:36:00,744 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:39:03,706 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:40:04,757 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:48:50,803 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:48:50,803 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 20:49:23,234 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 20:51:50,495 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:51:50,495 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 20:55:05,367 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:00:30,629 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:00:30,629 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:01:20,989 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:04:00,921 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:04:00,922 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:06:43,683 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:10:50,615 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:10:50,615 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:11:53,046 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:13:47,767 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:13:47,768 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:14:31,158 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:16:00,419 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:17:22,849 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:18:01,510 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:18:01,510 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:19:23,793 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:21:50,643 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:22:40,763 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:24:55,134 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:24:55,135 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:28:23,408 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 21:30:50,510 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:30:50,510 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 21:34:00,982 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 21:34:32,892 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:15:40,535 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:15:40,535 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:16:30,536 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:18:53,907 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:18:53,908 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:21:52,040 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:32:31,908 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:32:31,908 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:33:03,128 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:35:33,220 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:35:33,220 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:37:40,591 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:38:37,242 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:41:16,795 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:41:16,795 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:44:02,357 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:51:00,732 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:51:00,732 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 22:51:51,152 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 22:54:25,214 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:54:25,214 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 22:57:07,859 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 23:02:40,591 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 23:02:40,591 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 23:03:31,602 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 23:06:31,734 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 23:06:31,734 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 23:08:52,825 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 23:11:31,906 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 23:11:31,906 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 23:13:56,536 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 23:14:34,177 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 23:14:34,177 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-10 23:19:02,969 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 23:26:10,883 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-10 23:26:10,883 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-10 23:26:42,094 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-10 23:29:20,606 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-10 23:29:20,607 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-11 10:57:08,360 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 10:57:08,360 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-11 10:57:42,800 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 10:58:23,072 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 11:00:09,861 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:00:09,870 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:03:19,873 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 11:07:30,786 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:07:30,787 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:08:21,536 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 11:11:00,929 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:11:00,929 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:11:50,848 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:13:30,759 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 11:14:51,020 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:14:51,021 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:15:22,290 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:16:11,111 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:17:31,131 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:18:02,372 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:18:51,032 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:19:22,253 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:20:11,140 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 11:20:42,443 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:20:42,443 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:21:53,835 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 90.0% in ~1 minute
+2026-07-11 11:25:36,967 | WARNING  | keeper.warden        | Threat level: DEFENSIVE → NORMAL — All threats resolved
+2026-07-11 11:43:51,606 | WARNING  | keeper.warden        | [DEFENSIVE] oracle_manipulation: Rapid price movement: 900.0% in ~1 minute
+2026-07-11 11:43:51,606 | WARNING  | keeper.warden        | Threat level: NORMAL → DEFENSIVE — Rapid price movement: 900.0% in ~1 minute

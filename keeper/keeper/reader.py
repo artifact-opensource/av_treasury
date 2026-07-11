@@ -77,64 +77,85 @@ async def get_ag_supply() -> int:
 # ─── PID Controller ─────────────────────────────────────────────────────────
 
 async def get_emission_rate() -> int:
+    """Deployed PID v2: tokens that WOULD emit now (min of preview/remaining)."""
     contract = _contract("pid", PID_ABI)
-    return await contract.functions.getEmissionRate().call()
+    preview = await contract.functions.previewEmission().call()
+    remaining = await contract.functions.remainingDailyEmission().call()
+    return min(preview, remaining)
 
 
 async def get_next_epoch_time() -> int:
+    """Deployed PID v2: timeUntilDailyReset() -> seconds until next window."""
     contract = _contract("pid", PID_ABI)
-    return await contract.functions.getNextEpochTime().call()
+    return await contract.functions.timeUntilDailyReset().call()
 
 
 async def get_current_tvl() -> int:
+    """Deployed PID v2: twatvl() (time-weighted TVL)."""
     contract = _contract("pid", PID_ABI)
-    return await contract.functions.getCurrentTVL().call()
+    return await contract.functions.twatvl().call()
 
 
 async def get_pid_error() -> int:
+    """Deployed PID v2: lastError() -> last revert selector (0 = ok)."""
     contract = _contract("pid", PID_ABI)
-    return await contract.functions.getError().call()
+    return await contract.functions.lastError().call()
 
 
 # ─── FlashBuy ───────────────────────────────────────────────────────────────
 
 async def can_execute_buyback() -> bool:
-    contract = _contract("flashbuy", FLASHBUY_ABI)
-    return await contract.functions.canExecute().call()
+    """Deployed FlashBuy has no canExecute(); gate on PID daily window."""
+    contract = _contract("pid", PID_ABI)
+    until = await contract.functions.timeUntilDailyReset().call()
+    remaining = await contract.functions.remainingDailyEmission().call()
+    return (until == 0) and (remaining > 0)
 
 
 async def get_last_buyback_time() -> int:
-    contract = _contract("flashbuy", FLASHBUY_ABI)
-    return await contract.functions.getLastBuybackTime().call()
+    """Deployed AMO has no getLastBuybackTime(); use lastOperationTime()."""
+    contract = _contract("treasury_amo", TREASURY_AMO_ABI)
+    return await contract.functions.lastOperationTime().call()
 
 
 # ─── Oracle ─────────────────────────────────────────────────────────────────
 
 async def get_au_price() -> int:
+    """Deployed AvOracle v5: getAuPriceForAMO()."""
     contract = _contract("oracle", ORACLE_ABI)
-    return await contract.functions.getAuPrice().call()
+    return await contract.functions.getAuPriceForAMO().call()
 
 
 async def is_oracle_stale() -> bool:
+    """Deployed AvOracle v5: isPriceValid(AU) is False when stale."""
     contract = _contract("oracle", ORACLE_ABI)
-    return await contract.functions.isStale().call()
+    au_addr = Web3.to_checksum_address(CONTRACTS.get("au"))
+    return not await contract.functions.isPriceValid(au_addr).call()
 
 
 # ─── Treasury AMO ───────────────────────────────────────────────────────────
 
 async def get_nav() -> int:
+    """Deployed AMO has no getNAV(); use getReserveBalance() as NAV proxy."""
     contract = _contract("treasury_amo", TREASURY_AMO_ABI)
-    return await contract.functions.getNAV().call()
+    return await contract.functions.getReserveBalance().call()
 
 
 async def get_reserve_ratio() -> int:
+    """Deployed AMO has no getReserveRatio(); compute from balances * 1e4."""
     contract = _contract("treasury_amo", TREASURY_AMO_ABI)
-    return await contract.functions.getReserveRatio().call()
+    reserve = await contract.functions.getReserveBalance().call()
+    au = await contract.functions.getAuBalance().call()
+    total = reserve + au
+    return int(reserve * 10000 / total) if total > 0 else 0
 
 
 async def get_total_reserves() -> int:
+    """Deployed AMO has no getTotalReserves(); sum Au + reserve balances."""
     contract = _contract("treasury_amo", TREASURY_AMO_ABI)
-    return await contract.functions.getTotalReserves().call()
+    au = await contract.functions.getAuBalance().call()
+    res = await contract.functions.getReserveBalance().call()
+    return au + res
 
 
 # ─── Batch Reads ────────────────────────────────────────────────────────────

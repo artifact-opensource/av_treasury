@@ -11,7 +11,7 @@
  * bridge between the oracle (on-chain but unused) and the system (needs prices).
  * 
  * Run with: node scripts/oracle_keeper.js
- * Or via cron: */15 * * * * cd /home/adam/workspace/av_treasury && node scripts/oracle_keeper.js
+ * Or via cron: */15 * * * * cd /home/adam/Projects/ARC/av_treasury && node scripts/oracle_keeper.js
  */
 
 const { ethers } = require("hardhat");

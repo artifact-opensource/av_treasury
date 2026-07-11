@@ -79,20 +79,30 @@ class BuybackKeeper:
     def check_buyback_conditions(self) -> tuple[bool, str]:
         """Check if buyback should execute. Returns (should_execute, reason)."""
         # 1. Can FlashBuy execute? (cooldown, daily cap)
-        can_execute = self.flashbuy.functions.canExecute().call()
+        #    Deployed FlashBuy has no canExecute(); gate on PID daily window:
+        #    timeUntilDailyReset()==0 and remainingDailyEmission()>0.
+        try:
+            until = self.pid.functions.timeUntilDailyReset().call()
+            remaining = self.pid.functions.remainingDailyEmission().call()
+            can_execute = (until == 0) and (remaining > 0)
+        except Exception as e:
+            logger.warning(f"FlashBuy gate check failed: {e}")
+            can_execute = False
         if not can_execute:
             return False, "cooldown_or_cap"
 
-        # 2. Get current Au price from oracle
+        # 2. Get current Au price from AvOracle (quasicrystal)
         try:
-            au_price = self.oracle.functions.getAuPrice().call()
+            au_price = self.oracle.functions.getAuPriceForAMO().call()
         except Exception as e:
             logger.warning(f"Oracle read failed: {e}")
             return False, f"oracle_error: {e}"
 
-        # 3. Get NAV from Treasury AMO
+        # 3. Get reserve-backed value from Treasury AMO.
+        #    Deployed AMO has no getNAV(); use getReserveBalance() as the
+        #    on-chain NAV proxy (reserves backing the AMO).
         try:
-            nav = self.treasury.functions.getNAV().call()
+            nav = self.treasury.functions.getReserveBalance().call()
         except Exception as e:
             logger.warning(f"Treasury NAV read failed: {e}")
             return False, f"nav_error: {e}"
@@ -108,8 +118,13 @@ class BuybackKeeper:
                 return True, f"nav_deviation_{deviation:.4f}"
 
         # 5. Check reserve ratio
+        #    Deployed AMO has no getReserveRatio(); compute from
+        #    getReserveBalance() / (getReserveBalance() + getAuBalance()) * 1e4.
         try:
-            reserve_ratio = self.treasury.functions.getReserveRatio().call()
+            reserve = self.treasury.functions.getReserveBalance().call()
+            au = self.treasury.functions.getAuBalance().call()
+            total = reserve + au
+            reserve_ratio = int(reserve * 10000 / total) if total > 0 else 0
             if reserve_ratio < MIN_RESERVE_RATIO * 10000:
                 logger.warning(
                     f"Reserve ratio {reserve_ratio / 100:.1f}% < {MIN_RESERVE_RATIO * 100:.0f}%"
@@ -119,7 +134,8 @@ class BuybackKeeper:
             pass
 
         # 6. Emergency: TVL drop check
-        current_tvl = self.pid.functions.getCurrentTVL().call()
+        #    Deployed PID v2: twatvl() (time-weighted TVL).
+        current_tvl = self.pid.functions.twatvl().call()
         now = time.time()
 
         if self._tvl_24h_ago is not None:

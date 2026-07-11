@@ -19,9 +19,15 @@
 #   2 oracles (QuasiCrystalOracle 0xfd04, AvOracleV5 0xb479) are real on-chain but
 #   their Solidity SOURCE is NOT in this repo -> cannot re-verify without source.
 #
-# ⚠️ CONFLICTS TO RESOLVE (see bottom):
-#   - AVLPStaking: PID.staking()=0xd81C... but book/deployed_stack=0x8F63...
-#   - Oracle: quasicrystal 0xfd04 (keeper reads, stale) vs oracle 0xb479 (book)
+# ✅ RESOLVED (2026-07-08 audit): staking + oracle conflicts below are DONE.
+#   - AVLPStaking: NEW PID 0x43E2.staking()=0x8F63 (matches book). OLD PID 0xB8F2.staking()=0xd81C was the stale one.
+#   - Oracle: AvOracleV5 0x1B5F LIVE + keeper repointed to it. QuasiCrystal 0xfd04 is dead (ignore).
+#
+# 🔴 REAL REMAINING BLOCKER (NOT yet resolved — see [BLOCKER] section):
+#   - AgToken MINTER_ROLE is held ONLY by OLD/dead PID 0xB8F2. NEW PID 0x43E2 is NOT a minter.
+#     getRoleAdmin(MINTER)=DEFAULT_ADMIN_ROLE=0x0, and NO ONE holds it -> role cannot be re-granted.
+#     ERC1967 proxy-admin slot of AgToken(0x1D31) is EMPTY -> non-upgradeable as deployed.
+#     => Ag emission flywheel is frozen until AgToken minter is re-pointed to 0x43E2 (deploy fresh AgToken).
 # =============================================================================
 
 
@@ -118,4 +124,34 @@
 #   2 oracles real on-chain but source not in repo (cannot re-verify).
 #   5 placeholder entries removed (ProxyAdmin/ProxyHelper/OnChainBase64/
 #   QuasiCrystalSVG/NFTDescriptor — 0 code, never deployed).
+# =============================================================================
+
+# =============================================================================
+# [BLOCKER] AGTOKEN MINTER_ROLE — STILL ON DEAD OLD PID (verified 2026-07-08)
+# =============================================================================
+# On-chain probe (probe4.js / probe5.js):
+#   AgToken proxy      = 0x1D31719389Bd8b17277Ba367c26b830aE34D3674
+#   AgToken impl       = 0xBFD228862E407775D5911FD1a0fEF6bAb49534Da (UUPS)
+#   MINTER_ROLE        = 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6
+#   hasRole(MINTER, NEW PID 0x43E2) = FALSE   <-- should be TRUE
+#   hasRole(MINTER, OLD PID 0xB8F2) = TRUE    <-- dead controller holds mint rights
+#   getRoleAdmin(MINTER) = DEFAULT_ADMIN_ROLE = 0x0 (null)
+#   hasRole(ADMIN, deployer/keeper/gov/timelock) = ALL FALSE  <-- admin orphaned
+#   ERC1967 proxy-admin slot of 0x1D31 = 0x0  <-- non-upgradeable as deployed
+#
+# IMPACT: PID->Ag emission flywheel (F1) is FROZEN. New PID cannot mint Ag.
+# RESOLUTION: deploy a fresh AgToken wired so 0x43E2 holds MINTER_ROLE at init
+#   (mirror the oracle redeploy). Do NOT proceed with keeper/ops until done.
+# =============================================================================
+
+# =============================================================================
+# [RESOLVED 2026-07-10] AGTOKEN MINTER_ROLE — granted to NEW PID via Treasury Safe
+# =============================================================================
+# FIX APPLIED: Gnosis Safe (0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e) execTransaction
+#   granted grantRole(MINTER_ROLE, 0x43E2) on AgToken 0x1D31.
+#   hasRole(MINTER, NEW PID 0x43E2) = TRUE  ✅  (verified post-exec)
+#   OLD PID 0xB8F2 still holds MINTER_ROLE too — leave inert (superseded).
+#   getRoleAdmin(MINTER) = DEFAULT_ADMIN_ROLE = 0x0; Safe is the admin that grants.
+#   No redeploy needed — emission flywheel F1 re-enabled.
+#   SCRIPT: scripts/safe_grant_minter.js
 # =============================================================================

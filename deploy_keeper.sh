@@ -2,7 +2,7 @@
 # AV Treasury Keeper — Production Deployment Script
 set -e
 
-REPO_DIR="/home/adam/workspace/av_treasury"
+REPO_DIR="/home/adam/Projects/ARC/av_treasury"
 LOG_DIR="/opt/ava/logs/keeper"
 PID_FILE="/opt/ava/keeper.pid"
 
@@ -32,7 +32,16 @@ fi
 
 # Start keeper
 echo "[3/3] Starting keeper..."
-nohup python3 -u -m keeper.main run \
+# Use the keeper's own venv (Python 3.13 with dependencies) — system python3
+# lacks the keeper.main module and its deps.
+KEEPER_PY="${REPO_DIR}/keeper/venv/bin/python"
+if [ ! -x "$KEEPER_PY" ]; then
+    echo "⚠️  keeper venv not found at $KEEPER_PY — falling back to system python3"
+    KEEPER_PY="python3"
+fi
+# Package lives at keeper/keeper/ — run as keeper.keeper.main from REPO_DIR.
+cd "$REPO_DIR"
+nohup "$KEEPER_PY" -u -m keeper.keeper.main run \
     >> "$LOG_DIR/keeper.log" 2>&1 &
 
 NEW_PID=$!

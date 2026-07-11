@@ -1,11 +1,14 @@
 """
 Emission Keeper — Executes PID emissions when epoch is due.
 
-Flow:
-1. Check getNextEpochTime() — is it <= block.timestamp?
-2. Check getEmissionRate() — is it > 0?
-3. Call executeEmission() on PID Controller
-4. Log result with tx_hash and amount minted
+Deployed PID is v2 (verified against out/PID_Emission_Controller_v2.json).
+Real interface:
+  - timeUntilDailyReset() -> uint256   (seconds until next daily reset; 0 = window open)
+  - remainingDailyEmission() -> uint256 (capacity left today)
+  - previewEmission() -> uint256        (tokens that WOULD emit now)
+  - lastError() -> uint256              (last revert selector, 0 = ok)
+  - paused() / emergencyStop() -> bool
+  - executeEmission()                   (EMIT_ROLE only)
 """
 
 import asyncio
@@ -60,12 +63,29 @@ class EmissionKeeper:
         }
 
     def check_emission_due(self) -> tuple[bool, int]:
-        """Check if an emission is due and what the rate is."""
-        next_epoch = self.pid.functions.getNextEpochTime().call()
-        current_time = self.w3.eth.get_block("latest")["timestamp"]
-        emission_rate = self.pid.functions.getEmissionRate().call()
+        """Check if an emission is due and what the rate is.
 
-        is_due = (next_epoch <= current_time) and (emission_rate > 0)
+        Deployed PID v2: timeUntilDailyReset() == 0 means the daily window is
+        open; previewEmission()/remainingDailyEmission() give the amount.
+        """
+        try:
+            until = self.pid.functions.timeUntilDailyReset().call()
+            # previewEmission() returns a TUPLE:
+            # (emissionAmount, currentTVL, error, pTerm, iTerm, dTerm)
+            preview_tuple = self.pid.functions.previewEmission().call()
+            preview = preview_tuple[0] if isinstance(preview_tuple, (list, tuple)) else preview_tuple
+            # remainingDailyEmission() returns a single uint256 (or (remaining,))
+            rem_tuple = self.pid.functions.remainingDailyEmission().call()
+            remaining = rem_tuple[0] if isinstance(rem_tuple, (list, tuple)) else rem_tuple
+            paused = self.pid.functions.paused().call()
+            stopped = self.pid.functions.emergencyStop().call()
+        except Exception as e:
+            logger.warning(f"emission check failed: {e}")
+            return False, 0
+
+        current_time = self.w3.eth.get_block("latest")["timestamp"]
+        emission_rate = min(preview, remaining)
+        is_due = (until == 0) and (emission_rate > 0) and (not paused) and (not stopped)
         return is_due, emission_rate
 
     def execute_emission(self) -> Optional[str]:

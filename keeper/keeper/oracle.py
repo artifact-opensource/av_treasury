@@ -1,10 +1,11 @@
 """
 Oracle Keeper — Keeps the AvOracle price feed updated.
 
-Flow:
-1. Check isStale() on AvOracle
-2. If stale → call updatePrice()
-3. Also monitors TWAP health
+Deployed AvOracle is v5 (Quasicrystal). Real interface:
+  - isPriceValid(address token) -> bool   (replaces isStale())
+  - updatePrice(address token)            (replaces updatePrice())
+  - getAuAgPrices() -> (uint256, uint256)
+  - getTVL() -> uint256
 """
 
 import asyncio
@@ -62,16 +63,22 @@ class OracleKeeper:
         }
 
     def check_and_update(self) -> Optional[str]:
-        """Check if oracle is stale and update if needed."""
+        """Check if oracle is stale and update if needed.
+
+        Deployed AvOracle v5: isStale() does not exist; use
+        isPriceValid(AU_ADDRESS) (False == stale/needs update).
+        updatePrice() takes the token address argument.
+        """
         try:
-            is_stale = self.oracle.functions.isStale().call()
-            if not is_stale:
+            au_addr = Web3.to_checksum_address(CONTRACTS.get("au"))
+            is_valid = self.oracle.functions.isPriceValid(au_addr).call()
+            if is_valid:
                 logger.debug("Oracle is fresh, skipping update")
                 return None
 
             logger.info("Oracle is stale — updating price")
 
-            tx = self.oracle.functions.updatePrice().build_transaction(self._build_tx())
+            tx = self.oracle.functions.updatePrice(au_addr).build_transaction(self._build_tx())
             signed = self.account.sign_transaction(tx)
             tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
 

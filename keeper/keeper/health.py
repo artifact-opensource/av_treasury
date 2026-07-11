@@ -82,7 +82,12 @@ class HealthMonitor:
                 address=Web3.to_checksum_address(CONTRACTS["treasury_amo"]),
                 abi=TREASURY_AMO_ABI,
             )
-            ratio = treasury.functions.getReserveRatio().call()
+            # Deployed AMO has no getReserveRatio(); compute from
+            # getReserveBalance() / (getReserveBalance() + getAuBalance()) * 1e4.
+            reserve = treasury.functions.getReserveBalance().call()
+            au = treasury.functions.getAuBalance().call()
+            total = reserve + au
+            ratio = int(reserve * 10000 / total) if total > 0 else 0
             ratio_pct = ratio / 100  # basis points to percentage
 
             if ratio_pct < MIN_RESERVE_RATIO * 100:
@@ -109,14 +114,19 @@ class HealthMonitor:
         return None
 
     def _check_oracle_freshness(self) -> Optional[dict]:
-        """Check if oracle is not stale."""
+        """Check if oracle is not stale.
+
+        Deployed AvOracle v5 has no isStale(); use isPriceValid(AU)
+        (False == stale).
+        """
         try:
             oracle = self.w3.eth.contract(
-                address=Web3.to_checksum_address(CONTRACTS["oracle"]),
+                address=Web3.to_checksum_address(CONTRACTS["quasicrystal"]),
                 abi=ORACLE_ABI,
             )
-            is_stale = oracle.functions.isStale().call()
-            if is_stale:
+            au_addr = Web3.to_checksum_address(CONTRACTS["au"])
+            is_valid = oracle.functions.isPriceValid(au_addr).call()
+            if not is_valid:
                 issue = {
                     "severity": "WARNING",
                     "module": "oracle",

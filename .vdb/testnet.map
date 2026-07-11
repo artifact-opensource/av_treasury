@@ -1,0 +1,81 @@
+# testnet.map — AV Treasury Testnet Semantic Remap
+# Remaps the entire semantic map to the WORKING new testnet prototype (localhost, chainId 31337).
+# Generated: 2026-07-11 | Prototype status: GREEN (all functions 0% fail post ethers fix)
+# Namespace: testnet (isolated from mainnet vectors — see MAINNET_SEPARATION.md)
+
+## ─────────────────────────────────────────────────────────────
+## 1. NETWORK LAYER
+## ─────────────────────────────────────────────────────────────
+semantic:network                  -> TESTNET (localhost Hardhat)
+semantic:chain_id                 -> 31337
+semantic:rpc                      -> http://localhost:8545
+semantic:mining                   -> interval (auto:false, interval:1000ms)
+semantic:explorer                 -> none (local)
+semantic:gas_token                -> ETH (test)
+semantic:deploy_script            -> scripts/deploy_testnet.js --network localhost
+semantic:node_process             -> Hardhat interval-mining node on :8545
+
+## ─────────────────────────────────────────────────────────────
+## 2. TOKEN LAYER (mock ERC20s — NOT mainnet)
+## ─────────────────────────────────────────────────────────────
+semantic:au_token                 -> AuToken   0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 (UUPS, 18dp, genesis 1,000,000)
+semantic:ag_token                 -> AgToken   0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9 (RESERVE, 18dp)
+semantic:usdc                     -> MockUSDC  0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e (6dp mock)
+semantic:weth                     -> MockWETH  0x0B306BF915C4d645ff596e518fAf3F9669b97016
+semantic:lp_nft                   -> QuasiCrystalLPNFT 0x162A433068F51e18b7d13932F27e66a3f99E6890
+
+## ─────────────────────────────────────────────────────────────
+## 3. PROTOCOL LAYER (contracts)
+## ─────────────────────────────────────────────────────────────
+semantic:router                   -> MockAerodromeRouter 0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0
+semantic:oracle                   -> AvOracle   0xf5059a5D33d5853360D16C683c16e67980206f36
+semantic:oracle_wrapper           -> OracleWrapper 0x0E801D84Fa97b50751Dbf25036d067dCf18858bF
+semantic:amo                      -> TreasuryAMO 0x4826533B4897376654Bb4d4AD88B7faFD0C98528
+semantic:flashbuy                 -> TreasuryFlashBuy_v2 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf
+semantic:staking                  -> AVLPStaking_v2 0x5081a39b8A5f0E35a8D959395a630b68B74Dd30f
+semantic:pid_emission             -> PIDEmissionControllerV2 0x1fA02b2d6A771842690194Cf62D91bdd92BfE28d
+semantic:treasury_safe            -> TreasurySafe 0x36C02dA8a0983159322a80FFE9F24b1acfF8B570
+semantic:timelock                 -> ArtifactTimelock 0x809d550fca64d94Bd9F66E60752A544199cfAC3D
+semantic:governor                 -> GovernorContractV5 0x4c5859f0F772848b2D91F1D83E2Fe57935348029
+
+## ─────────────────────────────────────────────────────────────
+## 4. ROLE / ACCOUNT LAYER
+## ─────────────────────────────────────────────────────────────
+semantic:deployer                 -> Acct#0 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (Safe owner1, governor admin)
+semantic:keeper                   -> Acct#1 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (AMO + Flywheel keeper)
+semantic:safe_owner2              -> Acct#2 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+semantic:traders                  -> 7 random funded wallets (market simulation)
+semantic:pid_admin_on_staking     -> YES (PID_Emission_Controller_V2 holds ADMIN_ROLE on AVLPStaking_v2)
+
+## ─────────────────────────────────────────────────────────────
+## 5. FLYWHEEL FUNCTION MAP (verified working)
+## ─────────────────────────────────────────────────────────────
+semantic:buy_sell                 -> MockAerodromeRouter.swapBuy(AU/AG) / swapSell(AU/AG)  [0% fail]
+semantic:amo_buyback              -> TreasuryAMO.executeBuyback(reserveAmt, minAuOut, skipCooldown, deadline)
+                                       cap = 5% of reserve (reserveCapBps=500), dynamic per epoch
+                                       engine skips when reserveAmt<=0
+semantic:flashbuy_buyback         -> TreasuryFlashBuy_v2.executeBuyback(dexData, amount, minOut, deadline) [0% fail]
+semantic:lp_stake                 -> AVLPStaking_v2.stake(tokenId, weight, lockWeeks) [0% fail, 124+ positions]
+semantic:pid_emission             -> PIDEmissionController_V2.executeEmission() -> sets auRewardPerBlock=1, agRewardPerBlock=0.0058
+semantic:oracle_check             -> OracleWrapper.getOraclePrice(AU/AG)=0.01, every 10th tick [OK]
+semantic:reward_accrual           -> AVLPStaking_v2 accrues AU/AG per block to stakers
+
+## ─────────────────────────────────────────────────────────────
+## 6. ANALYTICS / OBSERVABILITY LAYER
+## ─────────────────────────────────────────────────────────────
+semantic:engine                   -> deployments/testnet/analytics/engine.js (standalone Node, JsonRpcProvider+Wallet)
+semantic:engine_log               -> deployments/testnet/analytics/log.jsonl (t, contract, fn, ok, gas, err)
+semantic:engine_summary           -> node deployments/testnet/analytics/summary.js
+semantic:metrics                  -> deployments/testnet/analytics/metrics.json
+
+## ─────────────────────────────────────────────────────────────
+## 7. KNOWN DEFECTS (tracked, not blocking)
+## ─────────────────────────────────────────────────────────────
+semantic:defect_amo_hoard         -> AMO holds AU (no burn). totalAuBought == AU bal in AMO. Design decision pending.
+semantic:defect_ethers_crash      -> FIXED 2026-07-11: engine.js:256 bare ethers -> hre.ethers. PID emission 0% fail now.
+
+## ─────────────────────────────────────────────────────────────
+## 8. MAINNET ISOLATION (see MAINNET_SEPARATION.md)
+## ─────────────────────────────────────────────────────────────
+semantic:mainnet_status           -> OUT OF SCOPE for this prototype. Separate namespace=mainnet vectors.
+semantic:contamination_guard      -> query .vdb by namespace=testnet only when reasoning about prototype.

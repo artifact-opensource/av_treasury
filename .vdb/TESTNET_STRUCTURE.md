@@ -151,6 +151,18 @@ one engine.** Verified clean baseline (2026-07-11): 21 calls across 9 function t
 - Secondary path (no skip): respects the 60s `respectsCooldown` guard → occasionally reverts with
   `CooldownActive` when called within 60s. This is the rate-limit working as designed, NOT a bug.
 
+### 6.3 PID emission — verified working
+- Engine calls `pid.connect(deployer).executeEmission()` every 20 ticks. Deployer holds `EMIT_ROLE`
+  (0x934c9386...). Verified: mined call succeeds (gas ~168k), `auRewardPerBlock=1`, `agRewardPerBlock=0.0058`.
+- **LATENT GAP:** the keeper (Acct#1) does NOT hold `EMIT_ROLE` — only the deployer does. If emission is
+  ever routed through the keeper, it reverts `MissingRole`. Not hit by current engine (uses deployer).
+  To harden: `pid.grantRole(EMIT_ROLE, keeper)` in deploy script.
+
+### 6.4 DEFINITIVE baseline (2026-07-11, single engine, truncated log)
+- 9 function types exercised, **0% fail** (swaps x4, AMO skip, FlashBuy, stake, PID emission, oracle-check).
+- Only non-zero "fail" = AMO non-skip cooldown guard (by design). Multi-process log contention caused
+  phantom fails in earlier reads — always kill all engine procs + truncate log before reading.
+
 ---
 
 ## 7. KNOWN DEFECTS (tracked)

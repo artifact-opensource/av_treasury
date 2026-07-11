@@ -140,6 +140,17 @@ Engine runtime: JsonRpcProvider + Wallet signers (no hardhat runtime dependency 
 **Bug fixed 2026-07-11:** `engine.js:256` used bare `ethers` (not `hre.ethers`) → crashed PID emission
 logging (`ethers is not defined`). Now `hre.ethers`. PID emission 0% fail.
 
+### 6.1 OPERATIONAL CAVEAT — one engine per log
+`log.jsonl` is append-only and NOT safe for concurrent writers. Running more than one `engine.js`
+process (or restarting without truncating the log) makes the summary show phantom "fails" with stale
+`firstTs` from prior runs. **Rule: kill all `engine.js` procs, truncate `log.jsonl`, then start exactly
+one engine.** Verified clean baseline (2026-07-11): 21 calls across 9 function types, **0 fails**.
+
+### 6.2 AMO buyback has two paths
+- Keeper path: `TreasuryAMO.executeBuyback(reserveAmt, minAuOut, skipCooldown=true, deadline)` → 0% fail.
+- Secondary path (no skip): respects the 60s `respectsCooldown` guard → occasionally reverts with
+  `CooldownActive` when called within 60s. This is the rate-limit working as designed, NOT a bug.
+
 ---
 
 ## 7. KNOWN DEFECTS (tracked)

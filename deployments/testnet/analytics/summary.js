@@ -7,7 +7,21 @@ const ROOT = __dirname;
 const METRICS = path.join(ROOT, "metrics.json");
 
 (async () => {
-  const metrics = JSON.parse(fs.readFileSync(METRICS, "utf8"));
+  // read with retry — engine writes metrics.json incrementally, so a concurrent
+  // read can catch a half-flushed buffer. Retry a few times before giving up.
+  let metrics;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      metrics = JSON.parse(fs.readFileSync(METRICS, "utf8"));
+      break;
+    } catch (e) {
+      if (attempt === 7) {
+        console.log("⚠️ Could not read metrics.json (concurrent write race):", e.message);
+        process.exit(0);
+      }
+      await new Promise((r) => setTimeout(r, 80));
+    }
+  }
   let totalCalls = 0, totalFails = 0;
   console.log("════════════════════════════════════════════════════════════");
   console.log("  AV TREASURY TESTNET — ANALYTICS SUMMARY");

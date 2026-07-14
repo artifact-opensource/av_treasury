@@ -241,6 +241,12 @@ async function main() {
   const ADMIN = await staking.ADMIN_ROLE();
   try { await (await staking.connect(deployer).grantRole(ADMIN, pid.address)).wait(); console.log("  staking.grantRole(ADMIN, pid) ok"); }
   catch (e) { console.log("  (grantRole skipped:", e.message.slice(0,40), ")"); }
+  // PID EMIT_ROLE -> keeper (Acct#1) so the engine can route emission through the
+  // keeper wallet (defense-in-depth; deployer retains the role too). Without this the
+  // keeper reverts MissingRole on executeEmission.
+  const EMIT_R = await pid.EMIT_ROLE();
+  try { await (await pid.connect(deployer).grantRole(EMIT_R, keeper.address)).wait(); console.log("  pid.grantRole(EMIT_ROLE, keeper) ok"); }
+  catch (e) { console.log("  (pid EMIT_ROLE grant skipped:", e.message.slice(0,40), ")"); }
   // PID must be MINTER on AG (and AU) so executeEmission can mint rewards.
   const MINTER_R = await ag.MINTER_ROLE();
   try { await (await ag.connect(deployer).grantRole(MINTER_R, pid.address)).wait(); console.log("  ag.grantRole(MINTER, pid) ok"); }

@@ -26,6 +26,14 @@ sandbox/logs/
 *.pid
 sandbox/deployed_*.json
 
+# Testnet runtime artifacts (ephemeral; state persists in chain-state.json locally)
+deployments/testnet/chain-state.json
+deployments/testnet/analytics/log.jsonl
+deployments/testnet/analytics/metrics.json
+deployments/testnet/logs/
+deployments/testnet/anvil.log
+deployments/testnet/events.jsonl
+
 # Index directory
 /index/
 
@@ -38,3 +46,4 @@ keeper/logs/
 keeper/venv/
 /validator
 address.book.BROKEN_20260629
+keeper/keeper/logs/

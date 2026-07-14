@@ -1,25 +1,27 @@
 # testnet.map — AV Treasury Testnet Semantic Remap
 # Remaps the entire semantic map to the WORKING new testnet prototype (localhost, chainId 31337).
-# Generated: 2026-07-11 | Prototype status: GREEN (all functions 0% fail post ethers fix)
+# Generated: 2026-07-11 | Last audited: 2026-07-14 | Prototype status: GREEN (0 fails live session)
 # Namespace: testnet (isolated from mainnet vectors — see MAINNET_SEPARATION.md)
 
 ## ─────────────────────────────────────────────────────────────
 ## 1. NETWORK LAYER
 ## ─────────────────────────────────────────────────────────────
-semantic:network                  -> TESTNET (localhost Hardhat)
+semantic:network                  -> TESTNET (localhost Foundry anvil)
 semantic:chain_id                 -> 31337
 semantic:rpc                      -> http://localhost:8545
-semantic:mining                   -> interval (auto:false, interval:1000ms)
+semantic:block_time               -> 2s (--block-time 2)
+semantic:state_persistence        -> anvil --state deployments/testnet/chain-state.json --state-interval 1000
 semantic:explorer                 -> none (local)
 semantic:gas_token                -> ETH (test)
 semantic:deploy_script            -> scripts/deploy_testnet.js --network localhost
-semantic:node_process             -> Hardhat interval-mining node on :8545
+semantic:start_script             -> bash scripts/start_stack.sh (kill stale, reset stale state, anvil, deploy, engine)
+semantic:node_process             -> anvil --port 8545 --chain-id 31337 --state ... --block-time 2
 
 ## ─────────────────────────────────────────────────────────────
 ## 2. TOKEN LAYER (mock ERC20s — NOT mainnet)
 ## ─────────────────────────────────────────────────────────────
 semantic:au_token                 -> AuToken   0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512 (UUPS, 18dp, genesis 1,000,000)
-semantic:ag_token                 -> AgToken   0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9 (RESERVE, 18dp)
+semantic:ag_token                 -> AgToken   0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9 (RESERVE, 18dp, genesis 5.75M: 5M deployer + 500k AMO + 250k staking)
 semantic:usdc                     -> MockUSDC  0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e (6dp mock)
 semantic:weth                     -> MockWETH  0x0B306BF915C4d645ff596e518fAf3F9669b97016
 semantic:lp_nft                   -> QuasiCrystalLPNFT 0x162A433068F51e18b7d13932F27e66a3f99E6890
@@ -42,7 +44,7 @@ semantic:governor                 -> GovernorContractV5 0x4c5859f0F772848b2D91F1
 ## 4. ROLE / ACCOUNT LAYER
 ## ─────────────────────────────────────────────────────────────
 semantic:deployer                 -> Acct#0 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (Safe owner1, governor admin)
-semantic:keeper                   -> Acct#1 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (AMO + Flywheel keeper)
+semantic:keeper                   -> Acct#1 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (AMO EXECUTOR + FlashBuy EXECUTOR + PID EMIT_ROLE [fixed 6e14de9])
 semantic:safe_owner2              -> Acct#2 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
 semantic:traders                  -> 7 random funded wallets (market simulation)
 semantic:pid_admin_on_staking     -> YES (PID_Emission_Controller_V2 holds ADMIN_ROLE on AVLPStaking_v2)
@@ -57,7 +59,7 @@ semantic:amo_buyback              -> TreasuryAMO.executeBuyback(reserveAmt, minA
 semantic:flashbuy_buyback         -> TreasuryFlashBuy_v2.executeBuyback(dexData, amount, minOut, deadline) [0% fail]
 semantic:lp_stake                 -> AVLPStaking_v2.stake(tokenId, weight, lockWeeks) [0% fail, 124+ positions]
 semantic:pid_emission             -> PIDEmissionController_V2.executeEmission() -> sets auRewardPerBlock=1, agRewardPerBlock=0.0058
-semantic:oracle_check             -> OracleWrapper.getOraclePrice(AU/AG)=0.01, every 10th tick [OK]
+semantic:oracle_check             -> AvOracle.getAuAgPrices()=0.01 (bootstrap mode, nominal 1y), every 10th tick [OK]
 semantic:reward_accrual           -> AVLPStaking_v2 accrues AU/AG per block to stakers
 
 ## ─────────────────────────────────────────────────────────────

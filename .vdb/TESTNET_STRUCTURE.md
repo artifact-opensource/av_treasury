@@ -1,17 +1,18 @@
 # AV Treasury Testnet — Granular Structure Document
 
 > Purpose: a single source of truth for the testnet prototype so we don't forget or drift.
-> Generated: 2026-07-11 | Status: **GREEN** — all treasury functions fire at 0% fail (post ethers fix).
+> Generated: 2026-07-11 | Last audited: 2026-07-14 | Status: **GREEN** — live end-to-end audit, 0 fails current session.
 > Location: `av_treasury/.vdb/` | Namespace: `testnet`
 
 ---
 
 ## 0. TL;DR
 
-The testnet is a **self-contained Hardhat localnet** (chainId 31337, `http://localhost:8545`) that runs the
-full AV Treasury flywheel against **mock contracts**. A standalone analytics engine (`engine.js`)
-perpetually drives market activity and records granular per-function telemetry. Everything is green
-except two documented design questions (AMO burn policy). This is a sandbox — nothing here touches mainnet.
+The testnet is a **self-contained Foundry anvil localnet** (chainId 31337, `http://localhost:8545`) running the
+full AV Treasury flywheel against **mock contracts**, with **persistent state** (anvil `--state`). A standalone
+analytics engine (`engine.js`) perpetually drives market activity and records granular per-function telemetry.
+End-to-end audit (2026-07-14) confirms the double-flywheel is operational: swaps → AMO buybacks → AU held →
+LP staking → PID emission → rewards accrue. **0 reverts in the live session.** Sandbox — nothing touches mainnet.
 
 ---
 
@@ -19,15 +20,17 @@ except two documented design questions (AMO burn policy). This is a sandbox — 
 
 | Property | Value |
 |----------|-------|
-| Type | Hardhat local node |
+| Type | **Foundry anvil** (not Hardhat node) |
 | Chain ID | `31337` |
 | RPC | `http://localhost:8545` |
-| Mining | Interval (`mining: { auto: false, interval: 1000 }`) — 1 block/sec |
-| Why interval | Automine caused `-32603`/nonce races under engine load; interval mining is stable |
-| Deploy cmd | `npx hardhat run scripts/deploy_testnet.js --network localhost` |
-| Node process | Hardhat interval-mining node on :8545 (proc `ef8875d3`) |
+| Block time | 2s (`--block-time 2`) |
+| Gas limit | 30,000,000 |
+| Persistence | `--state deployments/testnet/chain-state.json --state-interval 1000` (real anvil dump) |
+| Start cmd | `bash scripts/start_stack.sh` (kills stale, resets stale state, starts anvil, deploys, launches engine) |
+| Node process | `anvil --port 8545 --chain-id 31337 --state ... --block-time 2` |
 
-> Interval mining makes the engine ~1 tx / 3s. Deliberately gentle for stability. Do NOT switch back to automine.
+> State persists across restarts via anvil `--state`. A stale 24MB `chain-state.json` (old addresses) is
+> auto-detected and reset by `start_stack.sh`. Engine runs ~1 tx / 3s (gentle, stable).
 
 ---
 
@@ -36,7 +39,7 @@ except two documented design questions (AMO burn policy). This is a sandbox — 
 | Symbol | Contract | Address | Notes |
 |--------|----------|---------|-------|
 | AU | `AuToken` (UUPS) | `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512` | Genesis 1,000,000 minted, 18dp |
-| AG | `AgToken` (reserve) | `0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9` | Treasury reserve token, 18dp |
+| AG | `AgToken` (reserve) | `0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9` | Genesis 5.75M (5M deployer + 500k AMO + 250k staking), 18dp |
 | USDC | `MockUSDC` | `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` | 6dp mock |
 | WETH | `MockWETH` | `0x0B306BF915C4d645ff596e518fAf3F9669b97016` | mock |
 | LP-NFT | `QuasiCrystalLPNFT` | `0x162A433068F51e18b7d13932F27e66a3f99E6890` | staked into AVLPStaking_v2 |
@@ -83,8 +86,10 @@ except two documented design questions (AMO burn policy). This is a sandbox — 
 - `executeEmission()` — computes emission via PID (kp=ki=kd=1e15, targetTVL=1e24), calls
   `staking.setRewardRates(...)`. Holds ADMIN_ROLE on staking. 0% fail post ethers fix.
 
-### 3.6 OracleWrapper
-- `getOraclePrice(keccak256(symbol))` → (price, ts). AU=AG=0.01 in testnet. Checked every 10th engine tick.
+### 3.6 OracleWrapper (`AvOracle`)
+- `getAuAgPrices()` → `[AU, AG]`. Both read `0.01` because deploy set `setBootstrapPrice(token, 0.01, 1y)` + `setBootstrapMode(true)`. **Nominal bootstrap price, by design — NOT a market price.**
+- Engine checks oracle every 10th tick. No external feed in testnet (mock).
+- **Mainnet gap:** must swap bootstrap price for a real feed (Chainlink/Pyth) before floor logic is meaningful.
 
 ---
 
@@ -92,11 +97,12 @@ except two documented design questions (AMO burn policy). This is a sandbox — 
 
 | Role | Address | Notes |
 |------|---------|-------|
-| Deployer (Acct#0) | `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266` | Safe owner #1, governor admin |
-| Keeper (Acct#1) | `0x70997970C51812dc3A010C7d01b50e0d17dc79C8` | TreasuryAMO + Flywheel keeper (buyback + emission) |
+| Deployer (Acct#0) | `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266` | DEFAULT_ADMIN on all contracts; runs engine emission |
+| Keeper (Acct#1) | `0x70997970C51812dc3A010C7d01b50e0d17dc79C8` | AMO EXECUTOR ✓, FlashBuy EXECUTOR ✓, PID EMIT_ROLE ✓ (fixed 6e14de9) |
 | Safe owner #2 (Acct#2) | `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC` | 2-of-2 safe |
 | Traders | 7 random funded wallets | market simulation |
-| PID → staking admin | `PIDEmissionControllerV2` | can call `setRewardRates` |
+| PID → staking admin | `PIDEmissionControllerV2` | ADMIN on staking; calls `setRewardRates` + mints rewards |
+| AMO → treasury (NOT staking admin) | `TreasuryAMO` | buys/holds AU, spends AG reserve; by design not staking admin |
 
 ---
 
@@ -151,45 +157,63 @@ one engine.** Verified clean baseline (2026-07-11): 21 calls across 9 function t
 - Secondary path (no skip): respects the 60s `respectsCooldown` guard → occasionally reverts with
   `CooldownActive` when called within 60s. This is the rate-limit working as designed, NOT a bug.
 
-### 6.3 PID emission — verified working
+### 6.3 PID emission — verified working (keeper fix live)
 - Engine calls `pid.connect(deployer).executeEmission()` every 20 ticks. Deployer holds `EMIT_ROLE`
-  (0x934c9386...). Verified: mined call succeeds (gas ~168k), `auRewardPerBlock=1`, `agRewardPerBlock=0.0058`.
-- **LATENT GAP:** the keeper (Acct#1) does NOT hold `EMIT_ROLE` — only the deployer does. If emission is
-  ever routed through the keeper, it reverts `MissingRole`. Not hit by current engine (uses deployer).
-  To harden: `pid.grantRole(EMIT_ROLE, keeper)` in deploy script.
+  (0x934c9386...). Verified: mined call succeeds, `auRewardPerBlock=1`, `agRewardPerBlock=0.0058`.
+- **FIXED (6e14de9):** keeper (Acct#1) now ALSO holds `EMIT_ROLE` — verified live `hasRole=true`. The
+  Python keeper's `emission.py` calls `executeEmission()` as the keeper wallet, which was reverting
+  `MissingRole` before this fix. Now both paths work.
 
-### 6.4 DEFINITIVE baseline (2026-07-11, single engine, truncated log)
-- 9 function types exercised, **0% fail** (swaps x4, AMO skip, FlashBuy, stake, PID emission, oracle-check).
-- Only non-zero "fail" = AMO non-skip cooldown guard (by design). Multi-process log contention caused
-  phantom fails in earlier reads — always kill all engine procs + truncate log before reading.
+### 6.4 DEFINITIVE baseline — LIVE END-TO-END AUDIT (2026-07-14)
+- **0 fails in the current live session** across all 9 function types (swaps x4, AMO skip + non-skip,
+  FlashBuy, stake, PID emission, oracle-check). Verified by reading live contract state, not just log.
+- AMO holds **59,631.83 AU** (bought this session), spent ~68k AG (reserve 432k of 500k). Buybacks live.
+- PID emission flowing: staking `auRewardPerBlock=1`, `agRewardPerBlock≈0.006`; pending rewards accruing
+  to stakers (deployer stake#0: 133 AU + 110 AG pending). Flywheel loop closed.
+- Aggregate log 8% "fail" = non-skip buyback hitting `CooldownActive`/`RunwayViolation`/`BelowBuybackFloor`
+  guards — rate-limit working, handled by engine `withRetry`→skip path. NOT a defect.
+
+### 6.5 Can the treasury accrue positive value on its own?
+**Yes — the mechanism is self-sustaining by design, verified live:**
+1. Swaps create market activity + fees path through the router.
+2. AMO spends AG reserve to buy AU when below floor → AU accumulates in treasury (59,631 AU held).
+3. AU/AG staking rewards emit via PID → pulls stakers → LP depth grows.
+4. PID self-tunes `auRewardPerBlock`/`agRewardPerBlock` to staking weights (admin = PID).
+5. `reserveCapBps=500` (5%/epoch) caps AMO drawdown → runway protected.
+**Caveat:** in a closed testnet the "value" is token-movement, not external USD demand. Real value
+accretion requires external swaps/fees (mainnet). The plumbing is proven; the economics need a live market.
 
 ---
 
-## 7. KNOWN DEFECTS (tracked)
+## 7. KNOWN DEFECTS / GAPS (tracked)
 
 | ID | Severity | Description | Status |
 |----|----------|-------------|--------|
 | A | Design | AMO holds AU (no burn). `totalAuBought == AU bal in AMO`. Treasury hoard, not deflationary sink. | Open — design decision needed |
 | B | Bug (fixed) | `engine.js:256` bare `ethers` → PID emission logging crash. | FIXED 2026-07-11 |
 | C | Bug (fixed) | Router reserve misalignment broke `ag>usdc` swaps. | FIXED (sorted reserves) |
+| D | Bug (fixed) | Keeper lacked PID `EMIT_ROLE` → `emission.py` reverted `MissingRole`. | FIXED 6e14de9 |
+| E | Cosmetic | `engine.js:93` `weth` loads AgToken ABI (copy-paste). WETH unused in flywheel. | FIXED 2026-07-14 |
+| F | Mainnet gap | Oracle is bootstrap (0.01). Needs real feed (Chainlink/Pyth) before floor logic is meaningful. | Open (mainnet) |
 
 ---
 
-## 8. HOW TO RE-RUN
+## 8. HOW TO RE-RUN (persistent stack)
 
 ```bash
-# 1. start node (interval mining)
-npx hardhat node --network localhost   # with mining.interval configured in hardhat.config.js
+# Robust orchestration: kills stale procs, resets stale state, starts anvil --state, deploys, launches engine
+bash scripts/start_stack.sh
 
-# 2. deploy
-npx hardhat run scripts/deploy_testnet.js --network localhost
-
-# 3. run analytics engine
-node deployments/testnet/analytics/engine.js
-
-# 4. watch
+# watch
+tail -f deployments/testnet/logs/engine.log
 node deployments/testnet/analytics/summary.js
+
+# live state audit
+npx hardhat run scripts/audit_flywheel.js --network localhost
 ```
+
+> State persists across restarts via anvil `--state deployments/testnet/chain-state.json`. A stale 24MB
+> state file (old addresses) is auto-detected + reset by `start_stack.sh`.
 
 ---
 

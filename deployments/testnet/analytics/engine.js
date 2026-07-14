@@ -90,7 +90,7 @@ async function main() {
   const au = await hre.ethers.getContractAt("contracts/av_suite/AuToken.sol:AuToken", ADDR.AuToken, deployer);
   const ag = await hre.ethers.getContractAt("contracts/av_suite/AgToken.sol:AgToken", ADDR.AgToken, deployer);
   const usdc = await hre.ethers.getContractAt("contracts/av_suite/MockUSDC.sol:MockUSDC", ADDR.MockUSDC, deployer);
-  const weth = await hre.ethers.getContractAt("contracts/av_suite/AgToken.sol:AgToken", ADDR.MockWETH, deployer);
+  const weth = await hre.ethers.getContractAt("contracts/av_suite/MockWETH.sol:MockWETH", ADDR.MockWETH, deployer);
   const router = await hre.ethers.getContractAt("contracts/av_suite/MockAerodromeRouter.sol:MockAerodromeRouter", ADDR.MockAerodromeRouter, deployer);
   const amo = await hre.ethers.getContractAt("contracts/av_suite/TreasuryAMO.sol:TreasuryAMO", ADDR.TreasuryAMO, deployer);
   const flash = await hre.ethers.getContractAt("contracts/av_suite/TreasuryFlashBuy_v2.sol:TreasuryFlashBuy_v2", ADDR.TreasuryFlashBuy_v2, deployer);

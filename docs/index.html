@@ -134,7 +134,7 @@
 
 <body class="bg-amoled text-brightWhite font-sans min-h-screen selection:bg-white selection:text-black overflow-x-hidden pb-12">
 <div id="background-stack" aria-hidden="true">
-  <canvas id="bg-interactive" aria-hidden="true" role="presentation"></canvas>
+  <canvas id="bg-interactive" aria-hidden="true"></canvas>
   <div class="fog-overlay"></div>
   <div class="scanlines"></div>
 </div>
@@ -1366,7 +1366,7 @@
 
   // Listen to viewport changes to dynamically correct layout widths
   let resizeQueued = false;
-  window.addEventListener('resize', () => {
+  window.onresize = function() {
     if (resizeQueued) return;
     resizeQueued = true;
     requestAnimationFrame(() => {
@@ -1374,7 +1374,7 @@
       resizeCanvas();
       resizeQueued = false;
     });
-  });
+  };
 </script>
 
 </body>

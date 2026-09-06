@@ -250,12 +250,10 @@
       <a href="https://arc.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Treasury DApp (opens in a new tab)" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-brightWhite/70 bg-card/80 backdrop-blur-sm rounded text-brightWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.15)]">
         <span class="material-icons-outlined text-sm">account_balance</span>
         <span>Treasury DApp</span>
-        <span class="sr-only">(opens in a new tab)</span>
       </a>
       <a href="https://anvil.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Anvil Wallet (opens in a new tab)" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-borderMid bg-amoled/80 backdrop-blur-sm rounded text-mutedWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:text-brightWhite hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]">
         <span class="material-icons-outlined text-sm">account_balance_wallet</span>
         <span>Anvil Wallet</span>
-        <span class="sr-only">(opens in a new tab)</span>
       </a>
     </div>
   </div>
@@ -791,14 +789,17 @@
   const bgCtx = bgCanvas.getContext('2d');
   const pointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5, active: false, vx: 0, vy: 0 };
   let bgNodes = [];
+  let bgPixelRatio = 1;
+  let pidPixelRatio = 1;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function resizeBackground() {
-    bgCanvas.width = window.innerWidth * window.devicePixelRatio;
-    bgCanvas.height = window.innerHeight * window.devicePixelRatio;
+    bgPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    bgCanvas.width = window.innerWidth * bgPixelRatio;
+    bgCanvas.height = window.innerHeight * bgPixelRatio;
     bgCanvas.style.width = `${window.innerWidth}px`;
     bgCanvas.style.height = `${window.innerHeight}px`;
-    bgCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    bgCtx.setTransform(bgPixelRatio, 0, 0, bgPixelRatio, 0, 0);
     const count = Math.max(45, Math.floor((window.innerWidth * window.innerHeight) / 28000));
     bgNodes = Array.from({ length: count }, () => ({
       x: Math.random() * window.innerWidth,
@@ -823,7 +824,10 @@
     window.addEventListener('pointermove', (event) => setPointerFromEvent(event.clientX, event.clientY));
     window.addEventListener('pointerdown', (event) => setPointerFromEvent(event.clientX, event.clientY));
     window.addEventListener('pointerup', () => { pointer.active = false; });
-    window.addEventListener('pointerleave', () => { pointer.active = false; });
+    window.addEventListener('pointerout', (event) => {
+      if (!event.relatedTarget) pointer.active = false;
+    });
+    window.addEventListener('blur', () => { pointer.active = false; });
   }
 
   function renderBackground() {
@@ -1016,11 +1020,12 @@
 
   function resizeCanvas() {
     const parent = canvas.parentElement;
-    canvas.width = parent.clientWidth * window.devicePixelRatio;
-    canvas.height = parent.clientHeight * window.devicePixelRatio;
+    pidPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = parent.clientWidth * pidPixelRatio;
+    canvas.height = parent.clientHeight * pidPixelRatio;
     canvas.style.width = parent.clientWidth + 'px';
     canvas.style.height = parent.clientHeight + 'px';
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    ctx.setTransform(pidPixelRatio, 0, 0, pidPixelRatio, 0, 0);
     runSimulationAndRender();
   }
 
@@ -1028,8 +1033,8 @@
   function runSimulationAndRender() {
     if (!canvas.width || !canvas.height) return;
 
-    const w = canvas.width / window.devicePixelRatio;
-    const h = canvas.height / window.devicePixelRatio;
+    const w = canvas.width / pidPixelRatio;
+    const h = canvas.height / pidPixelRatio;
 
     // Clear background
     ctx.fillStyle = '#000000';

@@ -754,7 +754,7 @@
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNOR CONTRACT</h5>
-        <a href="https://basescan.org/address/0x5F061c177b76753686122185989C2332C1d0e8b1" target="_blank" class="block hover:text-brightWhite mb-1">0x5F06...e8b1</a>
+        <a href="https://basescan.org/address/0x5F061c177b76753686122185989C2332C1d0e8b1" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x5F06...e8b1</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">UTILITY ENGINE</h5>
@@ -766,7 +766,7 @@
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">TIMELOCK CONTROL</h5>
-        <a href="https://basescan.org/address/0x09058fdd4dd60b4e2f2c2f4c370da3cb606c09be" target="_blank" class="block hover:text-brightWhite mb-1">0x0905...09Be</a>
+        <a href="https://basescan.org/address/0x09058fdd4dd60b4e2f2c2f4c370da3cb606c09be" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x0905...09Be</a>
       </div>
     </div>
     
@@ -853,7 +853,7 @@
     window.addEventListener('pointermove', (event) => setPointerFromEvent(event.clientX, event.clientY));
     window.addEventListener('pointerdown', (event) => setPointerFromEvent(event.clientX, event.clientY));
     window.addEventListener('pointerup', () => { pointer.active = false; });
-    document.addEventListener('pointerleave', () => { pointer.active = false; });
+    window.addEventListener('pointerleave', () => { pointer.active = false; });
     window.addEventListener('blur', () => { pointer.active = false; });
   }
 

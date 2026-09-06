@@ -659,7 +659,7 @@
         </div>
         <div class="flex items-center justify-between border-t border-borderDim pt-3">
           <span class="font-mono text-[10px] text-dimWhite">0x0905...09Be</span>
-          <button onclick="fallbackClipboardCopy('0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+          <button onclick="fallbackClipboardCopy('0x09058fdd4dd60b4e2f2c2f4c370da3cb606c09be')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
             <span class="material-icons-outlined text-xs">content_copy</span> COPY
           </button>
         </div>
@@ -756,7 +756,7 @@
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">TIMELOCK CONTROL</h5>
-        <a href="https://basescan.org/address/0x09058FdD4dD60b4E2F2C2F4c370DA3cB606c09Be" target="_blank" class="block hover:text-brightWhite mb-1">0x0905...09Be</a>
+        <a href="https://basescan.org/address/0x09058fdd4dd60b4e2f2c2f4c370da3cb606c09be" target="_blank" class="block hover:text-brightWhite mb-1">0x0905...09Be</a>
       </div>
     </div>
     
@@ -789,6 +789,7 @@
   const bgCtx = bgCanvas.getContext('2d');
   const pointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5, active: false, vx: 0, vy: 0 };
   let bgNodes = [];
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function resizeBackground() {
     bgCanvas.width = window.innerWidth * window.devicePixelRatio;
@@ -816,15 +817,25 @@
     pointer.active = true;
   }
 
-  window.addEventListener('pointermove', (event) => setPointerFromEvent(event.clientX, event.clientY));
-  window.addEventListener('pointerdown', (event) => setPointerFromEvent(event.clientX, event.clientY));
-  window.addEventListener('pointerup', () => { pointer.active = false; });
-  window.addEventListener('pointerleave', () => { pointer.active = false; });
+  if (!prefersReducedMotion) {
+    window.addEventListener('pointermove', (event) => setPointerFromEvent(event.clientX, event.clientY));
+    window.addEventListener('pointerdown', (event) => setPointerFromEvent(event.clientX, event.clientY));
+    window.addEventListener('pointerup', () => { pointer.active = false; });
+    window.addEventListener('pointerleave', () => { pointer.active = false; });
+  }
 
   function renderBackground() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     bgCtx.clearRect(0, 0, w, h);
+    if (prefersReducedMotion) {
+      const still = bgCtx.createLinearGradient(0, 0, w, h);
+      still.addColorStop(0, 'rgba(12,12,12,0.95)');
+      still.addColorStop(1, 'rgba(0,0,0,0.98)');
+      bgCtx.fillStyle = still;
+      bgCtx.fillRect(0, 0, w, h);
+      return;
+    }
 
     const pulse = 0.45 + Math.sin(Date.now() * 0.0012) * 0.1;
     const grad = bgCtx.createRadialGradient(pointer.x, pointer.y, 20, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
@@ -859,7 +870,7 @@
     });
 
     for (let i = 0; i < bgNodes.length; i++) {
-      for (let j = i + 1; j < Math.min(i + 8, bgNodes.length); j++) {
+      for (let j = i + 1; j < bgNodes.length; j++) {
         const a = bgNodes[i];
         const b = bgNodes[j];
         const dx = a.x - b.x;
@@ -1290,7 +1301,11 @@
   // Startup lifecycle events
   window.onload = function() {
     resizeBackground();
-    renderBackground();
+    if (prefersReducedMotion) {
+      renderBackground();
+    } else {
+      requestAnimationFrame(renderBackground);
+    }
     resizeCanvas();
     diagnosticBoot('attestation');
   };

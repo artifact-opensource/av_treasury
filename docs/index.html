@@ -60,7 +60,7 @@
 
   /* Scanline Simulation Layer Overlay */
   .scanlines {
-    position: fixed;
+    position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     background: linear-gradient(
       rgba(18, 16, 16, 0) 50%, 
@@ -72,7 +72,7 @@
       rgba(0, 0, 255, 0.06)
     );
     background-size: 100% 4px, 6px 100%;
-    z-index: 9999;
+    z-index: 3;
     pointer-events: none;
     opacity: 0.15;
   }
@@ -86,11 +86,59 @@
     background: #0c0c0c !important;
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
   }
+
+  #background-stack {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  #bg-interactive {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .fog-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(22px) saturate(105%);
+    -webkit-backdrop-filter: blur(22px) saturate(105%);
+  }
+
+  .live-concept-btn {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .live-concept-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.16) 50%, transparent 100%);
+    transform: translateX(-120%);
+    transition: transform 700ms ease;
+  }
+
+  .live-concept-btn:hover::before {
+    transform: translateX(120%);
+  }
 </style>
 </head>
 
 <body class="bg-amoled text-brightWhite font-sans min-h-screen selection:bg-white selection:text-black overflow-x-hidden pb-12">
-<div class="scanlines"></div>
+<div id="background-stack" aria-hidden="true">
+  <canvas id="bg-interactive" aria-hidden="true"></canvas>
+  <div class="fog-overlay"></div>
+  <div class="scanlines"></div>
+</div>
+<div class="relative z-10">
 
 <!-- ═══ NAVIGATION TERMINAL HEAD ═══ -->
 <nav class="fixed top-0 left-0 w-full bg-amoled/90 border-b border-borderDim z-50 backdrop-blur-md">
@@ -145,13 +193,13 @@
       </p>
     </div>
 
-    <!-- Upgraded 5-Column Subsystems Grid with AV Treasury Integration -->
+    <!-- Upgraded 5-Column Subsystems Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
       
       <div onclick="diagnosticBoot('attestation')" id="node-attestation" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         <div class="flex justify-between items-start mb-3">
-          <span class="font-mono text-xs text-dimWhite">01 / SECURITY</span>
+          <span class="font-mono text-xs text-dimWhite">05 / SECURITY</span>
           <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">radar</span>
         </div>
         <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">AI ATTESTATION</h3>
@@ -161,7 +209,7 @@
       <div onclick="diagnosticBoot('defi')" id="node-defi" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         <div class="flex justify-between items-start mb-3">
-          <span class="font-mono text-xs text-dimWhite">02 / CAPITAL</span>
+          <span class="font-mono text-xs text-dimWhite">04 / CAPITAL</span>
           <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">account_balance_wallet</span>
         </div>
         <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">DEFI RESERVES</h3>
@@ -181,24 +229,42 @@
       <div onclick="diagnosticBoot('exchange')" id="node-exchange" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         <div class="flex justify-between items-start mb-3">
-          <span class="font-mono text-xs text-dimWhite">04 / LIQUIDITY</span>
+          <span class="font-mono text-xs text-dimWhite">02 / LIQUIDITY</span>
           <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">swap_horiz</span>
         </div>
         <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">AUTOMATED EXCHANGE</h3>
         <p class="text-xs text-mutedWhite font-light">Slipstream native AMMs providing continuous concentration loops to capture trades and guarantee value.</p>
       </div>
 
-      <!-- New Subsystem: AV Treasury -->
+      <!-- New Subsystem: Treasury -->
       <div onclick="diagnosticBoot('treasury')" id="node-treasury" class="cursor-pointer border border-borderDim bg-card p-5 rounded hover:border-borderMid transition-all duration-300 relative group overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         <div class="flex justify-between items-start mb-3">
-          <span class="font-mono text-xs text-dimWhite">05 / TREASURY</span>
+          <span class="font-mono text-xs text-dimWhite">01 / TREASURY</span>
           <span class="material-icons-outlined text-xs text-dimWhite group-hover:text-brightWhite transition-colors">account_balance</span>
         </div>
-        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">AV TREASURY</h3>
+        <h3 class="text-sm font-semibold tracking-tight text-brightWhite mb-1">TREASURY</h3>
         <p class="text-xs text-mutedWhite font-light">The central bank logic driving the dynamic dual-token mechanism, maintaining reserves ratio equilibrium.</p>
       </div>
 
+    </div>
+  </div>
+</section>
+
+<section class="py-12 border-b border-borderDim bg-black/70">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 text-center">
+    <h3 class="font-mono text-[11px] tracking-[0.2em] uppercase text-dimWhite mb-6">Live Concept</h3>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+      <a href="https://arc.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-brightWhite/70 bg-card/80 backdrop-blur-sm rounded text-brightWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.15)]">
+        <span class="material-icons-outlined text-sm">account_balance</span>
+        <span>Treasury DApp</span>
+        <span class="text-[9px] text-dimWhite normal-case">(new tab)</span>
+      </a>
+      <a href="https://anvil.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-borderMid bg-amoled/80 backdrop-blur-sm rounded text-mutedWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:text-brightWhite hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]">
+        <span class="material-icons-outlined text-sm">account_balance_wallet</span>
+        <span>Anvil Wallet</span>
+        <span class="text-[9px] text-dimWhite normal-case">(new tab)</span>
+      </a>
     </div>
   </div>
 </section>
@@ -227,10 +293,10 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
     
     <div class="flex flex-col lg:flex-row gap-12 items-start">
-      <!-- Left: AV Treasury introduction -->
+      <!-- Left: Treasury introduction -->
       <div class="w-full lg:w-5/12">
         <div class="font-mono text-xs text-dimWhite uppercase tracking-widest mb-2">[ CORE MODULE 01 ]</div>
-        <h2 class="text-3xl font-light tracking-tight mb-4 text-brightWhite">The AV Treasury</h2>
+        <h2 class="text-3xl font-light tracking-tight mb-4 text-brightWhite">The Treasury</h2>
         <p class="text-sm text-mutedWhite font-light leading-relaxed mb-6">
           The central economic node within THE ARC framework. It operates as a code-enforced reserve pool managing a modern dual-token engine: Artifact Utility (Au) as the stable medium of exchange, and Artifact Governance (Ag) for control-loop configuration. 
         </p>
@@ -297,24 +363,24 @@
           <tbody class="divide-y divide-borderDim bg-card">
             <tr class="hover:bg-amoled/50 transition-colors">
               <td class="p-3 font-semibold text-brightWhite">Artifact Utility (Au)</td>
-              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="hover:text-brightWhite underline">0x0c5A...2f08</a></td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" rel="noopener noreferrer" class="hover:text-brightWhite underline">0x0c5A...2f08</a></td>
               <td class="p-3 text-mutedWhite font-light">Deposit assets to TreasuryAMO</td>
               <td class="p-3 text-mutedWhite font-light">9 bps transfer tax (50% Burn / 50% Vault)</td>
               <td class="p-3 text-brightWhite font-mono">Utility Medium of Exchange</td>
             </tr>
             <tr class="hover:bg-amoled/50 transition-colors">
               <td class="p-3 font-semibold text-brightWhite">Artifact Governance (Ag)</td>
-              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="hover:text-brightWhite underline">0x1D31...3674</a></td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" rel="noopener noreferrer" class="hover:text-brightWhite underline">0x1D31...3674</a></td>
               <td class="p-3 text-mutedWhite font-light">PID Controlled Epoch distribution</td>
               <td class="p-3 text-mutedWhite font-light">0 bps (Tax-free transfers)</td>
               <td class="p-3 text-brightWhite font-mono">Governance & Yield Rights</td>
             </tr>
             <tr class="hover:bg-amoled/50 transition-colors">
-              <td class="p-3 font-semibold text-brightWhite">Soulbound Receipt (RSBT)</td>
-              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0xfd0451a53834E4DAa9626A24B9Aa640B0d3647CD" target="_blank" class="hover:text-brightWhite underline">0xfd04...47CD</a></td>
-              <td class="p-3 text-mutedWhite font-light">Vault Position Initialization</td>
-              <td class="p-3 text-cyberRed font-mono">SBT - Non-Transferable</td>
-              <td class="p-3 text-brightWhite font-mono">Staking Verification Matrix</td>
+              <td class="p-3 font-semibold text-brightWhite">USDC (Base)</td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913" target="_blank" rel="noopener noreferrer" class="hover:text-brightWhite underline">0x8335...2913</a></td>
+              <td class="p-3 text-mutedWhite font-light">External reserve collateral</td>
+              <td class="p-3 text-mutedWhite font-mono">Standard ERC-20</td>
+              <td class="p-3 text-brightWhite font-mono">Liquidity and buyback settlement</td>
             </tr>
           </tbody>
         </table>
@@ -530,8 +596,8 @@
           <p class="text-xs text-mutedWhite font-light mb-4">Primary liquidity stabilizer deployed explicitly to control slipstream positions on L2 clusters.</p>
         </div>
         <div class="flex items-center justify-between border-t border-borderDim pt-3">
-          <span class="font-mono text-[10px] text-dimWhite">0x5665...5188</span>
-          <button onclick="fallbackClipboardCopy('0x56653245f4718fe105b95C8424947B31b84b5188')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+          <span class="font-mono text-[10px] text-dimWhite">0xF096...ca88</span>
+          <button onclick="fallbackClipboardCopy('0xF096cD4D24811B0F824c929907196bCB796bca88')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
             <span class="material-icons-outlined text-xs">content_copy</span> COPY
           </button>
         </div>
@@ -584,8 +650,8 @@
           <p class="text-xs text-mutedWhite font-light mb-4">Core validation checkpoint executing voter validations, threshold queues, and state executions.</p>
         </div>
         <div class="flex items-center justify-between border-t border-borderDim pt-3">
-          <span class="font-mono text-[10px] text-dimWhite">0x259c...6385</span>
-          <button onclick="fallbackClipboardCopy('0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+          <span class="font-mono text-[10px] text-dimWhite">0x5F06...e8b1</span>
+          <button onclick="fallbackClipboardCopy('0x5F061c177b76753686122185989C2332C1d0e8b1')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
             <span class="material-icons-outlined text-xs">content_copy</span> COPY
           </button>
         </div>
@@ -602,8 +668,8 @@
           <p class="text-xs text-mutedWhite font-light mb-4">Secure multi-day structural protection gate holding transaction approvals prior to active state upgrades.</p>
         </div>
         <div class="flex items-center justify-between border-t border-borderDim pt-3">
-          <span class="font-mono text-[10px] text-dimWhite">0x6623...4714</span>
-          <button onclick="fallbackClipboardCopy('0x662321CC63700865838aB08378061BE499344714')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+          <span class="font-mono text-[10px] text-dimWhite">0x0905...09Be</span>
+          <button onclick="fallbackClipboardCopy('0x09058fdd4dd60b4e2f2c2f4c370da3cb606c09be')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
             <span class="material-icons-outlined text-xs">content_copy</span> COPY
           </button>
         </div>
@@ -616,12 +682,12 @@
             <span class="font-mono text-[9px] bg-borderDim text-dimWhite border border-borderMid px-1 rounded">RESERVE_AMO</span>
             <span class="w-1.5 h-1.5 rounded-full bg-cyberGreen"></span>
           </div>
-          <h4 class="text-sm font-semibold text-brightWhite mb-1">AvOracle v5</h4>
+          <h4 class="text-sm font-semibold text-brightWhite mb-1">AvOracle v6</h4>
           <p class="text-xs text-mutedWhite font-light mb-4">Secure multi-source price tracking oracle running manipulation filters on historical trading clusters.</p>
         </div>
         <div class="flex items-center justify-between border-t border-borderDim pt-3">
-          <span class="font-mono text-[10px] text-dimWhite">0xb479...2bdB</span>
-          <button onclick="fallbackClipboardCopy('0xb479760Dfd9Ba90cF670BBB1647a4B06B2032bdB')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
+          <span class="font-mono text-[10px] text-dimWhite">0x1B5F...732b</span>
+          <button onclick="fallbackClipboardCopy('0x1B5F6AC11efFeEBd5371858ce394DD0B8669732b')" class="text-mutedWhite hover:text-brightWhite font-mono text-[10px] flex items-center gap-1">
             <span class="material-icons-outlined text-xs">content_copy</span> COPY
           </button>
         </div>
@@ -684,23 +750,23 @@
     <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8 font-mono">
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">SYSTEM CONFIG</h5>
-        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank" class="block hover:text-brightWhite mb-1">0x1082...9F9e</a>
+        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x1082...9F9e</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNOR CONTRACT</h5>
-        <a href="https://basescan.org/address/0x259c1C2354Bc9e1eF20ee3B7b1D8580Cb5F06385" target="_blank" class="block hover:text-brightWhite mb-1">0x259c...6385</a>
+        <a href="https://basescan.org/address/0x5F061c177b76753686122185989C2332C1d0e8b1" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x5F06...e8b1</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">UTILITY ENGINE</h5>
-        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="block hover:text-brightWhite mb-1">0x0c5A...2f08</a>
+        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x0c5A...2f08</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNANCE ENGINE</h5>
-        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="block hover:text-brightWhite mb-1">0x1D31...3674</a>
+        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x1D31...3674</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">TIMELOCK CONTROL</h5>
-        <a href="https://basescan.org/address/0x991138923880773D67c01392c31A255e770F7f70" target="_blank" class="block hover:text-brightWhite mb-1">0x9911...7f70</a>
+        <a href="https://basescan.org/address/0x09058fdd4dd60b4e2f2c2f4c370da3cb606c09be" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x0905...09Be</a>
       </div>
     </div>
     
@@ -716,6 +782,7 @@
   <span id="toast-icon" class="material-icons-outlined text-sm">info</span>
   <span id="toast-text">Success Message</span>
 </div>
+</div>
 
 <script>
   
@@ -727,6 +794,164 @@
   let Kd = 0.02;
   let simulatedNoise = 0.02;
 
+  // Interactive Background Layer
+  const bgCanvas = document.getElementById('bg-interactive');
+  const bgCtx = bgCanvas ? bgCanvas.getContext('2d') : null;
+  const pointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5, active: false, vx: 0, vy: 0 };
+  let bgNodes = [];
+  let bgPixelRatio = 1;
+  let pidPixelRatio = 1;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hasBackgroundCanvas = !!bgCanvas && !!bgCtx;
+
+  function resizeBackground() {
+    if (!hasBackgroundCanvas) return;
+    bgPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    bgCanvas.width = window.innerWidth * bgPixelRatio;
+    bgCanvas.height = window.innerHeight * bgPixelRatio;
+    bgCanvas.style.width = `${window.innerWidth}px`;
+    bgCanvas.style.height = `${window.innerHeight}px`;
+    bgCtx.setTransform(bgPixelRatio, 0, 0, bgPixelRatio, 0, 0);
+    const targetCount = Math.max(45, Math.floor((window.innerWidth * window.innerHeight) / 28000));
+    if (bgNodes.length === 0) {
+      bgNodes = Array.from({ length: targetCount }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: 0.6 + Math.random() * 1.8
+      }));
+      return;
+    }
+    if (bgNodes.length < targetCount) {
+      const addCount = targetCount - bgNodes.length;
+      for (let i = 0; i < addCount; i++) {
+        bgNodes.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          r: 0.6 + Math.random() * 1.8
+        });
+      }
+    } else if (bgNodes.length > targetCount) {
+      bgNodes.length = targetCount;
+    }
+  }
+
+  function setPointerFromEvent(clientX, clientY) {
+    const dx = clientX - pointer.x;
+    const dy = clientY - pointer.y;
+    pointer.vx = dx * 0.06;
+    pointer.vy = dy * 0.06;
+    pointer.x = clientX;
+    pointer.y = clientY;
+    pointer.active = true;
+  }
+
+  if (!prefersReducedMotion) {
+    window.addEventListener('pointermove', (event) => setPointerFromEvent(event.clientX, event.clientY));
+    window.addEventListener('pointerdown', (event) => setPointerFromEvent(event.clientX, event.clientY));
+    window.addEventListener('pointerup', () => { pointer.active = false; });
+    window.addEventListener('pointerleave', () => { pointer.active = false; });
+    window.addEventListener('blur', () => { pointer.active = false; });
+  }
+
+  function renderStaticBackground() {
+    if (!hasBackgroundCanvas) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    bgCtx.clearRect(0, 0, w, h);
+    const still = bgCtx.createLinearGradient(0, 0, w, h);
+    still.addColorStop(0, 'rgba(12,12,12,0.95)');
+    still.addColorStop(1, 'rgba(0,0,0,0.98)');
+    bgCtx.fillStyle = still;
+    bgCtx.fillRect(0, 0, w, h);
+  }
+
+  function renderBackground() {
+    if (!hasBackgroundCanvas) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    bgCtx.clearRect(0, 0, w, h);
+
+    const pulse = 0.45 + Math.sin(Date.now() * 0.0012) * 0.1;
+    const grad = bgCtx.createRadialGradient(pointer.x, pointer.y, 20, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
+    grad.addColorStop(0, `rgba(255,255,255,${0.14 * pulse})`);
+    grad.addColorStop(0.35, 'rgba(22,22,22,0.28)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.88)');
+    bgCtx.fillStyle = grad;
+    bgCtx.fillRect(0, 0, w, h);
+
+    bgNodes.forEach((node) => {
+      const dx = pointer.x - node.x;
+      const dy = pointer.y - node.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 42000) {
+        const pull = (42000 - d2) / 42000;
+        node.vx += dx * 0.000015 * pull + pointer.vx * 0.0004;
+        node.vy += dy * 0.000015 * pull + pointer.vy * 0.0004;
+      }
+      node.x += node.vx;
+      node.y += node.vy;
+      node.vx *= 0.985;
+      node.vy *= 0.985;
+      if (node.x < -10) node.x = w + 10;
+      if (node.x > w + 10) node.x = -10;
+      if (node.y < -10) node.y = h + 10;
+      if (node.y > h + 10) node.y = -10;
+
+      bgCtx.beginPath();
+      bgCtx.fillStyle = pointer.active ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.24)';
+      bgCtx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+      bgCtx.fill();
+    });
+
+    const cellSize = 120;
+    const maxDist2 = cellSize * cellSize;
+    const buckets = new Map();
+    bgNodes.forEach((node, index) => {
+      const cx = Math.floor(node.x / cellSize);
+      const cy = Math.floor(node.y / cellSize);
+      const key = `${cx},${cy}`;
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(index);
+    });
+
+    const offsets = [-1, 0, 1];
+    buckets.forEach((indices, key) => {
+      const [cx, cy] = key.split(',').map(Number);
+      indices.forEach((aIndex) => {
+        const a = bgNodes[aIndex];
+        offsets.forEach((ox) => {
+          offsets.forEach((oy) => {
+            const neighbor = buckets.get(`${cx + ox},${cy + oy}`);
+            if (!neighbor) return;
+            neighbor.forEach((bIndex) => {
+              if (bIndex <= aIndex) return;
+              const b = bgNodes[bIndex];
+              const dx = a.x - b.x;
+              const dy = a.y - b.y;
+              const dist2 = dx * dx + dy * dy;
+              if (dist2 < maxDist2) {
+                bgCtx.strokeStyle = `rgba(255,255,255,${(1 - dist2 / maxDist2) * 0.14})`;
+                bgCtx.lineWidth = 0.6;
+                bgCtx.beginPath();
+                bgCtx.moveTo(a.x, a.y);
+                bgCtx.lineTo(b.x, b.y);
+                bgCtx.stroke();
+              }
+            });
+          });
+        });
+      });
+    });
+
+    pointer.vx *= 0.92;
+    pointer.vy *= 0.92;
+    requestAnimationFrame(renderBackground);
+  }
+
   // Clock Update Function
   function updateTerminalClock() {
     const clockEl = document.getElementById('terminal-clock');
@@ -735,18 +960,21 @@
       clockEl.innerText = `BLOCK: ${Math.floor(Date.now() / 2000)} // BASE_TIME: ${now.toISOString().replace('T', ' ').substring(0, 19)}`;
     }
   }
-  setInterval(updateTerminalClock, 1000);
+  updateTerminalClock();
+  if (!prefersReducedMotion) setInterval(updateTerminalClock, 1000);
 
   // Dynamic Base Gas Price Simulator
-  setInterval(() => {
-    const navGas = document.getElementById('nav-gas');
-    if (navGas) {
-      const value = (1.0 + Math.random() * 0.5).toFixed(2);
-      navGas.innerText = `${value} Gwei`;
-    }
-  }, 3000);
+  if (!prefersReducedMotion) {
+    setInterval(() => {
+      const navGas = document.getElementById('nav-gas');
+      if (navGas) {
+        const value = (1.0 + Math.random() * 0.5).toFixed(2);
+        navGas.innerText = `${value} Gwei`;
+      }
+    }, 3000);
+  }
 
-  // System Diagnostics Dynamic Terminal Logger (including new AV Treasury diagnostics)
+  // System Diagnostics Dynamic Terminal Logger
   const diagnosticLogs = {
     attestation: [
       "&gt; INITIALIZING AI ATTESTATION DIAGNOSTIC MATRIX...",
@@ -777,11 +1005,11 @@
       "&gt; Automatic market makers active. Capital loops locked."
     ],
     treasury: [
-      "&gt; CONNECTING TO AV TREASURY DECENTRALIZED RESERVE MATRIX...",
+      "&gt; CONNECTING TO TREASURY DECENTRALIZED RESERVE MATRIX...",
       "&gt; Syncing on-chain liquidity buffers... Active TVL target tracking initialized.",
       "&gt; Loading collateral reserves: 100% verified asset backing ratio intact.",
       "&gt; Calculated emissions rate: Running on PID closed-loop feedback parameters.",
-      "&gt; Equilibrium verified: AV Treasury operations matching target TVL bounds."
+      "&gt; Equilibrium verified: Treasury operations matching target TVL bounds."
     ]
   };
 
@@ -801,6 +1029,21 @@
       terminalBody.innerHTML = "";
       
       let logs = diagnosticLogs[system];
+      if (prefersReducedMotion) {
+        logs.forEach((entry) => {
+          const line = document.createElement('div');
+          line.innerHTML = entry;
+          if (entry.includes('Verifying') || entry.includes('Verified:') || entry.includes('equilibrium') || entry.includes('verified:')) {
+            line.className = 'text-cyberGreen';
+          } else if (entry.includes('INITIALIZING') || entry.includes('BOOTING') || entry.includes('ATTEMPTING') || entry.includes('CONNECTING')) {
+            line.className = 'text-brightWhite font-bold';
+          } else {
+            line.className = 'text-mutedWhite';
+          }
+          terminalBody.appendChild(line);
+        });
+        return;
+      }
       let i = 0;
       
       function printNextLog() {
@@ -828,11 +1071,12 @@
 
   function resizeCanvas() {
     const parent = canvas.parentElement;
-    canvas.width = parent.clientWidth * window.devicePixelRatio;
-    canvas.height = parent.clientHeight * window.devicePixelRatio;
+    pidPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = parent.clientWidth * pidPixelRatio;
+    canvas.height = parent.clientHeight * pidPixelRatio;
     canvas.style.width = parent.clientWidth + 'px';
     canvas.style.height = parent.clientHeight + 'px';
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    ctx.setTransform(pidPixelRatio, 0, 0, pidPixelRatio, 0, 0);
     runSimulationAndRender();
   }
 
@@ -840,8 +1084,8 @@
   function runSimulationAndRender() {
     if (!canvas.width || !canvas.height) return;
 
-    const w = canvas.width / window.devicePixelRatio;
-    const h = canvas.height / window.devicePixelRatio;
+    const w = canvas.width / pidPixelRatio;
+    const h = canvas.height / pidPixelRatio;
 
     // Clear background
     ctx.fillStyle = '#000000';
@@ -1134,15 +1378,31 @@
   }
 
   // Startup lifecycle events
-  window.onload = function() {
+  window.addEventListener('load', () => {
+    if (hasBackgroundCanvas) {
+      resizeBackground();
+      if (prefersReducedMotion) {
+        renderStaticBackground();
+      } else {
+        requestAnimationFrame(renderBackground);
+      }
+    }
     resizeCanvas();
     diagnosticBoot('attestation');
-  };
+  });
 
   // Listen to viewport changes to dynamically correct layout widths
-  window.onresize = function() {
-    resizeCanvas();
-  };
+  let resizeQueued = false;
+  window.addEventListener('resize', () => {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => {
+      resizeBackground();
+      if (prefersReducedMotion) renderStaticBackground();
+      resizeCanvas();
+      resizeQueued = false;
+    });
+  });
 </script>
 
 </body>

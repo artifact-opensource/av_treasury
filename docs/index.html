@@ -857,19 +857,23 @@
     window.addEventListener('blur', () => { pointer.active = false; });
   }
 
+  function renderStaticBackground() {
+    if (!hasBackgroundCanvas) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    bgCtx.clearRect(0, 0, w, h);
+    const still = bgCtx.createLinearGradient(0, 0, w, h);
+    still.addColorStop(0, 'rgba(12,12,12,0.95)');
+    still.addColorStop(1, 'rgba(0,0,0,0.98)');
+    bgCtx.fillStyle = still;
+    bgCtx.fillRect(0, 0, w, h);
+  }
+
   function renderBackground() {
     if (!hasBackgroundCanvas) return;
     const w = window.innerWidth;
     const h = window.innerHeight;
     bgCtx.clearRect(0, 0, w, h);
-    if (prefersReducedMotion) {
-      const still = bgCtx.createLinearGradient(0, 0, w, h);
-      still.addColorStop(0, 'rgba(12,12,12,0.95)');
-      still.addColorStop(1, 'rgba(0,0,0,0.98)');
-      bgCtx.fillStyle = still;
-      bgCtx.fillRect(0, 0, w, h);
-      return;
-    }
 
     const pulse = 0.45 + Math.sin(Date.now() * 0.0012) * 0.1;
     const grad = bgCtx.createRadialGradient(pointer.x, pointer.y, 20, w * 0.5, h * 0.5, Math.max(w, h) * 0.8);
@@ -1360,7 +1364,7 @@
     if (hasBackgroundCanvas) {
       resizeBackground();
       if (prefersReducedMotion) {
-        renderBackground();
+        renderStaticBackground();
       } else {
         requestAnimationFrame(renderBackground);
       }
@@ -1376,6 +1380,7 @@
     resizeQueued = true;
     requestAnimationFrame(() => {
       resizeBackground();
+      if (prefersReducedMotion) renderStaticBackground();
       resizeCanvas();
       resizeQueued = false;
     });

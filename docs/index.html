@@ -255,13 +255,15 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 text-center">
     <h3 class="font-mono text-[11px] tracking-[0.2em] uppercase text-dimWhite mb-6">Live Concept</h3>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-      <a href="https://arc.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Treasury DApp (opens in a new tab)" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-brightWhite/70 bg-card/80 backdrop-blur-sm rounded text-brightWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.15)]">
+      <a href="https://arc.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-brightWhite/70 bg-card/80 backdrop-blur-sm rounded text-brightWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.15)]">
         <span class="material-icons-outlined text-sm">account_balance</span>
         <span>Treasury DApp</span>
+        <span class="text-[9px] text-dimWhite normal-case">(new tab)</span>
       </a>
-      <a href="https://anvil.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Anvil Wallet (opens in a new tab)" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-borderMid bg-amoled/80 backdrop-blur-sm rounded text-mutedWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:text-brightWhite hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]">
+      <a href="https://anvil.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-borderMid bg-amoled/80 backdrop-blur-sm rounded text-mutedWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:text-brightWhite hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]">
         <span class="material-icons-outlined text-sm">account_balance_wallet</span>
         <span>Anvil Wallet</span>
+        <span class="text-[9px] text-dimWhite normal-case">(new tab)</span>
       </a>
     </div>
   </div>
@@ -794,14 +796,16 @@
 
   // Interactive Background Layer
   const bgCanvas = document.getElementById('bg-interactive');
-  const bgCtx = bgCanvas.getContext('2d');
+  const bgCtx = bgCanvas ? bgCanvas.getContext('2d') : null;
   const pointer = { x: window.innerWidth * 0.5, y: window.innerHeight * 0.5, active: false, vx: 0, vy: 0 };
   let bgNodes = [];
   let bgPixelRatio = 1;
   let pidPixelRatio = 1;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hasBackgroundCanvas = !!bgCanvas && !!bgCtx;
 
   function resizeBackground() {
+    if (!hasBackgroundCanvas) return;
     bgPixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     bgCanvas.width = window.innerWidth * bgPixelRatio;
     bgCanvas.height = window.innerHeight * bgPixelRatio;
@@ -849,13 +853,12 @@
     window.addEventListener('pointermove', (event) => setPointerFromEvent(event.clientX, event.clientY));
     window.addEventListener('pointerdown', (event) => setPointerFromEvent(event.clientX, event.clientY));
     window.addEventListener('pointerup', () => { pointer.active = false; });
-    window.addEventListener('pointerout', (event) => {
-      if (!event.relatedTarget) pointer.active = false;
-    });
+    document.addEventListener('pointerleave', () => { pointer.active = false; });
     window.addEventListener('blur', () => { pointer.active = false; });
   }
 
   function renderBackground() {
+    if (!hasBackgroundCanvas) return;
     const w = window.innerWidth;
     const h = window.innerHeight;
     bgCtx.clearRect(0, 0, w, h);
@@ -1353,20 +1356,22 @@
   }
 
   // Startup lifecycle events
-  window.onload = function() {
-    resizeBackground();
-    if (prefersReducedMotion) {
-      renderBackground();
-    } else {
-      requestAnimationFrame(renderBackground);
+  window.addEventListener('load', () => {
+    if (hasBackgroundCanvas) {
+      resizeBackground();
+      if (prefersReducedMotion) {
+        renderBackground();
+      } else {
+        requestAnimationFrame(renderBackground);
+      }
     }
     resizeCanvas();
     diagnosticBoot('attestation');
-  };
+  });
 
   // Listen to viewport changes to dynamically correct layout widths
   let resizeQueued = false;
-  window.onresize = function() {
+  window.addEventListener('resize', () => {
     if (resizeQueued) return;
     resizeQueued = true;
     requestAnimationFrame(() => {
@@ -1374,7 +1379,7 @@
       resizeCanvas();
       resizeQueued = false;
     });
-  };
+  });
 </script>
 
 </body>

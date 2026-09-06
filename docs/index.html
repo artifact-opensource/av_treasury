@@ -127,7 +127,7 @@
 </head>
 
 <body class="bg-amoled text-brightWhite font-sans min-h-screen selection:bg-white selection:text-black overflow-x-hidden pb-12">
-<canvas id="bg-interactive"></canvas>
+<canvas id="bg-interactive" aria-hidden="true" role="presentation"></canvas>
 <div class="fog-overlay"></div>
 <div class="scanlines"></div>
 <div class="relative z-10">
@@ -247,13 +247,15 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 text-center">
     <h3 class="font-mono text-[11px] tracking-[0.2em] uppercase text-dimWhite mb-6">Live Concept</h3>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-      <a href="https://arc.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-brightWhite/70 bg-card/80 backdrop-blur-sm rounded text-brightWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.15)]">
+      <a href="https://arc.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Treasury DApp (opens in a new tab)" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-brightWhite/70 bg-card/80 backdrop-blur-sm rounded text-brightWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.15)]">
         <span class="material-icons-outlined text-sm">account_balance</span>
         <span>Treasury DApp</span>
+        <span class="sr-only">(opens in a new tab)</span>
       </a>
-      <a href="https://anvil.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-borderMid bg-amoled/80 backdrop-blur-sm rounded text-mutedWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:text-brightWhite hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]">
+      <a href="https://anvil.artifactvirtual.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Anvil Wallet (opens in a new tab)" class="live-concept-btn inline-flex items-center justify-center gap-2 px-6 py-3 min-w-[240px] border border-borderMid bg-amoled/80 backdrop-blur-sm rounded text-mutedWhite font-mono text-[11px] tracking-widest uppercase transition-all hover:text-brightWhite hover:border-brightWhite hover:shadow-[0_0_24px_rgba(255,255,255,0.12)]">
         <span class="material-icons-outlined text-sm">account_balance_wallet</span>
         <span>Anvil Wallet</span>
+        <span class="sr-only">(opens in a new tab)</span>
       </a>
     </div>
   </div>
@@ -869,23 +871,44 @@
       bgCtx.fill();
     });
 
-    for (let i = 0; i < bgNodes.length; i++) {
-      for (let j = i + 1; j < bgNodes.length; j++) {
-        const a = bgNodes[i];
-        const b = bgNodes[j];
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          bgCtx.strokeStyle = `rgba(255,255,255,${(1 - dist / 120) * 0.14})`;
-          bgCtx.lineWidth = 0.6;
-          bgCtx.beginPath();
-          bgCtx.moveTo(a.x, a.y);
-          bgCtx.lineTo(b.x, b.y);
-          bgCtx.stroke();
-        }
-      }
-    }
+    const cellSize = 120;
+    const buckets = new Map();
+    bgNodes.forEach((node, index) => {
+      const cx = Math.floor(node.x / cellSize);
+      const cy = Math.floor(node.y / cellSize);
+      const key = `${cx},${cy}`;
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(index);
+    });
+
+    const offsets = [-1, 0, 1];
+    buckets.forEach((indices, key) => {
+      const [cx, cy] = key.split(',').map(Number);
+      indices.forEach((aIndex) => {
+        const a = bgNodes[aIndex];
+        offsets.forEach((ox) => {
+          offsets.forEach((oy) => {
+            const neighbor = buckets.get(`${cx + ox},${cy + oy}`);
+            if (!neighbor) return;
+            neighbor.forEach((bIndex) => {
+              if (bIndex <= aIndex) return;
+              const b = bgNodes[bIndex];
+              const dx = a.x - b.x;
+              const dy = a.y - b.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 120) {
+                bgCtx.strokeStyle = `rgba(255,255,255,${(1 - dist / 120) * 0.14})`;
+                bgCtx.lineWidth = 0.6;
+                bgCtx.beginPath();
+                bgCtx.moveTo(a.x, a.y);
+                bgCtx.lineTo(b.x, b.y);
+                bgCtx.stroke();
+              }
+            });
+          });
+        });
+      });
+    });
 
     pointer.vx *= 0.92;
     pointer.vy *= 0.92;

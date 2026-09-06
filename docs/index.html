@@ -363,21 +363,21 @@
           <tbody class="divide-y divide-borderDim bg-card">
             <tr class="hover:bg-amoled/50 transition-colors">
               <td class="p-3 font-semibold text-brightWhite">Artifact Utility (Au)</td>
-              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="hover:text-brightWhite underline">0x0c5A...2f08</a></td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" rel="noopener noreferrer" class="hover:text-brightWhite underline">0x0c5A...2f08</a></td>
               <td class="p-3 text-mutedWhite font-light">Deposit assets to TreasuryAMO</td>
               <td class="p-3 text-mutedWhite font-light">9 bps transfer tax (50% Burn / 50% Vault)</td>
               <td class="p-3 text-brightWhite font-mono">Utility Medium of Exchange</td>
             </tr>
             <tr class="hover:bg-amoled/50 transition-colors">
               <td class="p-3 font-semibold text-brightWhite">Artifact Governance (Ag)</td>
-              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="hover:text-brightWhite underline">0x1D31...3674</a></td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" rel="noopener noreferrer" class="hover:text-brightWhite underline">0x1D31...3674</a></td>
               <td class="p-3 text-mutedWhite font-light">PID Controlled Epoch distribution</td>
               <td class="p-3 text-mutedWhite font-light">0 bps (Tax-free transfers)</td>
               <td class="p-3 text-brightWhite font-mono">Governance & Yield Rights</td>
             </tr>
             <tr class="hover:bg-amoled/50 transition-colors">
               <td class="p-3 font-semibold text-brightWhite">USDC (Base)</td>
-              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913" target="_blank" class="hover:text-brightWhite underline">0x8335...2913</a></td>
+              <td class="p-3 font-mono text-dimWhite"><a href="https://basescan.org/address/0x833589fCD6eDb6E08f4c7C32D4f71b54bda02913" target="_blank" rel="noopener noreferrer" class="hover:text-brightWhite underline">0x8335...2913</a></td>
               <td class="p-3 text-mutedWhite font-light">External reserve collateral</td>
               <td class="p-3 text-mutedWhite font-mono">Standard ERC-20</td>
               <td class="p-3 text-brightWhite font-mono">Liquidity and buyback settlement</td>
@@ -750,7 +750,7 @@
     <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8 font-mono">
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">SYSTEM CONFIG</h5>
-        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank" class="block hover:text-brightWhite mb-1">0x1082...9F9e</a>
+        <a href="https://basescan.org/address/0x1082C9467488F869Aa64fcb0Dc78CD9BC6319F9e" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x1082...9F9e</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNOR CONTRACT</h5>
@@ -758,11 +758,11 @@
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">UTILITY ENGINE</h5>
-        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" class="block hover:text-brightWhite mb-1">0x0c5A...2f08</a>
+        <a href="https://basescan.org/address/0x0c5A9a970b9C9b77A1DDb1cd62F279cE6cDA2f08" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x0c5A...2f08</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">GOVERNANCE ENGINE</h5>
-        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" class="block hover:text-brightWhite mb-1">0x1D31...3674</a>
+        <a href="https://basescan.org/address/0x1D31719389Bd8b17277Ba367c26b830aE34D3674" target="_blank" rel="noopener noreferrer" class="block hover:text-brightWhite mb-1">0x1D31...3674</a>
       </div>
       <div>
         <h5 class="text-[10px] text-dimWhite mb-3 uppercase tracking-wider">TIMELOCK CONTROL</h5>
@@ -960,16 +960,19 @@
       clockEl.innerText = `BLOCK: ${Math.floor(Date.now() / 2000)} // BASE_TIME: ${now.toISOString().replace('T', ' ').substring(0, 19)}`;
     }
   }
-  setInterval(updateTerminalClock, 1000);
+  updateTerminalClock();
+  if (!prefersReducedMotion) setInterval(updateTerminalClock, 1000);
 
   // Dynamic Base Gas Price Simulator
-  setInterval(() => {
-    const navGas = document.getElementById('nav-gas');
-    if (navGas) {
-      const value = (1.0 + Math.random() * 0.5).toFixed(2);
-      navGas.innerText = `${value} Gwei`;
-    }
-  }, 3000);
+  if (!prefersReducedMotion) {
+    setInterval(() => {
+      const navGas = document.getElementById('nav-gas');
+      if (navGas) {
+        const value = (1.0 + Math.random() * 0.5).toFixed(2);
+        navGas.innerText = `${value} Gwei`;
+      }
+    }, 3000);
+  }
 
   // System Diagnostics Dynamic Terminal Logger
   const diagnosticLogs = {
@@ -1026,6 +1029,21 @@
       terminalBody.innerHTML = "";
       
       let logs = diagnosticLogs[system];
+      if (prefersReducedMotion) {
+        logs.forEach((entry) => {
+          const line = document.createElement('div');
+          line.innerHTML = entry;
+          if (entry.includes('Verifying') || entry.includes('Verified:') || entry.includes('equilibrium') || entry.includes('verified:')) {
+            line.className = 'text-cyberGreen';
+          } else if (entry.includes('INITIALIZING') || entry.includes('BOOTING') || entry.includes('ATTEMPTING') || entry.includes('CONNECTING')) {
+            line.className = 'text-brightWhite font-bold';
+          } else {
+            line.className = 'text-mutedWhite';
+          }
+          terminalBody.appendChild(line);
+        });
+        return;
+      }
       let i = 0;
       
       function printNextLog() {

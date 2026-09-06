@@ -60,7 +60,7 @@
 
   /* Scanline Simulation Layer Overlay */
   .scanlines {
-    position: fixed;
+    position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     background: linear-gradient(
       rgba(18, 16, 16, 0) 50%, 
@@ -72,7 +72,7 @@
       rgba(0, 0, 255, 0.06)
     );
     background-size: 100% 4px, 6px 100%;
-    z-index: 9999;
+    z-index: 3;
     pointer-events: none;
     opacity: 0.15;
   }
@@ -87,19 +87,25 @@
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
   }
 
-  #bg-interactive {
+  #background-stack {
     position: fixed;
     inset: 0;
     z-index: 0;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
   }
 
-  .fog-overlay {
-    position: fixed;
+  #bg-interactive {
+    position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 1;
+  }
+
+  .fog-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
     pointer-events: none;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(22px) saturate(105%);
@@ -127,9 +133,11 @@
 </head>
 
 <body class="bg-amoled text-brightWhite font-sans min-h-screen selection:bg-white selection:text-black overflow-x-hidden pb-12">
-<canvas id="bg-interactive" aria-hidden="true" role="presentation"></canvas>
-<div class="fog-overlay"></div>
-<div class="scanlines"></div>
+<div id="background-stack" aria-hidden="true">
+  <canvas id="bg-interactive" aria-hidden="true" role="presentation"></canvas>
+  <div class="fog-overlay"></div>
+  <div class="scanlines"></div>
+</div>
 <div class="relative z-10">
 
 <!-- ═══ NAVIGATION TERMINAL HEAD ═══ -->
@@ -800,14 +808,31 @@
     bgCanvas.style.width = `${window.innerWidth}px`;
     bgCanvas.style.height = `${window.innerHeight}px`;
     bgCtx.setTransform(bgPixelRatio, 0, 0, bgPixelRatio, 0, 0);
-    const count = Math.max(45, Math.floor((window.innerWidth * window.innerHeight) / 28000));
-    bgNodes = Array.from({ length: count }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      r: 0.6 + Math.random() * 1.8
-    }));
+    const targetCount = Math.max(45, Math.floor((window.innerWidth * window.innerHeight) / 28000));
+    if (bgNodes.length === 0) {
+      bgNodes = Array.from({ length: targetCount }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: 0.6 + Math.random() * 1.8
+      }));
+      return;
+    }
+    if (bgNodes.length < targetCount) {
+      const addCount = targetCount - bgNodes.length;
+      for (let i = 0; i < addCount; i++) {
+        bgNodes.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          r: 0.6 + Math.random() * 1.8
+        });
+      }
+    } else if (bgNodes.length > targetCount) {
+      bgNodes.length = targetCount;
+    }
   }
 
   function setPointerFromEvent(clientX, clientY) {
@@ -876,6 +901,7 @@
     });
 
     const cellSize = 120;
+    const maxDist2 = cellSize * cellSize;
     const buckets = new Map();
     bgNodes.forEach((node, index) => {
       const cx = Math.floor(node.x / cellSize);
@@ -899,9 +925,9 @@
               const b = bgNodes[bIndex];
               const dx = a.x - b.x;
               const dy = a.y - b.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < 120) {
-                bgCtx.strokeStyle = `rgba(255,255,255,${(1 - dist / 120) * 0.14})`;
+              const dist2 = dx * dx + dy * dy;
+              if (dist2 < maxDist2) {
+                bgCtx.strokeStyle = `rgba(255,255,255,${(1 - dist2 / maxDist2) * 0.14})`;
                 bgCtx.lineWidth = 0.6;
                 bgCtx.beginPath();
                 bgCtx.moveTo(a.x, a.y);
@@ -1339,10 +1365,16 @@
   };
 
   // Listen to viewport changes to dynamically correct layout widths
-  window.onresize = function() {
-    resizeBackground();
-    resizeCanvas();
-  };
+  let resizeQueued = false;
+  window.addEventListener('resize', () => {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => {
+      resizeBackground();
+      resizeCanvas();
+      resizeQueued = false;
+    });
+  });
 </script>
 
 </body>
